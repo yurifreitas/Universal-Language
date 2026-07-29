@@ -6,6 +6,10 @@ voz em português, funciona offline.
 
 
 
+🌐 **[Abrir o app](https://yurifreitas.github.io/Universal-Language/)**
+📚 **[Referências, metodologias e normas](REFERENCES.md)** — a base documental de
+cada decisão de projeto
+
 > ⚠️ Os pictogramas são **CC BY-NC-SA**. Leia [LICENSE-ARASAAC.md](LICENSE-ARASAAC.md)
 > antes de qualquer decisão de produto — a cláusula NC impede monetização.
 
@@ -104,9 +108,34 @@ seriam 184 MB baixados na primeira visita. Ficam em `CacheFirst`, permanentes
 após o primeiro uso de cada card. `search.json` (513 KB) é `StaleWhileRevalidate`
 e só carrega quando a busca abre.
 
+## Navegação e métodos de acesso
+
+Nem todo usuário aponta. Este é o eixo que separa um app de CAA sério de um app
+de figuras. Fundamentação em [REFERENCES.md § 5](REFERENCES.md).
+
+| Acesso | Como |
+|---|---|
+| **Toque / mouse** | Seleção direta |
+| **Teclado** | Setas movem o foco na grade (padrão *Grid* do WAI-ARIA, com roving tabindex); `Home`/`End`, `PageUp`/`PageDown` |
+| **Varredura linha-coluna** | A grade percorre as linhas sozinha; acionar entra na linha, acionar de novo seleciona |
+| **Switch** | `Espaço`/`Enter` — é como switches comerciais se apresentam ao sistema |
+| **Toque longo** | Fala o card **sem** inseri-lo na frase — explorar sem consequência |
+
+Atalhos: `1`–`9` trocam de prancha, `B` abre a busca, `Backspace` apaga o último
+card, `Esc` interrompe a varredura. A tela **Ajuda** documenta tudo no próprio app.
+
+A varredura volta às linhas sozinha se a linha terminar sem acionamento — um erro
+não pode prender a pessoa dentro de uma linha. Velocidade regulável de 0,4 s a
+3 s; o valor certo é individual e clínico, e 1,2 s é só um ponto de partida.
+
+**Favoritos** vivem numa prancha própria, acrescentada ao fim. Personalizar é
+essencial, mas não pode custar a estabilidade posicional das células já
+aprendidas.
+
 ## Decisões de acessibilidade
 
-- **Alvo mínimo de 88px.** WCAG 2.2 pede 24px; CAA com dificuldade motora
+- **Alvo mínimo de 88px.** WCAG 2.2 exige 24×24 px no nível AA (SC 2.5.8) e
+  44×44 px no AAA (SC 2.5.5). Usamos 88 — 3,7× o AA. CAA com dificuldade motora
   precisa de muito mais. As colunas são reguláveis de 2 a 8 — menos colunas,
   alvos maiores.
 - **Posição de célula nunca muda.** Nada de reordenar por frequência ou
@@ -257,4 +286,6 @@ usa o termo lusitano, o rotulo exibido e sempre o brasileiro**. Sem esse mapa,
 2. Camada de conjugação verbal pt-BR sobre os 2.674 verbos.
 3. Índice semântico via `synsets` para busca por intenção.
 4. Schema de personalização: foto própria e áudio do cuidador sobrepondo o card.
-5. Protótipo (PWA offline-first ou React Native) consumindo esta base.
+5. ~~Protótipo consumindo esta base~~ — feito.
+6. Validar a curadoria das 149 palavras com fonoaudiólogos.
+7. Varredura auditiva (as opções faladas), para quem não enxerga a grade.

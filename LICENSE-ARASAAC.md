@@ -27,10 +27,14 @@ A restrição **NC é viral sobre o conteúdo, não sobre o código**. Portanto:
 Se um dia o projeto precisar de modelo comercial, troca-se o banco de imagens
 sem reescrever o app. Alternativas com licença permissiva:
 
-- **Mulberry Symbols** — CC BY-SA 2.0 (permite comercial)
-- **Sclera Symbols** — uso livre
-- **Global Symbols** — agregador, licença varia por conjunto
-- Acervo próprio (fotos reais do usuário) — sem restrição
+- **Mulberry Symbols** — ~3.000 símbolos em SVG, **CC BY-SA**. É a única
+  alternativa madura que permite uso comercial.
+- **Global Symbols** — agregador; a licença varia por conjunto, verifique caso a caso.
+- Acervo próprio (fotos reais do usuário) — sem restrição.
+
+⚠️ **Sclera não serve como saída**: apesar de frequentemente descrito como
+"livre", é **CC BY-NC** — a mesma trava de não comercial. Ver
+[REFERENCES.md § 7](REFERENCES.md#7-símbolos--acervos-e-licenças).
 
 ## Fonte dos dados
 

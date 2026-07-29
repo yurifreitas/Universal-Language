@@ -33,6 +33,15 @@ export interface Settings {
   locked: boolean
   theme: 'dark' | 'light'
   highContrast: boolean
+  /**
+   * Varredura linha-coluna: a interface percorre as linhas, o usuario aciona
+   * (Espaco/Enter, ou um switch que emula teclado), e entao percorre as celulas
+   * daquela linha. E o metodo de acesso padrao para comprometimento motor
+   * severo. Ver REFERENCES.md secao 5.
+   */
+  scanning: boolean
+  /** Intervalo entre passos da varredura, em ms. Ajuste e individual e clinico. */
+  scanSpeed: number
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -44,4 +53,6 @@ export const DEFAULT_SETTINGS: Settings = {
   locked: false,
   theme: 'dark',
   highContrast: false,
+  scanning: false,
+  scanSpeed: 1200,
 }

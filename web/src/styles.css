@@ -535,6 +535,53 @@ button,
   transform: scale(0.955);
 }
 
+/* Varredura. O destaque precisa ser inequivoco a distancia e nao depender de
+   cor sozinha — quem usa varredura muitas vezes tem tambem baixa visao. Por
+   isso borda grossa + halo + leve escala, e nao apenas uma cor de fundo. */
+.grid--scanning .card {
+  opacity: 0.45;
+  transition: opacity 0.12s linear;
+}
+.card--scan-row {
+  opacity: 1 !important;
+  border-color: var(--accent);
+}
+.card--scan-cell {
+  opacity: 1 !important;
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 6px var(--accent-soft),
+    var(--shadow-md);
+  transform: scale(1.04);
+  z-index: 1;
+}
+
+/* Estrela de favorito: alvo pequeno de proposito e so aparece no hover/foco do
+   card — e um controle do cuidador, nao do usuario que esta comunicando. */
+.card__fav {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: color-mix(in oklab, var(--card-ink) 25%, transparent);
+  font-size: 0.95rem;
+  line-height: 1;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.card:hover .card__fav,
+.card:focus-visible .card__fav,
+.card__fav--on {
+  opacity: 1;
+}
+.card__fav--on {
+  color: #f0a828;
+}
+
 .card__label {
   font-size: clamp(0.74rem, 1.35vw, 1.02rem);
   font-weight: 700;
@@ -738,6 +785,66 @@ button,
   height: 22px;
   accent-color: var(--accent);
   cursor: pointer;
+}
+
+/* ------------------------------------------------------------- diversos */
+
+/* Indicador de varredura ativa na barra superior. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  font:
+    600 0.82em/1.5 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  color: var(--text);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.keys {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+.keys__row {
+  display: grid;
+  grid-template-columns: minmax(120px, 34%) 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.keys__row:last-child {
+  border-bottom: 0;
+}
+.keys dt,
+.keys dd {
+  margin: 0;
+}
+.keys dd {
+  color: var(--text-dim);
+  font-size: 0.9rem;
 }
 
 /* ------------------------------------------------------------ responsivo */

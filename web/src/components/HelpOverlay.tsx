@@ -1,0 +1,89 @@
+import { useEffect } from 'react'
+
+interface Props {
+  onClose: () => void
+}
+
+const KEYS: { keys: string; what: string }[] = [
+  { keys: '← ↑ → ↓', what: 'Mover entre os cards' },
+  { keys: 'Home / End', what: 'Primeiro / último card' },
+  { keys: 'Enter ou Espaço', what: 'Falar a frase montada' },
+  { keys: 'Backspace', what: 'Apagar o último card' },
+  { keys: '1 … 9', what: 'Trocar de prancha' },
+  { keys: 'B', what: 'Abrir a busca' },
+  { keys: 'Esc', what: 'Fechar / interromper a varredura' },
+  { keys: 'Toque longo', what: 'Falar o card sem inseri-lo na frase' },
+]
+
+export function HelpOverlay({ onClose }: Props) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="overlay" role="dialog" aria-modal="true" aria-label="Ajuda e atalhos">
+      <header className="overlay__head">
+        <div className="shell">
+          <h2 className="overlay__title">Atalhos e acesso</h2>
+          <button
+            type="button"
+            className="btn btn--ghost btn--icon"
+            onClick={onClose}
+            aria-label="Fechar"
+          >
+            ✕
+          </button>
+        </div>
+      </header>
+
+      <p className="overlay__status" />
+
+      <div className="overlay__body">
+        <div className="shell settings">
+          <section className="settings__group">
+            <h3>Teclado</h3>
+            <dl className="keys">
+              {KEYS.map((k) => (
+                <div className="keys__row" key={k.keys}>
+                  <dt>
+                    <kbd>{k.keys}</kbd>
+                  </dt>
+                  <dd>{k.what}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section className="settings__group">
+            <h3>Varredura</h3>
+            <p className="settings__note">
+              Para quem não consegue apontar, a varredura percorre a grade sozinha: primeiro
+              destaca cada <strong>linha</strong>, e depois de um acionamento passa a destacar
+              cada <strong>célula</strong> daquela linha. O segundo acionamento seleciona.
+            </p>
+            <p className="settings__note">
+              Acione com <kbd>Espaço</kbd> ou <kbd>Enter</kbd> — é assim que a maioria dos
+              switches comerciais se apresenta ao sistema. Se a linha terminar sem acionamento,
+              a varredura volta às linhas sozinha, para que um erro não prenda a pessoa.
+              A velocidade se ajusta em Ajustes; o valor certo é individual e clínico.
+            </p>
+          </section>
+
+          <section className="settings__group">
+            <h3>Por que as células não se movem</h3>
+            <p className="settings__note">
+              O app nunca reordena os cards por frequência de uso, e não coloca "recentes" no
+              início. O aprendizado de uma prancha se apoia em memória motora: a pessoa aprende
+              que "quero" fica na terceira célula da primeira linha. Mover a célula apaga esse
+              aprendizado. Favoritos, por isso, vivem numa prancha própria.
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}

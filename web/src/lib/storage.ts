@@ -21,3 +21,38 @@ export function saveSettings(s: Settings): void {
     // modo privado / cota cheia: preferencias viram sessao unica, sem quebrar o app
   }
 }
+
+/* ---------------------------------------------------------------- favoritos */
+
+import type { Card } from '../types'
+
+const FAV_KEY = 'autista-caa:favorites:v1'
+
+/**
+ * Favoritos vivem numa PRANCHA PROPRIA, nunca reordenando as pranchas fixas.
+ * Personalizar e essencial (a foto do copo daquela casa vale mais que o
+ * pictograma generico), mas nao pode custar a estabilidade posicional das
+ * celulas ja aprendidas.
+ */
+export function loadFavorites(): Card[] {
+  try {
+    const raw = localStorage.getItem(FAV_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (c): c is Card =>
+        typeof c === 'object' && c !== null && 'id' in c && 'label' in c,
+    )
+  } catch {
+    return []
+  }
+}
+
+export function saveFavorites(cards: Card[]): void {
+  try {
+    localStorage.setItem(FAV_KEY, JSON.stringify(cards))
+  } catch {
+    /* idem */
+  }
+}

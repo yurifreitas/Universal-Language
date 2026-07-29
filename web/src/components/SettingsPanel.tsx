@@ -136,6 +136,40 @@ export function SettingsPanel({ settings, onChange, onClose }: Props) {
         </section>
 
         <section className="settings__group">
+          <h3>Varredura (acesso por switch)</h3>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={settings.scanning}
+              onChange={(e) => onChange({ scanning: e.target.checked })}
+            />
+            <span>Ativar varredura linha-coluna</span>
+          </label>
+          <label className="field">
+            <span>Velocidade — {(settings.scanSpeed / 1000).toFixed(1)} s por passo</span>
+            <input
+              type="range"
+              min={400}
+              max={3000}
+              step={100}
+              value={settings.scanSpeed}
+              disabled={!settings.scanning}
+              onChange={(e) => onChange({ scanSpeed: Number(e.target.value) })}
+            />
+          </label>
+          <p className="settings__note">
+            Para quem não aponta. A grade percorre as linhas sozinha; um acionamento
+            (<kbd>Espaço</kbd>, <kbd>Enter</kbd> ou switch) entra na linha, o seguinte
+            seleciona a célula. Com a varredura ligada, Espaço e Enter deixam de falar a
+            frase — passam a pertencer ao switch.
+          </p>
+          <p className="settings__note">
+            O valor de velocidade certo é individual e clínico; 1,2 s é apenas um ponto de
+            partida.
+          </p>
+        </section>
+
+        <section className="settings__group">
           <h3>Tela</h3>
           <label className="switch">
             <input
