@@ -373,17 +373,450 @@ body::before {
 /* Nada de zoom acidental por duplo-toque numa prancha de comunicacao. */
 button,
 .card,
+.chip {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ shell */
+
+/* Todo bloco de largura total usa .shell por dentro, para que o fundo sangre
+   ate a borda mas o conteudo fique centralizado e alinhado entre secoes. */
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.shell--flush {
+  padding-block: 0;
+}
+
+/* ------------------------------------------------------------------ boot */
+
+.boot {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  height: 100%;
+}
+.boot__pulse {
+  width: 46px;
+  height: 46px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+.boot__msg {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+.boot__msg--error {
+  color: var(--danger);
+}
+
+/* ----------------------------------------------------------------- layout */
+
+.app {
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  /* `minmax(0, 1fr)` e nao o padrao `auto`: uma faixa `auto` de grade cresce
+     ate o max-content do filho mais largo, e um unico filho teimoso — a barra
+     superior com seis botoes — esticava o documento inteiro para 599px numa
+     tela de 390. A interface deslizava para fora pela direita, levando junto a
+     barra de marcadores. E o "grid blowout" classico, e o sintoma dele nunca
+     aparece no elemento culpado. */
+  grid-template-columns: minmax(0, 1fr);
+  /* `100dvh` e nao `100%`: em celular a altura da janela muda quando a barra
+     do navegador recolhe, e `100%` fica preso ao valor inicial — sobrando ou
+     faltando uma faixa conforme a rolagem. */
+  height: 100dvh;
+  max-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.banner {
+  margin: 10px 0 0;
+  padding: 10px 16px;
+  background: color-mix(in oklab, var(--danger) 16%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+  border-radius: var(--r-md);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- topbar */
+
+.topbar {
+  border-bottom: 1px solid var(--line-soft);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  backdrop-filter: blur(12px);
+}
+.topbar__inner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  /* Sem isto o conteudo minimo da barra define a largura do documento
+     inteiro, e a pagina desliza para fora da tela num celular. */
+  min-width: 0;
+}
+.topbar__actions {
+  display: flex;
+  /* Os controles do cuidador sao seis. `wrap` e incondicional: em tela larga
+     nunca quebra, e em tela estreita quebra em vez de sair pela direita.
+     Sumir para fora da tela e o pior desfecho possivel num botao que pode ser
+     "Ajustes" no meio de uma crise. */
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.topbar__inner {
+  flex-wrap: wrap;
+}
+
+/* Conteudo so para leitor de tela: fora da tela, mas dentro da arvore de
+   acessibilidade. `display:none` o removeria da arvore e nao serviria. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip link (WCAG 2.4.1): invisivel ate receber foco por teclado. */
+.skip {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  z-index: 50;
+  padding: 12px 22px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: var(--r-md);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translate(-50%, -200%);
+  transition: transform 0.15s ease;
+}
+.skip:focus-visible {
+  transform: translate(-50%, 0);
+}
+
+.brand {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  user-select: none;
+}
+/* Marca em 4 quadrados: e a propria metafora da prancha. */
+.brand__mark {
+  display: grid;
+  grid-template: repeat(2, 9px) / repeat(2, 9px);
+  gap: 3px;
+}
+.brand__mark span {
+  background: var(--accent);
+  border-radius: 2.5px;
+}
+.brand__mark span:nth-child(2) {
+  opacity: 0.55;
+}
+.brand__mark span:nth-child(3) {
+  opacity: 0.35;
+}
+.brand__mark span:nth-child(4) {
+  opacity: 0.75;
+}
+.brand__name {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------- botoes */
+
+.btn {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.1s ease;
+}
+.btn:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  border-color: var(--line-soft);
+}
+.btn--locked {
+  position: relative;
+  overflow: hidden;
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  /* O gesto longo do navegador em toque seleciona texto e abre menu de
+     contexto, o que interrompe a pressao. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Retorno visual da pressao longa. Sem isto o botao passa dois segundos
+   parecendo inerte, e quem aperta solta antes de completar — que e exatamente
+   como um recurso que funciona vira um recurso que "nao funciona". */
+.btn--locked::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+.btn--unlocking::after {
+  width: 100%;
+  transition: width var(--unlock-ms, 2000ms) linear;
+}
+/* Quem pediu menos movimento nao recebe a barra correndo: o estado passa a ser
+   binario (fundo aceso enquanto segura). WCAG 2.3.3 / prefers-reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  .btn--unlocking::after {
+    transition: none;
+  }
+}
+
+.btn--speak {
+  min-height: 60px;
+  min-width: 132px;
+  padding: 0 26px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: transparent;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 20px -10px var(--accent);
+}
+.btn--speak:hover:not(:disabled) {
+  color: var(--accent-ink);
+  background: color-mix(in oklab, var(--accent) 88%, white);
+}
+
+.btn--icon {
+  min-width: 60px;
+  min-height: 60px;
+  padding: 0;
+  font-size: 1.2rem;
+  border-color: var(--line);
+}
+
+.btn--wide {
+  width: 100%;
+}
+
+/* --------------------------------------------------------- barra da frase */
+
+/* Grade e nao flex-row porque a barra passou a empilhar tres faixas — cards,
+   frase falada e marcadores — mantendo os botoes de acao numa coluna propria a
+   direita, sempre no mesmo lugar. */
+.sentence {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  align-items: stretch;
+  padding-block: 14px;
+}
+
+.sentence__strip,
+.gram,
+.marks {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.sentence__actions {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
+.sentence__strip {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  min-height: 96px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+}
+
+.sentence__hint {
+  margin: 0 auto;
+  color: var(--text-faint);
+  font-size: 0.95rem;
+}
+
+.sentence__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ------------------------------------------------------- frase composta
+
+   A frase que o motor vai falar, com o que ele acrescentou visivelmente
+   marcado. Isso nao e enfeite: quem acompanha a terapia precisa ver o que a
+   maquina pos na boca da pessoa, e quem usa precisa poder discordar. Ver
+   GRAMMAR.md. */
+.gram {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+
+.gram__word:first-of-type {
+  text-transform: capitalize;
+}
+
+/* Palavra que o motor inseriu e o usuario nao escolheu: tom apagado e
+   sublinhado pontilhado. A distincao NAO e so por cor (WCAG 1.4.1). */
+.gram__word--added {
+  color: var(--text-dim);
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+/* Palavra que veio de um card mas mudou de forma (conjugada, pluralizada). */
+.gram__word--flex {
+  text-decoration: underline solid;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* --------------------------------------------------------- marcadores
+
+   Faixa separada da grade, exatamente como o LAMP exige: nenhuma celula da
+   prancha se move para dar lugar a eles. Ver LANGUAGE-SYSTEMS.md secao 5. */
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.marks__set {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+
+.mark {
+  min-width: 44px; /* WCAG 2.5.8: alvo minimo. Controle de cuidador, nao de card. */
+  min-height: 44px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.mark--wide {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+.mark:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mark--on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
 /* O bloco da frase deixou de ser um botao unico.
  *
- * Era: tocar em qualquer lugar do bloco APAGAVA a palavra. Esse e o gesto mais
- * facil de acontecer sem querer, e apagar por engano no meio de uma frase
- * custa remontar tudo — caro para quem toca com dificuldade, caríssimo para
- * quem usa varredura.
+ * Era assim: tocar em qualquer lugar do bloco APAGAVA a palavra. Esse e o
+ * gesto mais facil de acontecer sem querer, e apagar por engano no meio de uma
+ * frase custa remontar tudo — caro para quem toca com dificuldade motora,
+ * caríssimo para quem usa varredura, onde cada palavra levou segundos.
  *
  * Agora: tocar FALA a palavra, as setas reordenam sem apagar nada, e apagar
  * exige o ✕. Reordenar no proprio bloco resolve o outro custo antigo — corrigir
- * a ordem obrigava a apagar tudo depois do erro.
- */
+ * a ordem obrigava a apagar tudo depois do erro e refazer. */
 .chip {
   flex: 0 0 auto;
   display: grid;
@@ -412,26 +845,37 @@ button,
   border: 0;
   cursor: pointer;
 }
+.chip__main:active {
+  transform: scale(0.96);
+}
 
 .chip__label {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
   overflow-wrap: anywhere;
 }
 
-/* A forma que o motor de frases vai realmente dizer. Distinta do rotulo por
-   peso e cor, e nao so por posicao: quem le rapido precisa ver que sao duas
-   coisas diferentes. */
+/* A forma que o motor de frases vai realmente dizer, embaixo do rotulo
+   escolhido. E o que torna a flexao visivel NO CARD: quem tocou QUERER ve
+   "quero" ali. Distinta por peso, cor e italico, e nao so por posicao. */
 .chip__form {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   font-style: italic;
   line-height: 1.1;
   text-align: center;
   color: color-mix(in oklab, var(--card-ink) 62%, transparent);
   overflow-wrap: anywhere;
+}
+/* No modo dislexia o italico vira negrito em todo o app; aqui a distincao
+   precisa continuar existindo, entao ela passa a ser o sublinhado pontilhado. */
+:root[data-dyslexia='on'] .chip__form {
+  font-style: normal;
+  font-weight: 700;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
 
 .chip__bar {
@@ -441,10 +885,10 @@ button,
 }
 
 .chip__act {
-  min-height: 26px;
+  min-height: 28px;
   padding: 0;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   line-height: 1;
   color: color-mix(in oklab, var(--card-ink) 55%, transparent);
   background: color-mix(in oklab, var(--card-ink) 7%, transparent);
@@ -1233,96 +1677,4 @@ kbd {
   .chip .picto {
     max-height: 58px;
   }
-}
-
-/* ------------------------------------------------------------ tela de falha
-
-   Fallback da cerca de erro (`components/ErrorBoundary.tsx`). Deliberadamente
-   simples e sem dependencia de token que possa nao ter carregado: se o app
-   quebrou, esta tela precisa funcionar mesmo assim. */
-.crash {
-  display: grid;
-  place-items: center;
-  min-height: 100dvh;
-  padding: 24px;
-  background: var(--bg, #090d13);
-  color: var(--text, #eaf1f8);
-}
-.crash__box {
-  width: min(680px, 100%);
-}
-.crash__title {
-  margin: 0 0 8px;
-  font-size: 1.25rem;
-  line-height: 1.3;
-}
-.crash__hint {
-  margin: 0 0 20px;
-  color: var(--text-dim, #8ea0b4);
-}
-.crash__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  margin-bottom: 22px;
-}
-.crash__phrase {
-  min-height: 72px;
-  padding: 12px 16px;
-  font: inherit;
-  font-size: 1.05rem;
-  font-weight: 600;
-  text-align: left;
-  color: var(--card-ink, #101a25);
-  background: var(--card-bg, #fbfcfd);
-  border: 2px solid transparent;
-  border-radius: 16px;
-  cursor: pointer;
-}
-.crash__phrase:hover {
-  border-color: var(--accent, #38dfa0);
-}
-.crash__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-.crash__details {
-  color: var(--text-faint, #8090a3);
-  font-size: 0.85rem;
-}
-.crash__details code {
-  display: block;
-  margin-top: 6px;
-  overflow-wrap: anywhere;
-}
-
-/* Convite para ligar o motor de frases, no lugar exato onde a faixa de
-   marcadores vai aparecer — a descoberta acontece onde o recurso mora, e nao
-   escondida no fim da tela de ajustes. */
-.mark--invite {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  width: 100%;
-  padding: 0 14px;
-  color: var(--text-dim);
-  background: var(--surface-2);
-  border: 1px dashed var(--line);
-  text-align: left;
-}
-.mark--invite:hover {
-  color: var(--text);
-  border-color: var(--accent);
-  border-style: solid;
-}
-
-/* Separador entre o grupo de fala e o de ajustes na barra superior. */
-.topbar__split {
-  flex: 0 0 auto;
-  width: 1px;
-  height: 26px;
-  margin-inline: 4px;
-  background: var(--line);
 }
