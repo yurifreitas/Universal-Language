@@ -119,6 +119,186 @@
   border-width: 3px;
 }
 
+/* --------------------------------------------------- conforto sensorial
+
+   A literatura de hipersensibilidade sensorial no TEA aponta que vermelhos,
+   laranjas, amarelos e branco puro sobrecarregam, enquanto tons frios,
+   dessaturados e "de natureza" acalmam. O destino da escala e um sage
+   dessaturado no lugar do verde vivo e um creme no lugar do branco do card —
+   que e tambem a recomendacao do guia de dislexia da BDA contra o brilho do
+   branco puro.
+
+   Aqui o ajuste e CONTINUO, nao um interruptor: `--sensory` vai de 0 a 1 e
+   interpola cada cor entre a versao viva e a versao calma. A propria
+   literatura diz que a resposta e individual e recomenda ajuste continuo de
+   matiz e saturacao — um botao liga/desliga atendia mal quem precisa de um
+   meio-termo. Ver SENSORY.md secao 1. */
+:root {
+  --sensory: 0;
+}
+@supports (color: color-mix(in oklab, red, blue)) {
+  :root[data-sensory='on'] {
+    --accent: color-mix(in oklab, #38dfa0 calc(100% - var(--sensory) * 100%), #7fb3a0);
+    --accent-soft: color-mix(in oklab, var(--accent) 20%, transparent);
+    --card-bg: color-mix(in oklab, #fbfcfd calc(100% - var(--sensory) * 100%), #f3efe6);
+    --danger: color-mix(in oklab, #ff7a7a calc(100% - var(--sensory) * 100%), #c98b8b);
+  }
+  :root[data-sensory='on'][data-theme='light'] {
+    --accent: color-mix(in oklab, #0d9c62 calc(100% - var(--sensory) * 100%), #4e8a72);
+    --bg: color-mix(in oklab, #eef2f7 calc(100% - var(--sensory) * 100%), #eceee9);
+    --bg-glow: color-mix(in oklab, #ffffff calc(100% - var(--sensory) * 100%), #f6f7f4);
+    --surface: color-mix(in oklab, #ffffff calc(100% - var(--sensory) * 100%), #f7f8f5);
+    --surface-2: color-mix(in oklab, #f3f6fa calc(100% - var(--sensory) * 100%), #eef0eb);
+    --card-bg: color-mix(in oklab, #ffffff calc(100% - var(--sensory) * 100%), #fbf8f1);
+  }
+}
+/* Alto contraste sempre vence o conforto sensorial: quem o liga precisa de
+   separacao figura-fundo, nao de cor suave. Como as regras de alto contraste
+   vem antes desta no arquivo, a especificidade de dois atributos as manteria
+   perdendo — por isso a reposicao explicita. */
+:root[data-contrast='high'][data-sensory='on'] {
+  --accent: #ffe600;
+  --card-bg: #fff;
+  --danger: #fff;
+}
+:root[data-contrast='high'][data-sensory='on'][data-theme='light'] {
+  --accent: #0000cc;
+  --bg: #fff;
+  --bg-glow: #fff;
+  --surface: #fff;
+  --surface-2: #f2f2f2;
+}
+
+/* --------------------------------------------------------- modo dislexia
+
+   Dyslexia Style Guide (British Dyslexia Association): sans-serif, corpo
+   maior, entreletras e entrelinhas aumentadas, alinhamento a esquerda sem
+   justificar, sem italico nem sublinhado. Ver SENSORY.md secao 2. */
+:root[data-dyslexia='on'] body {
+  font-family: Verdana, Tahoma, 'Trebuchet MS', system-ui, sans-serif;
+  font-size: calc(17px * var(--text-scale, 1));
+  line-height: var(--line-height, 1.6);
+  letter-spacing: var(--letter-spacing, 0.035em);
+  word-spacing: 0.08em;
+}
+:root[data-dyslexia='on'] .card__label {
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+:root[data-dyslexia='on'] p,
+:root[data-dyslexia='on'] dd,
+:root[data-dyslexia='on'] .settings__note {
+  max-width: 62ch; /* linhas curtas: o guia da BDA desaconselha medida longa */
+  text-align: left;
+}
+:root[data-dyslexia='on'] em,
+:root[data-dyslexia='on'] i {
+  font-style: normal;
+  font-weight: 700;
+}
+:root[data-dyslexia='on'] a {
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* ------------------------------------------------- tipografia sob medida
+
+   O modo dislexia acima e um preset. Estes controles existem porque o guia da
+   BDA e explicito em que a medida certa varia por pessoa, e porque o ganho
+   documentado esta no ESPACAMENTO, nao no desenho da letra — o que torna
+   ajustavel justamente o que importa. As pilhas abaixo sao todas de fontes do
+   sistema: uma webfont baixada quebraria o funcionamento offline, que e
+   requisito de uma prancha de comunicacao.
+
+   Comic Sans esta na lista por constar do proprio guia da BDA (formas de letra
+   menos ambiguas), nao por gosto. Ver SENSORY.md secao 2. */
+:root[data-font='verdana'] body {
+  font-family: Verdana, Geneva, sans-serif;
+}
+:root[data-font='tahoma'] body {
+  font-family: Tahoma, Geneva, Verdana, sans-serif;
+}
+:root[data-font='century'] body {
+  font-family: 'Century Gothic', 'URW Gothic', 'Trebuchet MS', sans-serif;
+}
+:root[data-font='comic'] body {
+  font-family: 'Comic Sans MS', 'Comic Neue', 'Trebuchet MS', sans-serif;
+}
+
+/* `--text-scale` multiplica o corpo; `--letter-spacing` e `--line-height` so
+   existem no elemento raiz quando o usuario os define — sem eles, o fallback
+   do var() devolve exatamente o que o tema ja usava. O tamanho base e as
+   demais propriedades saem da regra `body` mais abaixo, que usa estas mesmas
+   variaveis. */
+
+/* -------------------------------------------- cor por classe gramatical
+
+   Chave de Fitzgerald modificada — a convencao de codificacao cromatica mais
+   difundida em CAA. A cor marca a CLASSE da palavra (quem, o que faz, como e),
+   nao o tema, e e o que sustenta a construcao de frase antes de a leitura
+   estar formada.
+
+   Duas restricoes:
+
+   - **WCAG 1.4.1 (uso da cor).** A cor nunca e a unica pista: o rotulo escrito
+     e o pictograma continuam la. Ela reforca, nao informa sozinha.
+   - **Estimulo.** Cor a mais tambem sobrecarrega. Por isso o padrao e
+     desligado, existe um modo so-borda, e as cores tambem passam pela escala
+     de conforto sensorial. */
+:root {
+  --wc-pronoun: #d8a11f;
+  --wc-verb: #2f8f56;
+  --wc-adjective: #2f6fae;
+  --wc-noun: #c4681f;
+  --wc-question: #7a4fb5;
+  --wc-negation: #b23b36;
+  --wc-social: #bd5a93;
+  --wc-misc: #6d7c8c;
+}
+
+.card[data-class='pronoun'] { --wc: var(--wc-pronoun); }
+.card[data-class='determiner'] { --wc: var(--wc-pronoun); }
+.card[data-class='verb'] { --wc: var(--wc-verb); }
+.card[data-class='adjective'] { --wc: var(--wc-adjective); }
+.card[data-class='adverb'] { --wc: var(--wc-adjective); }
+.card[data-class='noun'] { --wc: var(--wc-noun); }
+.card[data-class='question'] { --wc: var(--wc-question); }
+.card[data-class='negation'] { --wc: var(--wc-negation); }
+.card[data-class='affirmation'] { --wc: var(--wc-negation); }
+.card[data-class='social'] { --wc: var(--wc-social); }
+.card[data-class='quantifier'] { --wc: var(--wc-misc); }
+.card[data-class='connector'] { --wc: var(--wc-misc); }
+
+.card[data-class] {
+  --wc-shown: var(--wc);
+}
+@supports (color: color-mix(in oklab, red, blue)) {
+  /* A mesma escala de conforto puxa as cores de classe para o cinza. */
+  .card[data-class] {
+    --wc-shown: color-mix(in oklab, var(--wc) calc(100% - var(--sensory) * 45%), #8a8f92);
+  }
+}
+
+:root[data-colors='border'] .card[data-class] {
+  border-color: var(--wc-shown);
+  border-width: 3px;
+}
+:root[data-colors='fill'] .card[data-class] {
+  border-color: var(--wc-shown);
+  border-width: 3px;
+  /* Tinta leve: o pictograma da ARASAAC foi desenhado sobre branco, e um fundo
+     forte reduziria o contraste do proprio desenho. */
+  background: color-mix(in oklab, var(--wc-shown) 12%, var(--card-bg));
+}
+/* Em alto contraste a cor vira faixa de borda espessa e nada mais: preencher o
+   card reduziria o contraste do pictograma, que e o que a baixa visao precisa
+   preservar. */
+:root[data-contrast='high'] .card[data-class] {
+  background: var(--card-bg);
+  border-color: var(--wc);
+  border-width: 5px;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -133,28 +313,51 @@ body,
 body {
   background: var(--bg);
   color: var(--text);
-  font:
-    400 16px/1.45 ui-sans-serif,
+  font-family:
+    ui-sans-serif,
     system-ui,
     -apple-system,
     'Segoe UI',
     Roboto,
     sans-serif;
+  font-weight: 400;
+  font-size: calc(16px * var(--text-scale, 1));
+  line-height: var(--line-height, 1.45);
+  letter-spacing: var(--letter-spacing, normal);
   font-synthesis-weight: none;
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
 
-/* Brilho tenue atras do conteudo: da profundidade sem introduzir movimento
-   nem padrao — ambos custosos para sensibilidade sensorial. */
+/* Fundo generativo — deliberadamente NAO ciclico.
+ *
+ * Padrao repetitivo de listras e o gatilho classico de "pattern glare": cerca
+ * de 5% das pessoas com epilepsia tem crise por luz piscante, e um terco
+ * DESSES tambem por padrao estatico de listras. Visual stress por padrao
+ * atinge ainda quem tem enxaqueca e dislexia — justamente parte do publico
+ * deste app.
+ *
+ * Entao o fundo aqui e composto de tres gradientes radiais grandes, de baixa
+ * frequencia espacial e baixissimo contraste, em posicoes irregulares: gera
+ * variacao sem nunca formar periodicidade. Estatico, sem animacao.
+ * Ver SENSORY.md secao 3.
+ */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(120% 70% at 50% -10%, var(--bg-glow) 0%, transparent 62%);
+  background:
+    radial-gradient(120% 70% at 50% -10%, var(--bg-glow) 0%, transparent 62%),
+    radial-gradient(46% 38% at 12% 22%, color-mix(in oklab, var(--accent) 5%, transparent), transparent 70%),
+    radial-gradient(52% 44% at 88% 68%, color-mix(in oklab, var(--accent) 4%, transparent), transparent 72%);
   pointer-events: none;
+}
+/* Alto contraste elimina o fundo: qualquer variacao atras do conteudo reduz a
+   separacao figura-fundo de que baixa visao depende. */
+:root[data-contrast='high'] body::before {
+  display: none;
 }
 
 /* Nada de zoom acidental por duplo-toque numa prancha de comunicacao. */
@@ -407,15 +610,29 @@ button,
 
 /* --------------------------------------------------------- barra da frase */
 
+/* Grade e nao flex-row porque a barra passou a empilhar tres faixas — cards,
+   frase falada e marcadores — mantendo os botoes de acao numa coluna propria a
+   direita, sempre no mesmo lugar. */
 .sentence {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
   align-items: stretch;
   padding-block: 14px;
 }
 
+.sentence__strip,
+.gram,
+.marks {
+  grid-column: 1;
+}
+
+.sentence__actions {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
 .sentence__strip {
-  flex: 1;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -441,6 +658,89 @@ button,
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+/* ------------------------------------------------------- frase composta
+
+   A frase que o motor vai falar, com o que ele acrescentou visivelmente
+   marcado. Isso nao e enfeite: quem acompanha a terapia precisa ver o que a
+   maquina pos na boca da pessoa, e quem usa precisa poder discordar. Ver
+   GRAMMAR.md. */
+.gram {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+
+.gram__word:first-of-type {
+  text-transform: capitalize;
+}
+
+/* Palavra que o motor inseriu e o usuario nao escolheu: tom apagado e
+   sublinhado pontilhado. A distincao NAO e so por cor (WCAG 1.4.1). */
+.gram__word--added {
+  color: var(--text-dim);
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+/* Palavra que veio de um card mas mudou de forma (conjugada, pluralizada). */
+.gram__word--flex {
+  text-decoration: underline solid;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* --------------------------------------------------------- marcadores
+
+   Faixa separada da grade, exatamente como o LAMP exige: nenhuma celula da
+   prancha se move para dar lugar a eles. Ver LANGUAGE-SYSTEMS.md secao 5. */
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.marks__set {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+
+.mark {
+  min-width: 44px; /* WCAG 2.5.8: alvo minimo. Controle de cuidador, nao de card. */
+  min-height: 44px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.mark--wide {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+.mark:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mark--on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
 }
 
 .chip {
@@ -571,6 +871,72 @@ button,
 }
 .card:active {
   transform: scale(0.955);
+}
+
+/* ------------------------------------------------------- frases prontas
+
+   Celula de frase: o pictograma vira icone lateral e o texto ganha o espaco,
+   porque aqui o que identifica a celula e a frase escrita — o desenho e apoio.
+   O alvo continua acima do minimo de toque, so que deitado. */
+.grid--dense .card {
+  grid-template-rows: none;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 84px;
+  padding: 10px 14px 10px 10px;
+  text-align: left;
+}
+.grid--dense .card__label {
+  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  hyphens: none;
+}
+.grid--dense .picto,
+.grid--dense .picto--fallback {
+  width: 64px;
+  height: 64px;
+}
+
+.phrases__intro {
+  margin-top: 0;
+}
+
+/* Uma linha só, com rolagem — nunca `flex-wrap`. Quando "Minhas frases" ou o
+   histórico aparecem, uma segunda linha de abas empurraria a grade para baixo e
+   o toque seguinte cairia na frase errada. Posição estável vale aqui pelo mesmo
+   motivo que vale na prancha. */
+.phrases__tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.phrases__tabs .tab {
+  flex: 0 0 auto;
+}
+
+.phrases__save {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+.phrases__current {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.95rem;
 }
 
 /* Varredura. O destaque precisa ser inequivoco a distancia e nao depender de

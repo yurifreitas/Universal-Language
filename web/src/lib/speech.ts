@@ -67,6 +67,37 @@ export function speak(text: string, settings: Settings): void {
   speechSynthesis.speak(u)
 }
 
+/**
+ * Pista auditiva da varredura ("auditory cue").
+ *
+ * Pratica estabelecida em CAA: a opcao percorrida e anunciada numa **voz
+ * secundaria**, distinta da voz da mensagem, para que o usuario diferencie
+ * "o que esta sendo oferecido" de "o que eu disse". Dispositivos comerciais
+ * fazem isso com alto-falante privado (fone ou pillow speaker); no navegador
+ * nao ha saida separada, entao a distincao e feita por tom mais agudo e fala
+ * mais rapida.
+ *
+ * Ver SENSORY.md secao 4 e REFERENCES.md secao 5.
+ */
+export function speakCue(text: string, settings: Settings): void {
+  if (!text.trim() || !('speechSynthesis' in window)) return
+  speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(text)
+  const voice = pickVoice(settings)
+  if (voice) {
+    u.voice = voice
+    u.lang = voice.lang
+  } else {
+    u.lang = 'pt-BR'
+  }
+  // Mais rapida que a fala da mensagem: a pista precisa caber no passo da
+  // varredura, senao atrasa a proxima opcao.
+  u.rate = Math.min(2, settings.rate * 1.35)
+  u.pitch = Math.min(2, settings.pitch + 0.45)
+  u.volume = 0.85
+  speechSynthesis.speak(u)
+}
+
 export function stopSpeaking(): void {
   if ('speechSynthesis' in window) speechSynthesis.cancel()
 }

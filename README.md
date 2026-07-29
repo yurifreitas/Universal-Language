@@ -9,6 +9,12 @@ voz em português, funciona offline.
 🌐 **[Abrir o app](https://yurifreitas.github.io/Universal-Language/)**
 📚 **[Referências, metodologias e normas](REFERENCES.md)** — evidência científica,
 metodologias de CAA e normas técnicas
+🧩 **[Sistemas de linguagem visual](LANGUAGE-SYSTEMS.md)** — Bliss, Isotype,
+Makaton, Minspeak, LAMP e o que cada um ensina a este app
+✍️ **[Motor de frases](GRAMMAR.md)** — como `EU · QUERER · ÁGUA` vira
+"Eu quero água", e o que o motor se recusa a fazer
+🎨 **[Cor, tipografia e som](SENSORY.md)** — conforto sensorial, dislexia,
+pattern glare e earcons
 ⚖️ **[Legislação](LEGISLATION.md)** — CDPD/ONU, ADA, European Accessibility Act e
 o arcabouço brasileiro de direitos de neurodivergentes
 

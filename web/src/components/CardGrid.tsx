@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Card, Settings } from '../types'
 import { Pictogram } from './Pictogram'
+import { wordClassOf } from '../lib/lexicon'
 import type { ScanState } from '../lib/useScanning'
 
 interface Props {
@@ -13,6 +14,14 @@ interface Props {
   isFavorite?: (card: Card) => boolean
   scan?: ScanState
   emptyMessage?: string
+  /**
+   * Celulas menores e rotulo de varias linhas. Para frases prontas: o texto e
+   * longo e o alvo nao precisa do tamanho de um card de palavra, que existe
+   * para quem toca com dificuldade motora fina durante uma frase inteira.
+   */
+  dense?: boolean
+  /** Verbo da acao secundaria ("Favoritar" na prancha, "Remover" nas frases). */
+  favoriteLabel?: string
 }
 
 const LONG_PRESS_MS = 550
@@ -36,11 +45,16 @@ export function CardGrid({
   isFavorite,
   scan,
   emptyMessage,
+  dense,
+  favoriteLabel,
 }: Props) {
   const [focus, setFocus] = useState(0)
   const refs = useRef<(HTMLButtonElement | null)[]>([])
   const longPress = useRef<{ timer: number; fired: boolean } | null>(null)
-  const cols = settings.columns
+  // No modo denso a coluna nao segue o ajuste da prancha: aquele numero foi
+  // calibrado para o tamanho do alvo de uma palavra, e frases precisam de
+  // largura, nao de altura.
+  const cols = dense ? Math.max(2, Math.min(3, settings.columns)) : settings.columns
 
   // A prancha mudou: o foco volta ao inicio, senao apontaria para celula ausente.
   useEffect(() => setFocus(0), [cards])
@@ -99,7 +113,7 @@ export function CardGrid({
 
   return (
     <div
-      className={`grid ${scan && scan.phase !== 'idle' ? 'grid--scanning' : ''}`}
+      className={`grid ${dense ? 'grid--dense' : ''} ${scan && scan.phase !== 'idle' ? 'grid--scanning' : ''}`}
       style={{ '--cols': cols } as React.CSSProperties}
       // Deliberadamente NAO usa role="grid": o padrao ARIA exige elementos
       // role="row" entre a grade e as celulas, e aqui as celulas sao filhas
@@ -114,6 +128,14 @@ export function CardGrid({
         const scanRow = scan?.phase === 'rows' && Math.floor(i / cols) === scan.row
         const scanCell = scan?.phase === 'cells' && scan.index === i
         const fav = isFavorite?.(card) ?? false
+        // Chave de Fitzgerald: a cor da celula codifica a CLASSE da palavra, e
+        // nao a categoria tematica. Nao e decoracao — e a pista que sustenta a
+        // construcao de frase quando a leitura ainda nao esta formada. Fica
+        // atras de um ajuste porque cor a mais tambem e estimulo a mais.
+        // Frase pronta nao tem classe gramatical — e uma oracao inteira. Colorir
+        // pela primeira palavra seria pior que nao colorir.
+        const wordClass =
+          settings.wordColors === 'off' || dense ? null : wordClassOf(card.label)
         return (
           <button
             key={`${card.id}-${card.label}`}
@@ -122,6 +144,7 @@ export function CardGrid({
             }}
             type="button"
             className={`card ${scanRow ? 'card--scan-row' : ''} ${scanCell ? 'card--scan-cell' : ''}`}
+            {...(wordClass ? { 'data-class': wordClass } : {})}
             // Roving tabindex: so uma celula entra na ordem de tabulacao, para
             // que Tab pule a grade inteira em vez de 149 paradas.
             tabIndex={i === focus ? 0 : -1}
@@ -144,14 +167,20 @@ export function CardGrid({
                 className={`card__fav ${fav ? 'card__fav--on' : ''}`}
                 role="button"
                 tabIndex={-1}
-                aria-label={fav ? `Remover ${card.label} dos favoritos` : `Favoritar ${card.label}`}
+                aria-label={
+                  favoriteLabel
+                    ? `${favoriteLabel}: ${card.label}`
+                    : fav
+                      ? `Remover ${card.label} dos favoritos`
+                      : `Favoritar ${card.label}`
+                }
                 onClick={(e) => {
                   e.stopPropagation()
                   onToggleFavorite(card)
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
               >
-                ★
+                {favoriteLabel ? '✕' : '★'}
               </span>
             )}
           </button>

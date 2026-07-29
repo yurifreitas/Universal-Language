@@ -22,6 +22,12 @@ interface Options {
   total: number
   columns: number
   onSelect: (index: number) => void
+  /**
+   * Chamado a cada passo. `phase` diz se o destaque mudou de linha ou de
+   * celula; `index` e a primeira celula da linha na fase de linhas. Usado para
+   * emitir earcon e anunciar a pista auditiva.
+   */
+  onStep?: (phase: 'rows' | 'cells', index: number) => void
   /** Se falso, a varredura pausa (ex.: um overlay esta aberto). */
   active?: boolean
 }
@@ -39,6 +45,7 @@ export function useScanning({
   total,
   columns,
   onSelect,
+  onStep,
   active = true,
 }: Options): ScanState {
   const rows = Math.max(1, Math.ceil(total / columns))
@@ -124,6 +131,20 @@ export function useScanning({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [enabled, active, columns, total, onSelect])
+
+  // Notifica o passo depois do render, para que o destaque visual e a pista
+  // sonora cheguem juntos.
+  const lastStep = useRef('')
+  useEffect(() => {
+    if (!enabled || !active || phase === 'idle') {
+      lastStep.current = ''
+      return
+    }
+    const key = `${phase}:${row}:${col}`
+    if (key === lastStep.current) return
+    lastStep.current = key
+    onStep?.(phase, phase === 'rows' ? row * columns : row * columns + col)
+  }, [enabled, active, phase, row, col, columns, onStep])
 
   return {
     phase: enabled ? phase : 'idle',

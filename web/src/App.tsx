@@ -1,7 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Board, Card, Settings } from './types'
-import { loadFavorites, loadSettings, saveFavorites, saveSettings } from './lib/storage'
-import { speak, speechSupported } from './lib/speech'
+import {
+  HISTORY_LIMIT,
+  loadFavorites,
+  loadHistory,
+  loadMyPhrases,
+  loadSettings,
+  saveFavorites,
+  saveHistory,
+  saveMyPhrases,
+  saveSettings,
+} from './lib/storage'
+import { speak, speakCue, speechSupported } from './lib/speech'
+import { compose, NO_MARKS, type GrammarMarks } from './lib/grammar'
+import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
 import { SentenceBar } from './components/SentenceBar'
@@ -9,13 +21,15 @@ import { BoardTabs, panelId, tabId } from './components/BoardTabs'
 import { CardGrid } from './components/CardGrid'
 import { SearchOverlay } from './components/SearchOverlay'
 import { SettingsPanel } from './components/SettingsPanel'
+import { PhrasesPanel } from './components/PhrasesPanel'
 import { HelpOverlay } from './components/HelpOverlay'
 
 const BASE = import.meta.env.BASE_URL
 
-type Panel = 'none' | 'search' | 'settings' | 'help'
+type Panel = 'none' | 'search' | 'settings' | 'help' | 'phrases'
 
 const TOOLS = [
+  { key: 'phrases', icon: '💬', label: 'Frases', aria: 'Frases prontas' },
   { key: 'search', icon: '🔍', label: 'Buscar', aria: 'Buscar pictograma' },
   { key: 'help', icon: '?', label: 'Ajuda', aria: 'Atalhos e acesso' },
   { key: 'settings', icon: '⚙', label: 'Ajustes', aria: 'Configurações' },
@@ -25,10 +39,15 @@ const TOOLS = [
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
   const [favorites, setFavorites] = useState<Card[]>(loadFavorites)
+  const [myPhrases, setMyPhrases] = useState<Card[]>(loadMyPhrases)
+  const [history, setHistory] = useState<Card[]>(loadHistory)
   const [boards, setBoards] = useState<Board[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeBoard, setActiveBoard] = useState(0)
   const [sentence, setSentence] = useState<Card[]>([])
+  // Marcadores gramaticais valem para a frase corrente, nao sao preferencia:
+  // zeram junto com ela.
+  const [marks, setMarks] = useState<GrammarMarks>(NO_MARKS)
   const [panel, setPanel] = useState<Panel>('none')
   const unlockTimer = useRef<number | null>(null)
 
@@ -44,12 +63,44 @@ export default function App() {
 
   useEffect(() => saveSettings(settings), [settings])
   useEffect(() => saveFavorites(favorites), [favorites])
+  useEffect(() => saveMyPhrases(myPhrases), [myPhrases])
+  useEffect(() => saveHistory(history), [history])
 
   useEffect(() => {
     const root = document.documentElement
     root.dataset['theme'] = settings.theme
     root.dataset['contrast'] = settings.highContrast ? 'high' : 'normal'
-  }, [settings.theme, settings.highContrast])
+    root.dataset['dyslexia'] = settings.dyslexia ? 'on' : 'off'
+    root.dataset['colors'] = settings.wordColors
+    root.dataset['font'] = settings.font
+
+    // Conforto sensorial continuo: um unico numero 0–1 que o CSS usa para
+    // interpolar acento, fundo do card e alerta. Nao ha modo "ligado" — ha
+    // quanto. Ver SENSORY.md secao 1.
+    const s = Math.min(100, Math.max(0, settings.sensory)) / 100
+    root.style.setProperty('--sensory', String(s))
+    root.dataset['sensory'] = s > 0 ? 'on' : 'off'
+
+    // Tipografia: `0` significa "deixa como o tema define", entao a variavel e
+    // removida em vez de escrita com um valor neutro qualquer.
+    root.style.setProperty('--text-scale', String(settings.textScale))
+    if (settings.letterSpacing > 0) {
+      root.style.setProperty('--letter-spacing', `${settings.letterSpacing}em`)
+    } else root.style.removeProperty('--letter-spacing')
+    if (settings.lineHeight > 0) {
+      root.style.setProperty('--line-height', String(settings.lineHeight))
+    } else root.style.removeProperty('--line-height')
+  }, [
+    settings.theme,
+    settings.highContrast,
+    settings.dyslexia,
+    settings.wordColors,
+    settings.font,
+    settings.sensory,
+    settings.textScale,
+    settings.letterSpacing,
+    settings.lineHeight,
+  ])
 
   const patch = useCallback((p: Partial<Settings>) => setSettings((s) => ({ ...s, ...p })), [])
   const tools = useRovingFocus(TOOLS.length)
@@ -64,11 +115,57 @@ export default function App() {
   const board = allBoards[activeBoard] ?? allBoards[0]
   const cards = board?.cards ?? []
 
-  const sentenceText = useMemo(() => sentence.map((c) => c.label).join(' '), [sentence])
+  /**
+   * A frase, nas duas formas. `composed` e null com a gramatica desligada — e
+   * so entao que o app fala a selecao literal. Ver GRAMMAR.md: a saida
+   * flexionada e camada de apoio, nunca a unica fala possivel.
+   */
+  const composed = useMemo(
+    () =>
+      settings.grammar
+        ? compose(sentence, { marks, speakerGender: settings.speakerGender })
+        : null,
+    [settings.grammar, settings.speakerGender, sentence, marks],
+  )
+  const sentenceText = useMemo(
+    () => composed?.text ?? sentence.map((c) => c.label).join(' '),
+    [composed, sentence],
+  )
+
+  const clearSentence = useCallback(() => {
+    setSentence([])
+    setMarks(NO_MARKS)
+  }, [])
+
+  /**
+   * Toda fala de frase — montada ou pronta — passa por aqui e entra no
+   * historico. Repetir e uma das operacoes mais frequentes numa conversa real:
+   * o parceiro nao ouviu, chegou alguem novo, o ambiente estava barulhento.
+   */
+  const say = useCallback(
+    (phrase: Card) => {
+      if (!phrase.label.trim()) return
+      speak(phrase.label, settings)
+      setHistory((h) => {
+        // Repetir a mesma frase nao cria entrada nova: o historico e atalho,
+        // e uma lista com a mesma frase seis vezes nao ajuda ninguem.
+        if (h[0]?.label === phrase.label) return h
+        return [phrase, ...h.filter((x) => x.label !== phrase.label)].slice(0, HISTORY_LIMIT)
+      })
+    },
+    [settings],
+  )
+
+  /** A frase montada como um card unico — icone do primeiro pictograma dela. */
+  const currentPhrase = useMemo<Card | null>(
+    () => (sentence.length && sentence[0] ? { id: sentence[0].id, label: sentenceText } : null),
+    [sentence, sentenceText],
+  )
 
   const pick = useCallback(
     (card: Card) => {
       setSentence((s) => [...s, card])
+      if (settings.sounds) earcon.select()
       if (settings.speakOnTap) speak(card.label, settings)
       setPanel('none')
     },
@@ -83,12 +180,30 @@ export default function App() {
     [cards, pick],
   )
 
+  const onScanStep = useCallback(
+    (phase: 'rows' | 'cells', index: number) => {
+      if (settings.sounds) (phase === 'rows' ? earcon.scanRow : earcon.scanCell)()
+      if (!settings.auditoryScanning) return
+      if (phase === 'cells') {
+        const c = cards[index]
+        if (c) speakCue(c.label, settings)
+      } else {
+        // Na fase de linhas anuncia a primeira palavra da linha como pista —
+        // ler a linha inteira nao caberia no passo da varredura.
+        const c = cards[index]
+        if (c) speakCue(`linha, ${c.label}`, settings)
+      }
+    },
+    [cards, settings],
+  )
+
   const scan = useScanning({
     enabled: settings.scanning,
     speed: settings.scanSpeed,
     total: cards.length,
     columns: settings.columns,
     onSelect: pickByIndex,
+    onStep: onScanStep,
     active: panel === 'none',
   })
 
@@ -114,9 +229,9 @@ export default function App() {
       if (e.ctrlKey || e.altKey || e.metaKey) return
 
       // Na varredura, Espaco/Enter sao do switch — nao devem falar a frase.
-      if (!settings.scanning && (e.key === 'Enter' || e.key === ' ') && sentence.length) {
+      if (!settings.scanning && (e.key === 'Enter' || e.key === ' ') && currentPhrase) {
         e.preventDefault()
-        speak(sentenceText, settings)
+        say(currentPhrase)
         return
       }
       if (e.key === 'Backspace') {
@@ -129,6 +244,11 @@ export default function App() {
         setPanel('search')
         return
       }
+      if (e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setPanel('phrases')
+        return
+      }
       if (/^[1-9]$/.test(e.key)) {
         const i = Number(e.key) - 1
         if (i < allBoards.length) {
@@ -139,7 +259,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [panel, sentence.length, sentenceText, settings, allBoards.length])
+  }, [panel, currentPhrase, say, settings, allBoards.length])
 
   // A prancha de favoritos some quando o ultimo favorito e removido; sem isto o
   // indice ativo apontaria para fora do array.
@@ -251,9 +371,12 @@ export default function App() {
       <div className="shell shell--flush">
         <SentenceBar
           sentence={sentence}
-          onSpeak={() => speak(sentenceText, settings)}
+          composed={composed}
+          marks={marks}
+          onMark={(p) => setMarks((m) => ({ ...m, ...p }))}
+          onSpeak={() => currentPhrase && say(currentPhrase)}
           onBackspace={() => setSentence((s) => s.slice(0, -1))}
-          onClear={() => setSentence([])}
+          onClear={clearSentence}
           onRemoveAt={(i) => setSentence((s) => s.filter((_, j) => j !== i))}
         />
       </div>
@@ -266,7 +389,14 @@ export default function App() {
         </div>
       )}
 
-      <BoardTabs boards={allBoards} active={activeBoard} onChange={setActiveBoard} />
+      <BoardTabs
+        boards={allBoards}
+        active={activeBoard}
+        onChange={(i) => {
+          setActiveBoard(i)
+          if (settings.sounds) earcon.board()
+        }}
+      />
 
       <main
         className="board"
@@ -298,8 +428,36 @@ export default function App() {
           onClose={() => setPanel('none')}
         />
       )}
+      {panel === 'phrases' && (
+        <PhrasesPanel
+          settings={settings}
+          mine={myPhrases}
+          history={history}
+          current={currentPhrase}
+          onSpeak={say}
+          onSave={(p) =>
+            setMyPhrases((list) =>
+              list.some((x) => x.label === p.label) ? list : [...list, p],
+            )
+          }
+          onRemoveMine={(p) => setMyPhrases((list) => list.filter((x) => x.label !== p.label))}
+          onClearHistory={() => setHistory([])}
+          onClose={() => setPanel('none')}
+        />
+      )}
       {panel === 'settings' && (
-        <SettingsPanel settings={settings} onChange={patch} onClose={() => setPanel('none')} />
+        <SettingsPanel
+          settings={settings}
+          favorites={favorites}
+          phrases={myPhrases}
+          onChange={patch}
+          onImport={(p) => {
+            setSettings((s) => ({ ...s, ...p.settings }))
+            setFavorites(p.favorites)
+            setMyPhrases(p.phrases)
+          }}
+          onClose={() => setPanel('none')}
+        />
       )}
       {panel === 'help' && <HelpOverlay onClose={() => setPanel('none')} />}
     </div>
