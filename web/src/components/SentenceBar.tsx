@@ -11,10 +11,16 @@ interface Props {
   marks: GrammarMarks
   region: Region
   onMark: (patch: Partial<GrammarMarks>) => void
+  /** Liga o motor de frases a partir da propria barra. */
+  onEnableGrammar: () => void
   onSpeak: () => void
   onBackspace: () => void
   onClear: () => void
   onRemoveAt: (index: number) => void
+  /** Reordena a frase movendo o card de uma posicao para outra. */
+  onMoveAt: (from: number, to: number) => void
+  /** Fala uma palavra sozinha — a forma flexionada quando houver. */
+  onSpeakWord: (card: Card, inflected?: string) => void
 }
 
 const TENSES = [
@@ -48,15 +54,33 @@ export function SentenceBar({
   marks,
   region,
   onMark,
+  onEnableGrammar,
   onSpeak,
   onBackspace,
   onClear,
   onRemoveAt,
+  onMoveAt,
+  onSpeakWord,
 }: Props) {
   const empty = sentence.length === 0
   const spoken = composed
     ? composed.text
     : sentence.map((c) => regionalLabel(c.label, region)).join(' ')
+
+  /**
+   * A forma que cada card assumiu na frase falada, indexada pela posicao dele.
+   *
+   * E o que torna a flexao visivel NO CARD: quem escolheu QUERER ve "quero"
+   * embaixo, e quem escolheu MÃO ve "minha mão". Antes isso so aparecia na
+   * linha da frase inteira, onde era preciso descobrir sozinho qual palavra
+   * veio de qual card.
+   */
+  const inflectedOf = new Map<number, string>()
+  if (composed) {
+    for (const t of composed.tokens) {
+      if (t.kind === 'inflected' && t.cardIndex !== undefined) inflectedOf.set(t.cardIndex, t.text)
+    }
+  }
 
   return (
     <div className="sentence">
@@ -64,20 +88,62 @@ export function SentenceBar({
         {empty ? (
           <p className="sentence__hint">Toque nos cards para montar a frase</p>
         ) : (
-          sentence.map((card, i) => (
-            <button
+          sentence.map((card, i) => {
+            const label = regionalLabel(card.label, region)
+            const inflected = inflectedOf.get(i)
+            return (
               // indice no key: a mesma palavra pode repetir na frase ("mais mais")
-              key={`${card.id}-${i}`}
-              type="button"
-              role="listitem"
-              className="chip"
-              onClick={() => onRemoveAt(i)}
-              aria-label={`Remover ${regionalLabel(card.label, region)}`}
-            >
-              <Pictogram card={card} eager />
-              <span className="chip__label">{regionalLabel(card.label, region)}</span>
-            </button>
-          ))
+              <div key={`${card.id}-${i}`} role="listitem" className="chip">
+                {/* Tocar o card FALA a palavra; nao apaga.
+                    Apagar so no ✕, porque o toque no proprio bloco era o gesto
+                    mais facil de acontecer sem querer — e apagar por engano no
+                    meio de uma frase custa remontar tudo. */}
+                <button
+                  type="button"
+                  className="chip__main"
+                  onClick={() => onSpeakWord(card, inflected)}
+                  aria-label={
+                    inflected ? `${label}, dito como ${inflected}. Falar` : `${label}. Falar`
+                  }
+                >
+                  <Pictogram card={card} eager />
+                  <span className="chip__label">{label}</span>
+                  {/* A forma flexionada so aparece quando difere do rotulo —
+                      repetir "água/água" seria ruido. */}
+                  {inflected && <span className="chip__form">{inflected}</span>}
+                </button>
+
+                <div className="chip__bar">
+                  <button
+                    type="button"
+                    className="chip__act"
+                    onClick={() => onMoveAt(i, i - 1)}
+                    disabled={i === 0}
+                    aria-label={`Mover ${label} para antes`}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="chip__act chip__act--del"
+                    onClick={() => onRemoveAt(i)}
+                    aria-label={`Remover ${label} da frase`}
+                  >
+                    ✕
+                  </button>
+                  <button
+                    type="button"
+                    className="chip__act"
+                    onClick={() => onMoveAt(i, i + 1)}
+                    disabled={i === sentence.length - 1}
+                    aria-label={`Mover ${label} para depois`}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            )
+          })
         )}
       </div>
 
@@ -104,6 +170,19 @@ export function SentenceBar({
           ))}
           {composed.text.slice(-1)}
         </p>
+      )}
+
+      {/* Com o motor desligado a faixa de marcadores nao existe — e ate aqui
+          nada na tela dizia que ela existia. Um convite de uma linha resolve:
+          o recurso deixa de depender de a pessoa abrir Ajustes e ler ate o fim
+          para descobrir que o app conjuga verbo. */}
+      {!composed && (
+        <div className="marks">
+          <button type="button" className="mark mark--invite" onClick={onEnableGrammar}>
+            <span aria-hidden="true">✍️</span>
+            <span>Compor frase em português — conjugar verbo, tempo, negação</span>
+          </button>
+        </div>
       )}
 
       {composed && (

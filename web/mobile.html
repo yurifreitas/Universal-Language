@@ -1,6 +1,19 @@
 <!doctype html>
 <meta charset="utf-8" />
-<title>viewport de teste</title>
+<title>Fala — visualizacao em telas pequenas</title>
+<!--
+  Ferramenta de desenvolvimento, NAO faz parte do app.
+  Fica na raiz de `web/` (e nao em `public/`) de proposito: o Vite serve este
+  arquivo em `npm run dev` mas nao o copia para `dist/`, entao ele nunca vai
+  ao ar.
+
+  Existe porque media query dentro de iframe responde a largura do iframe, o
+  que da um teste de layout responsivo fiel sem depender de emulador. Foi assim
+  que apareceu o "grid blowout" que esticava o documento para 599px numa tela
+  de 390.
+
+  Abra em: http://localhost:5173/mobile.html
+-->
 <style>
   body { margin: 0; background: #222; display: flex; gap: 16px; padding: 12px; font: 12px system-ui; color: #ccc }
   figure { margin: 0 }

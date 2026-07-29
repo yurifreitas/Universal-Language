@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Board, Card, Settings } from './types'
 import {
   HISTORY_LIMIT,
@@ -42,14 +42,25 @@ const UNLOCK_MS = 2000
 
 type Panel = 'none' | 'search' | 'settings' | 'help' | 'phrases' | 'scripts' | 'editor'
 
+/**
+ * A barra superior tem dois grupos com donos diferentes, e misturar os dois
+ * fazia sete botoes iguais em fila.
+ *
+ * - **Falar** e de quem usa a prancha: frases prontas e roteiros sao fala, e
+ *   ficam junto, primeiro, e continuam visiveis no modo bloqueado.
+ * - **Ajustar** e de quem acompanha: buscar, editar, ajuda e configuracoes.
+ *
+ * Um separador visual entre eles custa 1px e poupa uma leitura de sete itens
+ * toda vez que a pessoa procura um botao.
+ */
 const TOOLS = [
-  { key: 'phrases', icon: '💬', label: 'Frases', aria: 'Frases prontas' },
-  { key: 'scripts', icon: '📋', label: 'Roteiros', aria: 'Roteiros de situações' },
-  { key: 'search', icon: '🔍', label: 'Buscar', aria: 'Buscar pictograma' },
-  { key: 'editor', icon: '✎', label: 'Editar', aria: 'Editar pranchas e cards' },
-  { key: 'help', icon: '?', label: 'Ajuda', aria: 'Atalhos e acesso' },
-  { key: 'settings', icon: '⚙', label: 'Ajustes', aria: 'Configurações' },
-  { key: 'lock', icon: '🔓', label: 'Travar', aria: 'Travar na prancha' },
+  { key: 'phrases', icon: '💬', label: 'Frases', aria: 'Frases prontas', group: 'falar' },
+  { key: 'scripts', icon: '📋', label: 'Roteiros', aria: 'Roteiros de situações', group: 'falar' },
+  { key: 'search', icon: '🔍', label: 'Buscar', aria: 'Buscar pictograma', group: 'ajustar' },
+  { key: 'editor', icon: '✎', label: 'Editar', aria: 'Editar pranchas e cards', group: 'ajustar' },
+  { key: 'help', icon: '?', label: 'Ajuda', aria: 'Atalhos e acesso', group: 'ajustar' },
+  { key: 'settings', icon: '⚙', label: 'Ajustes', aria: 'Configurações', group: 'ajustar' },
+  { key: 'lock', icon: '🔓', label: 'Travar', aria: 'Travar na prancha', group: 'ajustar' },
 ] as const
 
 export default function App() {
@@ -173,6 +184,25 @@ export default function App() {
     (card: Card) => regionalLabel(card.label, settings.region),
     [settings.region],
   )
+
+  /**
+   * Reordenar a frase no proprio bloco.
+   *
+   * Antes, corrigir a ordem de uma frase montada exigia apagar tudo depois do
+   * erro e refazer. Numa prancha onde cada palavra custa um toque — e para
+   * quem usa varredura, varios segundos — isso e caro o bastante para a pessoa
+   * preferir dizer a frase errada.
+   */
+  const moveInSentence = useCallback((from: number, to: number) => {
+    setSentence((s) => {
+      if (to < 0 || to >= s.length || from === to) return s
+      const next = [...s]
+      const [moved] = next.splice(from, 1)
+      if (!moved) return s
+      next.splice(to, 0, moved)
+      return next
+    })
+  }, [])
 
   const clearSentence = useCallback(() => {
     setSentence([])
@@ -443,8 +473,14 @@ export default function App() {
                   </span>
                 )}
                 {TOOLS.map((t, i) => (
+                  <Fragment key={t.key}>
+                    {/* Separador entre o grupo de fala e o de ajustes. Como e
+                        puramente visual, sai da arvore de acessibilidade: o
+                        leitor de tela ja tem o rotulo de cada botao. */}
+                    {t.group === 'ajustar' && TOOLS[i - 1]?.group === 'falar' && (
+                      <span className="topbar__split" aria-hidden="true" />
+                    )}
                   <button
-                    key={t.key}
                     ref={tools.setRef(i)}
                     type="button"
                     className="btn btn--ghost"
@@ -457,6 +493,7 @@ export default function App() {
                     <span aria-hidden="true">{t.icon}</span>
                     <span className="btn__text">{t.label}</span>
                   </button>
+                  </Fragment>
                 ))}
               </>
             )}
@@ -471,10 +508,13 @@ export default function App() {
           composed={composed}
           marks={marks}
           onMark={(p) => setMarks((m) => ({ ...m, ...p }))}
+          onEnableGrammar={() => patch({ grammar: true })}
           onSpeak={() => currentPhrase && say(currentPhrase)}
           onBackspace={() => setSentence((s) => s.slice(0, -1))}
           onClear={clearSentence}
           onRemoveAt={(i) => setSentence((s) => s.filter((_, j) => j !== i))}
+          onMoveAt={moveInSentence}
+          onSpeakWord={(card, inflected) => speak(inflected ?? word(card), settings)}
         />
       </div>
 

@@ -71,7 +71,13 @@ export interface Settings {
   /**
    * Compoe a frase flexionada a partir dos cards ("eu querer agua" ->
    * "Eu quero agua"). Sempre reversivel: a frase literal continua visivel e
-   * pode ser falada. Ver GRAMMAR.md.
+   * pode ser falada, e desligar aqui volta a ela.
+   *
+   * LIGADO por padrao. Vinha desligado, e o resultado pratico era que ninguem
+   * descobria o recurso: a faixa de marcadores — tempo, negacao, pergunta — so
+   * aparece com o motor ligado, entao a tela nao dava nenhuma pista de que
+   * existia. A garantia que importa nao e "vir desligado", e sim **poder
+   * desligar com um toque**, e essa continua valendo. Ver GRAMMAR.md.
    */
   grammar: boolean
   /**
@@ -124,7 +130,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sounds: false,
   dyslexia: false,
   sensory: 0,
-  grammar: false,
+  grammar: true,
   speakerGender: 'n',
   wordColors: 'off',
   region: 'padrao',
