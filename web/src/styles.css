@@ -599,6 +599,10 @@ button,
   place-items: center;
   aspect-ratio: 1;
   min-height: 0;
+  /* `aspect-ratio` + `max-height` encolhem a caixa abaixo da largura da celula.
+     Sem isto ela fica alinhada ao inicio da coluna e o pictograma aparece
+     deslocado ~20px para a esquerda do centro do card. */
+  justify-self: center;
   /* Sem teto, uma grade de 5 colunas em 1380px gera cards de ~250px de altura
      e so uma linha e meia cabe na tela — a pessoa passa a rolar em vez de
      falar. O teto mantem o alvo grande e ainda entrega 3 linhas visiveis. */
@@ -619,6 +623,7 @@ button,
   display: grid;
   place-items: center;
   aspect-ratio: 1;
+  justify-self: center;
   max-height: min(24vh, 190px);
   background: color-mix(in oklab, var(--card-ink) 8%, transparent);
   border-radius: var(--r-sm);

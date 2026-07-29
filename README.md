@@ -7,8 +7,10 @@ voz em português, funciona offline.
 
 
 🌐 **[Abrir o app](https://yurifreitas.github.io/Universal-Language/)**
-📚 **[Referências, metodologias e normas](REFERENCES.md)** — a base documental de
-cada decisão de projeto
+📚 **[Referências, metodologias e normas](REFERENCES.md)** — evidência científica,
+metodologias de CAA e normas técnicas
+⚖️ **[Legislação](LEGISLATION.md)** — CDPD/ONU, ADA, European Accessibility Act e
+o arcabouço brasileiro de direitos de neurodivergentes
 
 > ⚠️ Os pictogramas são **CC BY-NC-SA**. Leia [LICENSE-ARASAAC.md](LICENSE-ARASAAC.md)
 > antes de qualquer decisão de produto — a cláusula NC impede monetização.

@@ -265,42 +265,16 @@ Ver [LICENSE-ARASAAC.md](LICENSE-ARASAAC.md) para as obrigações concretas.
 
 ---
 
-## 8. Legislação brasileira
+## 8. Legislação
 
-### Lei 13.146/2015 — Lei Brasileira de Inclusão (Estatuto da Pessoa com Deficiência)
+Marco legal completo — internacional, EUA, União Europeia, Reino Unido e Brasil
+— em documento próprio: **[LEGISLATION.md](LEGISLATION.md)**.
 
-**Art. 3º** define **tecnologia assistiva**:
-
-> produtos, equipamentos, dispositivos, recursos, metodologias, estratégias,
-> práticas e serviços que objetivem promover a funcionalidade, relacionada à
-> atividade e à participação da pessoa com deficiência ou com mobilidade
-> reduzida, visando à sua autonomia, independência, qualidade de vida e inclusão
-> social.
-
-O mesmo artigo, inciso V, enumera as formas de comunicação reconhecidas —
-incluindo os sistemas de comunicação alternativa. Um app de CAA é, por
-definição legal, tecnologia assistiva.
-
-> [Texto integral — Câmara](https://www2.camara.leg.br/legin/fed/lei/2015/lei-13146-6-julho-2015-781174-normaatualizada-pl.html) ·
-> [LBI comentada — FEAC (PDF)](https://www.feac.org.br/wp-content/uploads/2017/05/Lei-brasileira-de-inclusao-comentada.pdf) ·
-> [MDHC — 10 anos da LBI](https://www.gov.br/mdh/pt-br/navegue-por-temas/pessoa-com-deficiencia/publicacoes/dez-anos-da-lei-brasileira-de-inclusao-lbi-texto-na-integra/lei_brasileira_de_inclusao_digital__1_.pdf)
-
-### Lei Estadual SP 17.759/2023 e adaptações na USP
-
-Obriga o **PIA (Protocolo Individualizado de Avaliação)** em todas as
-instituições de ensino do estado de São Paulo. Na USP, o pedido de adaptações
-passa pela **CIP** da unidade, com relatório clínico contendo CID (F84 / 6A02) e
-as adaptações recomendadas.
-
-> [Jornal da USP — Estudantes com TEA podem solicitar adaptações](https://jornal.usp.br/diversidade/estudantes-com-diagnostico-dentro-do-transtorno-do-espectro-autista-podem-solicitar-adaptacoes-em-atividades-academicas/) ·
-> [PRIP — Política de Inclusão e Pertencimento das PcD](https://prip.usp.br/destaques/usp-define-politica-de-inclusao-e-pertencimento-das-pessoas-com-deficiencia/) ·
-> [Portaria PRIP 059 — TEA (PDF)](https://prip.usp.br/wp-content/uploads/sites/1128/2024/11/Portaria_PRIP_059-TEA-Errata.pdf)
-
-⚠️ O PDF da Portaria 059 está publicado como **imagem escaneada, sem camada de
-texto** — inacessível a leitor de tela. Uma norma de acessibilidade publicada em
-formato inacessível.
-
----
+O essencial: a **CDPD/ONU (2006)** é o único tratado de direitos humanos que
+nomeia explicitamente a comunicação aumentativa e alternativa (art. 2 e art. 21),
+e entrou no Brasil com **status de emenda constitucional**. No plano interno, a
+**LBI 13.146/2015** art. 3º define tecnologia assistiva de forma que um app de
+CAA é, por definição legal, tecnologia assistiva.
 
 ## 9. Referências técnicas
 
