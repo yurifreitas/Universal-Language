@@ -1,0 +1,795 @@
+/* =========================================================================
+   Fala — design system
+   Tokens primeiro, componentes depois. Sem framework: a superficie do app e
+   pequena e muito especifica, e um framework generico so atrapalharia as
+   exigencias de acessibilidade (alvo minimo, contraste, foco visivel).
+   ========================================================================= */
+
+:root {
+  /* superficies em escada, do fundo ao card */
+  --bg: #090d13;
+  --bg-glow: #101826;
+  --surface: #111925;
+  --surface-2: #18222f;
+  --surface-3: #202c3b;
+  --line: #263344;
+  --line-soft: #1c2632;
+
+  --text: #eaf1f8;
+  --text-dim: #8ea0b4;
+  --text-faint: #5f7286;
+
+  --accent: #38dfa0;
+  --accent-soft: #38dfa033;
+  --accent-ink: #04150d;
+  --danger: #ff7a7a;
+
+  --card-bg: #fbfcfd;
+  --card-ink: #101a25;
+
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 30px;
+
+  /* Alvo minimo de toque. WCAG 2.2 pede 24px; CAA com dificuldade motora
+     precisa de muito mais — 88px e o piso pratico em tablet. */
+  --tap: 88px;
+
+  /* Largura do conteudo. Sem teto, uma TV ou monitor ultrawide estica a grade
+     ate os cards virarem cartazes e o olhar ter de varrer 2000px. */
+  --shell: 1380px;
+  --gutter: clamp(14px, 3vw, 36px);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.28);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.24), 0 12px 28px -16px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 8px 48px -20px rgb(0 0 0 / 0.75);
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg: #eef2f7;
+  --bg-glow: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f3f6fa;
+  --surface-3: #e8eef5;
+  --line: #d3dce7;
+  --line-soft: #e4eaf2;
+
+  --text: #101c28;
+  --text-dim: #55697d;
+  --text-faint: #7e8fa1;
+
+  --accent: #0d9c62;
+  --accent-soft: #0d9c621f;
+  --accent-ink: #ffffff;
+
+  --card-bg: #ffffff;
+  --card-ink: #101c28;
+
+  --shadow-sm: 0 1px 2px rgb(16 28 40 / 0.06);
+  --shadow-md: 0 1px 3px rgb(16 28 40 / 0.08), 0 12px 28px -18px rgb(16 28 40 / 0.35);
+  --shadow-lg: 0 8px 48px -20px rgb(16 28 40 / 0.28);
+
+  color-scheme: light;
+}
+
+/* Alto contraste nao e "tema escuro turbinado": e uma paleta separada para
+   baixa visao — preto/branco puros, bordas grossas, zero sombra. */
+:root[data-contrast='high'] {
+  --bg: #000;
+  --bg-glow: #000;
+  --surface: #000;
+  --surface-2: #0d0d0d;
+  --surface-3: #1a1a1a;
+  --line: #fff;
+  --line-soft: #fff;
+  --text: #fff;
+  --text-dim: #ededed;
+  --text-faint: #d0d0d0;
+  --accent: #ffe600;
+  --accent-soft: #ffe60033;
+  --accent-ink: #000;
+  --card-bg: #fff;
+  --card-ink: #000;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+}
+:root[data-contrast='high'][data-theme='light'] {
+  --bg: #fff;
+  --bg-glow: #fff;
+  --surface: #fff;
+  --surface-2: #f2f2f2;
+  --surface-3: #e6e6e6;
+  --line: #000;
+  --line-soft: #000;
+  --text: #000;
+  --text-dim: #1a1a1a;
+  --text-faint: #333;
+  --accent: #0000cc;
+  --accent-ink: #fff;
+}
+:root[data-contrast='high'] .card,
+:root[data-contrast='high'] .tab--active,
+:root[data-contrast='high'] .btn {
+  border-width: 3px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font:
+    400 16px/1.45 ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-synthesis-weight: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Brilho tenue atras do conteudo: da profundidade sem introduzir movimento
+   nem padrao — ambos custosos para sensibilidade sensorial. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(120% 70% at 50% -10%, var(--bg-glow) 0%, transparent 62%);
+  pointer-events: none;
+}
+
+/* Nada de zoom acidental por duplo-toque numa prancha de comunicacao. */
+button,
+.card,
+.chip {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ shell */
+
+/* Todo bloco de largura total usa .shell por dentro, para que o fundo sangre
+   ate a borda mas o conteudo fique centralizado e alinhado entre secoes. */
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.shell--flush {
+  padding-block: 0;
+}
+
+/* ------------------------------------------------------------------ boot */
+
+.boot {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  height: 100%;
+}
+.boot__pulse {
+  width: 46px;
+  height: 46px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+.boot__msg {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+.boot__msg--error {
+  color: var(--danger);
+}
+
+/* ----------------------------------------------------------------- layout */
+
+.app {
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  height: 100%;
+  max-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.banner {
+  margin: 10px 0 0;
+  padding: 10px 16px;
+  background: color-mix(in oklab, var(--danger) 16%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+  border-radius: var(--r-md);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- topbar */
+
+.topbar {
+  border-bottom: 1px solid var(--line-soft);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  backdrop-filter: blur(12px);
+}
+.topbar__inner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+}
+.topbar__actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.brand {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  user-select: none;
+}
+/* Marca em 4 quadrados: e a propria metafora da prancha. */
+.brand__mark {
+  display: grid;
+  grid-template: repeat(2, 9px) / repeat(2, 9px);
+  gap: 3px;
+}
+.brand__mark span {
+  background: var(--accent);
+  border-radius: 2.5px;
+}
+.brand__mark span:nth-child(2) {
+  opacity: 0.55;
+}
+.brand__mark span:nth-child(3) {
+  opacity: 0.35;
+}
+.brand__mark span:nth-child(4) {
+  opacity: 0.75;
+}
+.brand__name {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------- botoes */
+
+.btn {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.1s ease;
+}
+.btn:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  border-color: var(--line-soft);
+}
+.btn--locked {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+}
+
+.btn--speak {
+  min-height: 60px;
+  min-width: 132px;
+  padding: 0 26px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: transparent;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 20px -10px var(--accent);
+}
+.btn--speak:hover:not(:disabled) {
+  color: var(--accent-ink);
+  background: color-mix(in oklab, var(--accent) 88%, white);
+}
+
+.btn--icon {
+  min-width: 60px;
+  min-height: 60px;
+  padding: 0;
+  font-size: 1.2rem;
+  border-color: var(--line);
+}
+
+.btn--wide {
+  width: 100%;
+}
+
+/* --------------------------------------------------------- barra da frase */
+
+.sentence {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  padding-block: 14px;
+}
+
+.sentence__strip {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  min-height: 96px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+}
+
+.sentence__hint {
+  margin: 0 auto;
+  color: var(--text-faint);
+  font-size: 0.95rem;
+}
+
+.sentence__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chip {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  width: 78px;
+  padding: 5px 4px;
+  background: var(--card-bg);
+  color: var(--card-ink);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    border-color 0.16s ease;
+}
+.chip:hover {
+  border-color: var(--danger);
+}
+.chip:active {
+  transform: scale(0.94);
+}
+.chip__label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ abas */
+
+.tabs {
+  border-bottom: 1px solid var(--line-soft);
+}
+.tabs__inner {
+  display: flex;
+  gap: 6px;
+  padding-block: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs__inner::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 18px;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease;
+}
+.tab:hover:not(.tab--active) {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.tab--active {
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: 0 6px 18px -10px var(--accent);
+}
+.tab__icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* ----------------------------------------------------------------- grade */
+
+.board {
+  min-height: 0;
+  overflow-y: auto;
+  padding-block: 18px 26px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
+  gap: clamp(8px, 1.1vw, 16px);
+}
+
+.grid__empty {
+  padding: 48px 24px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 10px 8px 8px;
+  background: var(--card-bg);
+  color: var(--card-ink);
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition:
+    transform 0.13s cubic-bezier(0.2, 0, 0.2, 1),
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.card:hover {
+  border-color: var(--accent);
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 4px var(--accent-soft);
+}
+.card:active {
+  transform: scale(0.955);
+}
+
+.card__label {
+  font-size: clamp(0.74rem, 1.35vw, 1.02rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* ------------------------------------------------------------ pictograma */
+
+.picto {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-height: 0;
+  /* Sem teto, uma grade de 5 colunas em 1380px gera cards de ~250px de altura
+     e so uma linha e meia cabe na tela — a pessoa passa a rolar em vez de
+     falar. O teto mantem o alvo grande e ainda entrega 3 linhas visiveis. */
+  max-height: min(24vh, 190px);
+}
+.picto img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* Placeholder discreto: sem shimmer, que compete com o pictograma pela atencao
+   de quem tem sensibilidade sensorial. */
+.picto--loading {
+  background: color-mix(in oklab, var(--card-ink) 5%, transparent);
+  border-radius: var(--r-sm);
+}
+.picto--fallback {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  max-height: min(24vh, 190px);
+  background: color-mix(in oklab, var(--card-ink) 8%, transparent);
+  border-radius: var(--r-sm);
+  font-size: clamp(1rem, 3.4vw, 2rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.chip .picto,
+.chip .picto--fallback {
+  max-height: 50px;
+}
+
+/* --------------------------------------------------------------- overlay */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: overlay-in 0.16s ease-out;
+}
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.overlay__head {
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+.overlay__head .shell {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 76px;
+}
+
+.overlay__title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.overlay__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 1.05rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  transition: border-color 0.16s ease;
+}
+.overlay__input::placeholder {
+  color: var(--text-faint);
+}
+.overlay__input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.overlay__status {
+  display: block;
+  margin: 0;
+  min-height: 20px;
+  padding-block: 10px;
+  color: var(--text-faint);
+  font-size: 0.85rem;
+}
+.overlay__status .shell {
+  display: block;
+}
+
+.overlay__body {
+  min-height: 0;
+  overflow-y: auto;
+  padding-block: 4px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+/* --------------------------------------------------------- configuracoes */
+
+.settings {
+  display: grid;
+  gap: 16px;
+  max-width: 660px;
+  margin-inline: auto;
+}
+
+.settings__group {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.settings__group h3 {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.settings__note {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.settings__note a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.field select,
+.field input[type='range'] {
+  min-height: 48px;
+  accent-color: var(--accent);
+}
+.field select {
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.switch {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.switch input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------ responsivo */
+
+@media (max-width: 720px) {
+  .btn__text {
+    display: none;
+  }
+  .btn--ghost {
+    min-width: 46px;
+    padding: 0 12px;
+  }
+  .btn--locked .btn__text {
+    display: inline;
+  }
+}
+
+/* Em tela estreita a barra da frase empilha, para os controles nao espremerem
+   os cards ja escolhidos. */
+@media (max-width: 560px) {
+  .sentence {
+    flex-direction: column;
+  }
+  .sentence__actions {
+    justify-content: stretch;
+  }
+  .btn--speak {
+    flex: 1;
+  }
+  .tab__name {
+    display: none;
+  }
+  .tab {
+    padding: 0 16px;
+  }
+  .tab__icon {
+    font-size: 1.3rem;
+  }
+  .brand__name {
+    display: none;
+  }
+}
+
+/* Telas altas: a barra da frase pode respirar mais. */
+@media (min-height: 900px) {
+  .sentence__strip {
+    min-height: 112px;
+  }
+  .chip {
+    width: 88px;
+  }
+  .chip .picto {
+    max-height: 58px;
+  }
+}

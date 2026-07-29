@@ -1,0 +1,19 @@
+# Acervo bruto: 3,2 GB. Fonte de verdade local, reproduzível com
+# `python scripts/arasaac_fetch.py all`. Nunca vai para o repositório.
+data/images/
+data/raw/
+data/arasaac.sqlite
+data/*.log
+data/failed_images.txt
+
+# O que VAI para o repo (gerado por build_web_images.py / build_web_data.py):
+#   web/public/pictos/*.webp   ~213 MB — o app serve as imagens, não um CDN
+#   web/public/data/*.json
+
+node_modules/
+web/dist/
+web/dev-dist/
+*.tsbuildinfo
+
+.DS_Store
+Thumbs.db
