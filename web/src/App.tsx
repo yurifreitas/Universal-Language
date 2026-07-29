@@ -168,7 +168,9 @@ export default function App() {
           esta tocando os cards, e fora do caminho do polegar da crianca. */}
       <header className="topbar">
         <div className="shell topbar__inner">
-          <div className="brand">
+          {/* h1 real: leitores de tela navegam por cabecalhos, e uma pagina sem
+              nenhum h1 nao tem ponto de entrada nessa navegacao. */}
+          <h1 className="brand">
             <span className="brand__mark" aria-hidden="true">
               <span />
               <span />
@@ -176,7 +178,8 @@ export default function App() {
               <span />
             </span>
             <span className="brand__name">Fala</span>
-          </div>
+            <span className="sr-only"> — prancha de comunicação alternativa</span>
+          </h1>
 
           <div className="topbar__actions">
             {settings.locked ? (

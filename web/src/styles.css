@@ -17,7 +17,9 @@
 
   --text: #eaf1f8;
   --text-dim: #8ea0b4;
-  --text-faint: #5f7286;
+  /* Antes #5f7286: dava 4,24:1 contra a superficie da barra da frase, abaixo do
+     minimo AA de 4,5 para texto normal (WCAG 1.4.3). Medido no navegador. */
+  --text-faint: #8090a3;
 
   --accent: #38dfa0;
   --accent-soft: #38dfa033;
@@ -264,10 +266,27 @@ button,
   align-items: center;
 }
 
+/* Conteudo so para leitor de tela: fora da tela, mas dentro da arvore de
+   acessibilidade. `display:none` o removeria da arvore e nao serviria. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .brand {
   display: inline-flex;
   gap: 10px;
   align-items: center;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
   user-select: none;
 }
 /* Marca em 4 quadrados: e a propria metafora da prancha. */

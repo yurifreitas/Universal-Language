@@ -101,7 +101,13 @@ export function CardGrid({
     <div
       className={`grid ${scan && scan.phase !== 'idle' ? 'grid--scanning' : ''}`}
       style={{ '--cols': cols } as React.CSSProperties}
-      role="grid"
+      // Deliberadamente NAO usa role="grid": o padrao ARIA exige elementos
+      // role="row" entre a grade e as celulas, e aqui as celulas sao filhas
+      // diretas do CSS Grid. Declarar grid sem linhas produz arvore de
+      // acessibilidade invalida. Como `group` de botoes nativos, o leitor de
+      // tela anuncia "botao, agua" — que e exatamente o util aqui. A navegacao
+      // por setas continua funcionando.
+      role="group"
       aria-label="Cards da prancha"
     >
       {cards.map((card, i) => {
@@ -115,7 +121,6 @@ export function CardGrid({
               refs.current[i] = el
             }}
             type="button"
-            role="gridcell"
             className={`card ${scanRow ? 'card--scan-row' : ''} ${scanCell ? 'card--scan-cell' : ''}`}
             // Roving tabindex: so uma celula entra na ordem de tabulacao, para
             // que Tab pule a grade inteira em vez de 149 paradas.
