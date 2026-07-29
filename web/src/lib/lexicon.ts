@@ -29,6 +29,19 @@ export type WordClass =
   | 'affirmation'
   | 'social'
   | 'connector'
+  /**
+   * Preposicao solta, escolhida pela pessoa: DE, EM, COM, PARA, SEM. Existe
+   * porque o motor insere preposicao sozinho — e as vezes a pessoa quer outra,
+   * ou quer uma onde o motor nao poria nenhuma.
+   */
+  | 'preposition'
+  /**
+   * Artigo e demonstrativo soltos: O, A, UM, ESSE. O motor decide artigo por
+   * conta propria; quando a pessoa escolhe um, a escolha dela vence.
+   */
+  | 'article'
+  /** AH, OI, NOSSA, EI — abre a fala e chama alguem. */
+  | 'interjection'
 
 /**
  * Pessoa gramatical.
@@ -494,6 +507,62 @@ export const LEXICON: Record<string, Lexeme> = {
   'todo dia': { class: 'adverb' },
   'de novo': { class: 'adverb' },
   junto: { class: 'adverb' },
+
+  /* ------------------------------------------------- palavras de ligacao
+
+     Prancha "Ligacao". Sao as palavras que o motor de frases normalmente
+     insere sozinho — e por isso mesmo precisam existir como card: quando a
+     pessoa escolhe uma, a escolha dela vence a do motor. Ver GRAMMAR.md. */
+  e: { class: 'connector' },
+  ou: { class: 'connector' },
+  mas: { class: 'connector' },
+  porque: { class: 'connector' },
+  então: { class: 'connector' },
+  aí: { class: 'connector' },
+  'e aí': { class: 'connector' },
+
+  de: { class: 'preposition' },
+  em: { class: 'preposition' },
+  com: { class: 'preposition' },
+  para: { class: 'preposition' },
+  sem: { class: 'preposition' },
+  até: { class: 'preposition' },
+
+  o: { class: 'article', gender: 'm' },
+  a: { class: 'article', gender: 'f' },
+  os: { class: 'article', gender: 'm', plural: true },
+  as: { class: 'article', gender: 'f', plural: true },
+  um: { class: 'article', gender: 'm' },
+  uma: { class: 'article', gender: 'f' },
+  esse: { class: 'article', gender: 'm' },
+  essa: { class: 'article', gender: 'f' },
+  aquele: { class: 'article', gender: 'm' },
+  aquela: { class: 'article', gender: 'f' },
+  seu: { class: 'determiner', gender: 'm' },
+  sua: { class: 'determiner', gender: 'f' },
+  nosso: { class: 'determiner', gender: 'm' },
+  nossa: { class: 'determiner', gender: 'f' },
+
+  ah: { class: 'interjection' },
+  oh: { class: 'interjection' },
+  ei: { class: 'interjection' },
+  opa: { class: 'interjection' },
+  oba: { class: 'interjection' },
+  eca: { class: 'interjection' },
+  ui: { class: 'interjection' },
+  uau: { class: 'interjection' },
+  sério: { class: 'interjection' },
+  claro: { class: 'interjection' },
+  'que legal': { class: 'interjection' },
+
+  só: { class: 'adverb' },
+  já: { class: 'adverb' },
+  ainda: { class: 'adverb' },
+  também: { class: 'adverb' },
+  sempre: { class: 'adverb' },
+  nunca: { class: 'negation' },
+  tudo: { class: 'quantifier' },
+  nada: { class: 'quantifier' },
 
   /* ------------------------------------------------------------- social */
   oi: { class: 'social' },

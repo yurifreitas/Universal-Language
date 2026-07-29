@@ -143,10 +143,9 @@ const CASES: Record<string, Case[]> = {
     { cards: ['eu', 'você', 'ir', 'parque'], expect: 'Eu e você vamos pro parque.' },
     { cards: ['mamãe', 'papai', 'ir', 'trabalhar'], expect: 'A mamãe e o papai vão trabalhar.' },
     { cards: ['eu', 'querer', 'pintar', 'desenhar'], expect: 'Eu quero pintar e desenhar.' },
-    {
-      cards: ['eu', 'correr', 'pular', 'dançar'],
-      expect: 'Eu corro, pular e dançar.',
-    },
+    // Verbo coordenado compartilha o sujeito, entao compartilha a flexao.
+    { cards: ['eu', 'correr', 'pular', 'dançar'], expect: 'Eu corro, pulo e danço.' },
+    { cards: ['mãe', 'pular', 'querer'], expect: 'A mãe pula e quer.' },
     { cards: ['eu', 'ver', 'televisão'], expect: 'Eu vejo na televisão.' },
     { cards: ['eu', 'querer', 'celular'], expect: 'Eu quero o celular.' },
     // Negacao com verbo modal e coordenacao: o "nao" cola no verbo conjugado e

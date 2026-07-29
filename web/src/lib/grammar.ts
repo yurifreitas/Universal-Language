@@ -226,6 +226,31 @@ const DETERMINERS: Record<string, Record<'m' | 'f', [string, string]>> = {
   // singular, plural
   meu: { m: ['meu', 'meus'], f: ['minha', 'minhas'] },
   minha: { m: ['meu', 'meus'], f: ['minha', 'minhas'] },
+  seu: { m: ['seu', 'seus'], f: ['sua', 'suas'] },
+  sua: { m: ['seu', 'seus'], f: ['sua', 'suas'] },
+  nosso: { m: ['nosso', 'nossos'], f: ['nossa', 'nossas'] },
+  nossa: { m: ['nosso', 'nossos'], f: ['nossa', 'nossas'] },
+}
+
+/**
+ * Artigos e demonstrativos que a pessoa escolhe como card.
+ *
+ * O motor decide artigo sozinho o tempo todo; quando a pessoa toca um, ela esta
+ * dizendo qual quer. A forma, porem, continua sendo concordada: quem toca "o" e
+ * depois "mãe" escolheu ARTIGO DEFINIDO, nao escolheu o masculino — e "o mãe"
+ * nao ajudaria ninguem.
+ */
+const ARTICLES: Record<string, Record<'m' | 'f', [string, string]>> = {
+  o: { m: ['o', 'os'], f: ['a', 'as'] },
+  a: { m: ['o', 'os'], f: ['a', 'as'] },
+  os: { m: ['os', 'os'], f: ['as', 'as'] },
+  as: { m: ['os', 'os'], f: ['as', 'as'] },
+  um: { m: ['um', 'uns'], f: ['uma', 'umas'] },
+  uma: { m: ['um', 'uns'], f: ['uma', 'umas'] },
+  esse: { m: ['esse', 'esses'], f: ['essa', 'essas'] },
+  essa: { m: ['esse', 'esses'], f: ['essa', 'essas'] },
+  aquele: { m: ['aquele', 'aqueles'], f: ['aquela', 'aquelas'] },
+  aquela: { m: ['aquele', 'aqueles'], f: ['aquela', 'aquelas'] },
 }
 
 function article(gender: 'm' | 'f', plural: boolean): string {
@@ -392,6 +417,22 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   let questionSeen = false
   /** Ultimo verbo visto, para decidir o locativo de aparelho. */
   let lastVerbLabel: string | null = null
+  /** A pessoa escolheu a preposicao; o motor nao sobrepoe a dele. */
+  let explicitPrep = false
+  /** A pessoa escolheu o conectivo; o motor nao insere virgula nem "e". */
+  let explicitConnector = false
+  /**
+   * Forma que um verbo COORDENADO deve assumir.
+   *
+   * Verbo coordenado compartilha o sujeito, entao compartilha a flexao:
+   * "eu corro, pulo e danço" — nunca "eu corro, pular e dançar".
+   *
+   * Mas quando o primeiro verbo saiu como perifrase — "vamos brincar" no
+   * futuro, "estou brincando" no progressivo — quem carrega a flexao e o
+   * auxiliar, e ele e compartilhado pela lista inteira: "vamos brincar, pintar
+   * e desenhar". Ali a coordenacao volta ao infinitivo.
+   */
+  let coordForm: 'finite' | 'infinitive' = 'finite'
 
   /**
    * Clitico. Um pronome DEPOIS do verbo e objeto, e o portugues brasileiro o
@@ -491,6 +532,11 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
   /** Virgula entre os itens do meio, "e" antes do ultimo. */
   const emitListSeparator = (isLast: boolean) => {
+    // A pessoa acabou de escolher "e" ou "mas": o motor nao poe outro por cima.
+    if (explicitConnector) {
+      explicitConnector = false
+      return
+    }
     if (isLast) {
       push('e', 'inserted')
     } else {
@@ -622,6 +668,13 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           }
         }
 
+        const coordenado =
+          emCadeia &&
+          Boolean(
+            [...items.slice(0, i)].reverse().find((x) => x.lex.class === 'verb') &&
+              ![...items.slice(0, i)].reverse().find((x) => x.lex.class === 'verb')!.lex.modal,
+          )
+
         if (lex.fixed || (lex as { guessed?: boolean }).guessed) {
           // Palavra fora do lexico so foi ADIVINHADA como verbo pela
           // terminacao. Conjugar um chute produz forma inexistente ("ver" ->
@@ -644,14 +697,29 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
             cardIndex: it.index,
             ...(text === label ? {} : { original: it.card.label }),
           })
+        } else if (coordenado && coordForm === 'finite') {
+          // Coordenado com um verbo finito: flexiona igual a ele.
+          const text = conjugate(label, person, tense)
+          push(text, text === label ? 'card' : 'inflected', {
+            cardIndex: it.index,
+            ...(text === label ? {} : { original: it.card.label }),
+          })
         } else {
-          // Verbo em cadeia fica no infinitivo.
+          // Complemento de modal, ou coordenado sob um auxiliar compartilhado:
+          // infinitivo.
           push(it.card.label, 'card', { cardIndex: it.index })
+        }
+        if (!emCadeia) {
+          // Perifrase ("vou brincar", "estou brincando") poe a flexao no
+          // auxiliar, e o auxiliar vale para a lista toda.
+          coordForm = tense === 'future' || marks.progressive ? 'infinitive' : 'finite'
+        } else if (!coordenado) {
+          coordForm = 'infinitive'
         }
         verbDone = true
 
         lastVerbLabel = label
-        if (lex.prep) {
+        if (lex.prep && !explicitPrep) {
           pendingPrep = lex.prep
           regencyPrep = lex.prep
         }
@@ -659,7 +727,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // card e mesmo um lugar ou uma pessoa.
         // Movimento + lugar pede "para": "vou pra escola". Movimento + pessoa
         // pede "a": "vou ao médico" — nunca "vou o médico".
-        if (label === 'ir' || label === 'vir') {
+        if ((label === 'ir' || label === 'vir') && !explicitPrep) {
           if (next?.lex.place) pendingPrep = to
           else if (next?.lex.animate) pendingPrep = 'a'
         }
@@ -763,6 +831,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           ...(text === it.card.label ? {} : { original: it.card.label }),
         })
 
+        explicitPrep = false
         lastNoun = { gender, plural: isPlural || Boolean(lex.plural), label, lex }
         // "medo de cair", "vontade de ir": substantivo de estado tambem liga
         // ao verbo seguinte por preposicao.
@@ -800,6 +869,76 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         push(it.card.label, 'card', { cardIndex: it.index })
         // "mais agua", "muito bolo": quantificador ja determina, artigo sobra.
         suppressArticle = true
+        previousWasNoun = false
+        break
+
+      /**
+       * PALAVRA FUNCIONAL ESCOLHIDA PELA PESSOA.
+       *
+       * O motor insere artigo e preposicao sozinho o tempo todo. Isso e util
+       * ate a pessoa querer OUTRA — "brincar COM a mãe" em vez de "brincar a
+       * mãe", "suco SEM açucar", "o carro DELE". A partir daqui existe card
+       * para cada uma delas, e a regra e simples: **escolha da pessoa vence a
+       * do motor**.
+       *
+       * O que o motor ainda faz e concordar a forma. Quem toca "o" e depois
+       * "mãe" escolheu artigo definido, nao escolheu masculino.
+       */
+      case 'preposition':
+        push(it.card.label, 'card', { cardIndex: it.index })
+        pendingPrep = label
+        explicitPrep = true
+        previousWasNoun = false
+        break
+
+      case 'article': {
+        const alvo = next?.lex.class === 'noun' ? next.lex : undefined
+        const gender = alvo?.gender ?? lex.gender ?? 'm'
+        const plural = Boolean(alvo?.plural) || next?.index === lastNounIndex
+        const forms = ARTICLES[label]
+        const text = forms ? forms[gender][plural ? 1 : 0] : it.card.label
+        // A preposicao pendente contrai com o artigo escolhido: EM + O = "no".
+        if (pendingPrep) {
+          const merged = contract(pendingPrep, text)
+          pendingPrep = null
+          if (merged.length === 1) {
+            // Some o token da preposicao ja emitido e entra a forma contraida.
+            const last = tokens[tokens.length - 1]
+            if (last?.text === label || last?.kind === 'card') tokens.pop()
+            push(merged[0]!, 'inflected', { cardIndex: it.index, original: it.card.label })
+          } else {
+            push(text, text === it.card.label ? 'card' : 'inflected', {
+              cardIndex: it.index,
+              ...(text === it.card.label ? {} : { original: it.card.label }),
+            })
+          }
+        } else {
+          push(text, text === it.card.label ? 'card' : 'inflected', {
+            cardIndex: it.index,
+            ...(text === it.card.label ? {} : { original: it.card.label }),
+          })
+        }
+        suppressArticle = true
+        previousWasNoun = false
+        break
+      }
+
+      case 'interjection':
+        push(it.card.label, 'card', { cardIndex: it.index })
+        // "Ah, mãe!" — interjeicao pede pausa, e quem vem depois e chamado, nao
+        // descrito: vocativo nao leva artigo.
+        {
+          const last = tokens[tokens.length - 1]
+          if (last && next) last.text = `${last.text},`
+        }
+        if (next?.lex.class === 'noun' && next.lex.animate) suppressArticle = true
+        previousWasNoun = false
+        break
+
+      case 'connector':
+        push(it.card.label, 'card', { cardIndex: it.index })
+        // A pessoa ja pos o "e"; o motor nao poe outro.
+        explicitConnector = true
         previousWasNoun = false
         break
 

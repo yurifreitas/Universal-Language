@@ -176,7 +176,7 @@ export function SentenceBar({
           nada na tela dizia que ela existia. Um convite de uma linha resolve:
           o recurso deixa de depender de a pessoa abrir Ajustes e ler ate o fim
           para descobrir que o app conjuga verbo. */}
-      {!composed && (
+      {!composed && !empty && (
         <div className="marks">
           <button type="button" className="mark mark--invite" onClick={onEnableGrammar}>
             <span aria-hidden="true">✍️</span>
@@ -185,7 +185,7 @@ export function SentenceBar({
         </div>
       )}
 
-      {composed && (
+      {composed && !empty && (
         <div className="marks" role="toolbar" aria-label="Marcadores gramaticais">
           <div className="marks__set" role="group" aria-label="Tempo verbal">
             {TENSES.map((t) => (
