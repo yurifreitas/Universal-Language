@@ -30,8 +30,15 @@ export type WordClass =
   | 'social'
   | 'connector'
 
-/** Pessoa gramatical. `2s` (voce) flexiona como 3a pessoa em pt-BR. */
-export type Person = '1s' | '2s' | '3s' | '1p' | '3p'
+/**
+ * Pessoa gramatical.
+ *
+ * `2s` e "voce", que flexiona como 3a pessoa em pt-BR. `2t` e o "tu" normativo
+ * ("tu queres", "tu foste"), usado quando a pessoa escolhe uma variedade com tu
+ * E o registro normativo — no coloquial brasileiro, "tu" leva o verbo na forma
+ * de 3a pessoa e cai em `2s`. Ver `regional.ts`.
+ */
+export type Person = '1s' | '2s' | '2t' | '3s' | '1p' | '3p'
 
 export type Tense = 'present' | 'past' | 'future'
 
@@ -75,61 +82,61 @@ type VerbForms = Partial<Record<Tense, Partial<Record<Person, string>>>>
  */
 export const IRREGULAR_VERBS: Record<string, VerbForms> = {
   ser: {
-    present: { '1s': 'sou', '2s': 'é', '3s': 'é', '1p': 'somos', '3p': 'são' },
-    past: { '1s': 'fui', '2s': 'foi', '3s': 'foi', '1p': 'fomos', '3p': 'foram' },
+    present: { '2t': 'és', '1s': 'sou', '2s': 'é', '3s': 'é', '1p': 'somos', '3p': 'são' },
+    past: { '2t': 'foste', '1s': 'fui', '2s': 'foi', '3s': 'foi', '1p': 'fomos', '3p': 'foram' },
   },
   estar: {
-    present: { '1s': 'estou', '2s': 'está', '3s': 'está', '1p': 'estamos', '3p': 'estão' },
-    past: { '1s': 'estive', '2s': 'esteve', '3s': 'esteve', '1p': 'estivemos', '3p': 'estiveram' },
+    present: { '2t': 'estás', '1s': 'estou', '2s': 'está', '3s': 'está', '1p': 'estamos', '3p': 'estão' },
+    past: { '2t': 'estiveste', '1s': 'estive', '2s': 'esteve', '3s': 'esteve', '1p': 'estivemos', '3p': 'estiveram' },
   },
   ter: {
-    present: { '1s': 'tenho', '2s': 'tem', '3s': 'tem', '1p': 'temos', '3p': 'têm' },
-    past: { '1s': 'tive', '2s': 'teve', '3s': 'teve', '1p': 'tivemos', '3p': 'tiveram' },
+    present: { '2t': 'tens', '1s': 'tenho', '2s': 'tem', '3s': 'tem', '1p': 'temos', '3p': 'têm' },
+    past: { '2t': 'tiveste', '1s': 'tive', '2s': 'teve', '3s': 'teve', '1p': 'tivemos', '3p': 'tiveram' },
   },
   querer: {
-    present: { '1s': 'quero', '2s': 'quer', '3s': 'quer', '1p': 'queremos', '3p': 'querem' },
-    past: { '1s': 'quis', '2s': 'quis', '3s': 'quis', '1p': 'quisemos', '3p': 'quiseram' },
+    present: { '2t': 'queres', '1s': 'quero', '2s': 'quer', '3s': 'quer', '1p': 'queremos', '3p': 'querem' },
+    past: { '2t': 'quiseste', '1s': 'quis', '2s': 'quis', '3s': 'quis', '1p': 'quisemos', '3p': 'quiseram' },
   },
   ir: {
-    present: { '1s': 'vou', '2s': 'vai', '3s': 'vai', '1p': 'vamos', '3p': 'vão' },
-    past: { '1s': 'fui', '2s': 'foi', '3s': 'foi', '1p': 'fomos', '3p': 'foram' },
+    present: { '2t': 'vais', '1s': 'vou', '2s': 'vai', '3s': 'vai', '1p': 'vamos', '3p': 'vão' },
+    past: { '2t': 'foste', '1s': 'fui', '2s': 'foi', '3s': 'foi', '1p': 'fomos', '3p': 'foram' },
   },
   vir: {
-    present: { '1s': 'venho', '2s': 'vem', '3s': 'vem', '1p': 'vimos', '3p': 'vêm' },
-    past: { '1s': 'vim', '2s': 'veio', '3s': 'veio', '1p': 'viemos', '3p': 'vieram' },
+    present: { '2t': 'vens', '1s': 'venho', '2s': 'vem', '3s': 'vem', '1p': 'vimos', '3p': 'vêm' },
+    past: { '2t': 'vieste', '1s': 'vim', '2s': 'veio', '3s': 'veio', '1p': 'viemos', '3p': 'vieram' },
   },
   dar: {
-    present: { '1s': 'dou', '2s': 'dá', '3s': 'dá', '1p': 'damos', '3p': 'dão' },
-    past: { '1s': 'dei', '2s': 'deu', '3s': 'deu', '1p': 'demos', '3p': 'deram' },
+    present: { '2t': 'dás', '1s': 'dou', '2s': 'dá', '3s': 'dá', '1p': 'damos', '3p': 'dão' },
+    past: { '2t': 'deste', '1s': 'dei', '2s': 'deu', '3s': 'deu', '1p': 'demos', '3p': 'deram' },
   },
   fazer: {
-    present: { '1s': 'faço', '2s': 'faz', '3s': 'faz', '1p': 'fazemos', '3p': 'fazem' },
-    past: { '1s': 'fiz', '2s': 'fez', '3s': 'fez', '1p': 'fizemos', '3p': 'fizeram' },
+    present: { '2t': 'fazes', '1s': 'faço', '2s': 'faz', '3s': 'faz', '1p': 'fazemos', '3p': 'fazem' },
+    past: { '2t': 'fizeste', '1s': 'fiz', '2s': 'fez', '3s': 'fez', '1p': 'fizemos', '3p': 'fizeram' },
   },
   poder: {
-    present: { '1s': 'posso', '2s': 'pode', '3s': 'pode', '1p': 'podemos', '3p': 'podem' },
-    past: { '1s': 'pude', '2s': 'pôde', '3s': 'pôde', '1p': 'pudemos', '3p': 'puderam' },
+    present: { '2t': 'podes', '1s': 'posso', '2s': 'pode', '3s': 'pode', '1p': 'podemos', '3p': 'podem' },
+    past: { '2t': 'pudeste', '1s': 'pude', '2s': 'pôde', '3s': 'pôde', '1p': 'pudemos', '3p': 'puderam' },
   },
   ver: {
-    present: { '1s': 'vejo', '2s': 'vê', '3s': 'vê', '1p': 'vemos', '3p': 'veem' },
-    past: { '1s': 'vi', '2s': 'viu', '3s': 'viu', '1p': 'vimos', '3p': 'viram' },
+    present: { '2t': 'vês', '1s': 'vejo', '2s': 'vê', '3s': 'vê', '1p': 'vemos', '3p': 'veem' },
+    past: { '2t': 'viste', '1s': 'vi', '2s': 'viu', '3s': 'viu', '1p': 'vimos', '3p': 'viram' },
   },
   saber: {
-    present: { '1s': 'sei', '2s': 'sabe', '3s': 'sabe', '1p': 'sabemos', '3p': 'sabem' },
-    past: { '1s': 'soube', '2s': 'soube', '3s': 'soube', '1p': 'soubemos', '3p': 'souberam' },
+    present: { '2t': 'sabes', '1s': 'sei', '2s': 'sabe', '3s': 'sabe', '1p': 'sabemos', '3p': 'sabem' },
+    past: { '2t': 'soubeste', '1s': 'soube', '2s': 'soube', '3s': 'soube', '1p': 'soubemos', '3p': 'souberam' },
   },
   ler: {
-    present: { '1s': 'leio', '2s': 'lê', '3s': 'lê', '1p': 'lemos', '3p': 'leem' },
-    past: { '1s': 'li', '2s': 'leu', '3s': 'leu', '1p': 'lemos', '3p': 'leram' },
+    present: { '2t': 'lês', '1s': 'leio', '2s': 'lê', '3s': 'lê', '1p': 'lemos', '3p': 'leem' },
+    past: { '2t': 'leste', '1s': 'li', '2s': 'leu', '3s': 'leu', '1p': 'lemos', '3p': 'leram' },
   },
   ouvir: {
-    present: { '1s': 'ouço', '2s': 'ouve', '3s': 'ouve', '1p': 'ouvimos', '3p': 'ouvem' },
+    present: { '2t': 'ouves', '1s': 'ouço', '2s': 'ouve', '3s': 'ouve', '1p': 'ouvimos', '3p': 'ouvem' },
   },
   dormir: {
-    present: { '1s': 'durmo', '2s': 'dorme', '3s': 'dorme', '1p': 'dormimos', '3p': 'dormem' },
+    present: { '2t': 'dormes', '1s': 'durmo', '2s': 'dorme', '3s': 'dorme', '1p': 'dormimos', '3p': 'dormem' },
   },
   vestir: {
-    present: { '1s': 'visto', '2s': 'veste', '3s': 'veste', '1p': 'vestimos', '3p': 'vestem' },
+    present: { '2t': 'vestes', '1s': 'visto', '2s': 'veste', '3s': 'veste', '1p': 'vestimos', '3p': 'vestem' },
   },
   doer: {
     present: { '3s': 'dói', '3p': 'doem' },
@@ -147,6 +154,57 @@ export const IRREGULAR_VERBS: Record<string, VerbForms> = {
   começar: { past: { '1s': 'comecei' } },
 }
 
+/**
+ * Imperfeito de ESTAR — a unica forma de imperfeito que o motor precisa, porque
+ * so aparece no progressivo passado ("eu estava comendo"). Conjugar o
+ * imperfeito de todos os verbos exigiria outra tabela inteira; a perifrase
+ * resolve com um verbo so.
+ */
+export const ESTAR_IMPERFECT: Record<Person, string> = {
+  '1s': 'estava',
+  '2s': 'estava',
+  '2t': 'estavas',
+  '3s': 'estava',
+  '1p': 'estávamos',
+  '3p': 'estavam',
+}
+
+/**
+ * Presente do subjuntivo, usado para o imperativo normativo ("abra a porta").
+ * Só os irregulares: os regulares seguem a troca de vogal temática
+ * (-ar → -e, -er/-ir → -a).
+ */
+export const SUBJUNCTIVE: Record<string, string> = {
+  ser: 'seja',
+  estar: 'esteja',
+  ter: 'tenha',
+  ir: 'vá',
+  vir: 'venha',
+  dar: 'dê',
+  fazer: 'faça',
+  poder: 'possa',
+  querer: 'queira',
+  saber: 'saiba',
+  ver: 'veja',
+  ler: 'leia',
+  ouvir: 'ouça',
+  dormir: 'durma',
+  vestir: 'vista',
+  pegar: 'pegue',
+  brincar: 'brinque',
+  ficar: 'fique',
+  jogar: 'jogue',
+  chegar: 'chegue',
+  dançar: 'dance',
+  começar: 'comece',
+}
+
+/** Gerundios que a regra (-ar→ando, -er→endo, -ir→indo) nao acerta. */
+export const GERUND: Record<string, string> = {
+  vir: 'vindo',
+  pôr: 'pondo',
+}
+
 /* ------------------------------------------------------------------ lexico */
 
 const V = (extra: Partial<Lexeme> = {}): Lexeme => ({ class: 'verb', ...extra })
@@ -161,6 +219,12 @@ export const LEXICON: Record<string, Lexeme> = {
   /* ------------------------------------------------------------- nucleo */
   eu: { class: 'pronoun', person: '1s' },
   você: { class: 'pronoun', person: '2s' },
+  // `tu` entra como 2s: a pessoa que ele exige depende do registro escolhido, e
+  // essa decisao e do motor (`grammar.ts`), nao do lexico.
+  tu: { class: 'pronoun', person: '2s' },
+  // "A gente" e semanticamente 1a do plural e gramaticalmente 3a do singular —
+  // "a gente vai", nunca "a gente vamos".
+  'a gente': { class: 'pronoun', person: '3s' },
   ele: { class: 'pronoun', person: '3s' },
   ela: { class: 'pronoun', person: '3s' },
   nós: { class: 'pronoun', person: '1p' },

@@ -288,9 +288,11 @@ a mesma regra de estabilidade posicional que vale na prancha (LAMP).
 7. **As frases prontas são um chute informado.** Foram escritas a partir dos
    contextos que a literatura de CAA descreve como recorrentes, não de registro
    de uso real. Quais faltam só se descobre observando alguém usar.
-8. **Não há frase pronta em primeira pessoa do plural nem no feminino.** "Estou
-   cansado" está no masculino não marcado, e o ajuste de concordância da seção 4
-   não alcança as frases prontas, porque elas não passam pelo motor.
+8. **A concordância das frases prontas é por tabela, não por regra.** Como elas
+   não passam pelo motor, as poucas com adjetivo referente a quem fala têm uma
+   versão feminina escrita à mão, trocada conforme o ajuste da seção 4. Frase
+   nova com adjetivo exige entrada nova na tabela — e não há nada que avise
+   quando alguém esquece.
 
 ---
 

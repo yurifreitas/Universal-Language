@@ -1,3 +1,5 @@
+import type { Region, Register } from './lib/regional'
+
 export interface Card {
   /** id do pictograma na ARASAAC */
   id: number
@@ -84,6 +86,16 @@ export interface Settings {
    * modo compativel com alto contraste.
    */
   wordColors: 'off' | 'border' | 'fill'
+  /**
+   * Variedade regional do portugues brasileiro. Troca rotulos ("mandioca" →
+   * "macaxeira") e o tratamento de 2a pessoa (voce/tu). Ver `lib/regional.ts`.
+   */
+  region: Region
+  /**
+   * Registro. `coloquial` fala como se fala ("pra", "abre a porta", "tu quer");
+   * `normativo` fala como a escola cobra ("para", "abra a porta", "tu queres").
+   */
+  register: Register
 
   /* ------------------------------------------------------------ tipografia */
 
@@ -115,6 +127,8 @@ export const DEFAULT_SETTINGS: Settings = {
   grammar: false,
   speakerGender: 'n',
   wordColors: 'off',
+  region: 'padrao',
+  register: 'coloquial',
   font: 'auto',
   textScale: 1,
   letterSpacing: 0,

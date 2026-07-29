@@ -1,13 +1,23 @@
 import type { Card } from '../types'
 import {
+  ESTAR_IMPERFECT,
+  GERUND,
   IRREGULAR_VERBS,
   LEXICON,
+  SUBJUNCTIVE,
   TIME_ADVERBS,
   lookup,
   type Lexeme,
   type Person,
   type Tense,
 } from './lexicon'
+import {
+  regionalLabel,
+  secondPerson,
+  tuUsesThirdPerson,
+  type Region,
+  type Register,
+} from './regional'
 
 /**
  * Motor de frases — de selecao telegrafica para portugues flexionado.
@@ -40,6 +50,19 @@ export interface GrammarMarks {
   question: boolean
   /** Pluraliza o ultimo substantivo da frase. */
   plural: boolean
+  /**
+   * Acontecendo agora: perifrase progressiva ("estou comendo"). Combina com o
+   * tempo — com passado da o imperfeito ("estava comendo"), que e a unica forma
+   * de imperfeito que o motor produz.
+   */
+  progressive: boolean
+  /**
+   * Pedido. Poe o verbo no imperativo ("abre a porta" no coloquial, "abra a
+   * porta" no normativo). Nao se aplica quando a frase tem sujeito explicito
+   * de 2a pessoa: "voce abre a porta" ja e um pedido em portugues falado, e
+   * "voce abra" nao existe.
+   */
+  request: boolean
 }
 
 export const NO_MARKS: GrammarMarks = {
@@ -47,6 +70,8 @@ export const NO_MARKS: GrammarMarks = {
   negated: false,
   question: false,
   plural: false,
+  progressive: false,
+  request: false,
 }
 
 export type TokenKind =
@@ -80,20 +105,64 @@ export interface Composed {
 
 const REGULAR: Record<'ar' | 'er' | 'ir', Record<Tense, Record<Person, string>>> = {
   ar: {
-    present: { '1s': 'o', '2s': 'a', '3s': 'a', '1p': 'amos', '3p': 'am' },
-    past: { '1s': 'ei', '2s': 'ou', '3s': 'ou', '1p': 'amos', '3p': 'aram' },
-    future: { '1s': 'ar', '2s': 'ar', '3s': 'ar', '1p': 'ar', '3p': 'ar' },
+    present: { '1s': 'o', '2s': 'a', '2t': 'as', '3s': 'a', '1p': 'amos', '3p': 'am' },
+    past: { '1s': 'ei', '2s': 'ou', '2t': 'aste', '3s': 'ou', '1p': 'amos', '3p': 'aram' },
+    future: { '1s': 'ar', '2s': 'ar', '2t': 'ar', '3s': 'ar', '1p': 'ar', '3p': 'ar' },
   },
   er: {
-    present: { '1s': 'o', '2s': 'e', '3s': 'e', '1p': 'emos', '3p': 'em' },
-    past: { '1s': 'i', '2s': 'eu', '3s': 'eu', '1p': 'emos', '3p': 'eram' },
-    future: { '1s': 'er', '2s': 'er', '3s': 'er', '1p': 'er', '3p': 'er' },
+    present: { '1s': 'o', '2s': 'e', '2t': 'es', '3s': 'e', '1p': 'emos', '3p': 'em' },
+    past: { '1s': 'i', '2s': 'eu', '2t': 'este', '3s': 'eu', '1p': 'emos', '3p': 'eram' },
+    future: { '1s': 'er', '2s': 'er', '2t': 'er', '3s': 'er', '1p': 'er', '3p': 'er' },
   },
   ir: {
-    present: { '1s': 'o', '2s': 'e', '3s': 'e', '1p': 'imos', '3p': 'em' },
-    past: { '1s': 'i', '2s': 'iu', '3s': 'iu', '1p': 'imos', '3p': 'iram' },
-    future: { '1s': 'ir', '2s': 'ir', '3s': 'ir', '1p': 'ir', '3p': 'ir' },
+    present: { '1s': 'o', '2s': 'e', '2t': 'es', '3s': 'e', '1p': 'imos', '3p': 'em' },
+    past: { '1s': 'i', '2s': 'iu', '2t': 'iste', '3s': 'iu', '1p': 'imos', '3p': 'iram' },
+    future: { '1s': 'ir', '2s': 'ir', '2t': 'ir', '3s': 'ir', '1p': 'ir', '3p': 'ir' },
   },
+}
+
+function verbGroup(head: string): 'ar' | 'er' | 'ir' | null {
+  if (head.endsWith('ar')) return 'ar'
+  if (head.endsWith('er')) return 'er'
+  if (head.endsWith('ir')) return 'ir'
+  return null
+}
+
+/** Gerundio: falar → falando, comer → comendo, partir → partindo. */
+export function gerund(infinitive: string): string {
+  const parts = infinitive.split(' ')
+  const head = parts[0] ?? infinitive
+  const tail = parts.slice(1).join(' ')
+  const join = (v: string) => (tail ? `${v} ${tail}` : v)
+
+  const known = GERUND[head]
+  if (known) return join(known)
+  const group = verbGroup(head)
+  if (!group) return infinitive
+  return join(`${head.slice(0, -2)}${group === 'ar' ? 'ando' : group === 'er' ? 'endo' : 'indo'}`)
+}
+
+/**
+ * Imperativo de 2a pessoa.
+ *
+ * No coloquial brasileiro o imperativo afirmativo usa a forma de 3a do presente
+ * ("abre a porta", "me ajuda"); a gramatica normativa, para "voce", usa o
+ * subjuntivo ("abra a porta"). As duas circulam, e nenhuma e erro — o app segue
+ * o registro que a pessoa escolheu, e nao corrige ninguem.
+ */
+export function imperative(infinitive: string, register: Register): string {
+  const parts = infinitive.split(' ')
+  const head = parts[0] ?? infinitive
+  const tail = parts.slice(1).join(' ')
+  const join = (v: string) => (tail ? `${v} ${tail}` : v)
+
+  if (register === 'coloquial') return join(conjugate(head, '3s', 'present'))
+
+  const known = SUBJUNCTIVE[head]
+  if (known) return join(known)
+  const group = verbGroup(head)
+  if (!group) return infinitive
+  return join(`${head.slice(0, -2)}${group === 'ar' ? 'e' : 'a'}`)
 }
 
 /**
@@ -119,7 +188,7 @@ export function conjugate(infinitive: string, person: Person, tense: Tense): str
   const irregular = IRREGULAR_VERBS[head]?.[tense]?.[person]
   if (irregular) return join(irregular)
 
-  const group = head.endsWith('ar') ? 'ar' : head.endsWith('er') ? 'er' : head.endsWith('ir') ? 'ir' : null
+  const group = verbGroup(head)
   if (!group) return infinitive // nao sabemos conjugar: devolve intacto
 
   return join(head.slice(0, -2) + REGULAR[group][tense][person])
@@ -168,6 +237,9 @@ const CONTRACTIONS: Record<string, Record<string, string>> = {
   de: { o: 'do', a: 'da', os: 'dos', as: 'das' },
   em: { o: 'no', a: 'na', os: 'nos', as: 'nas' },
   a: { o: 'ao', a: 'à', os: 'aos', as: 'às' },
+  // "pra" e a forma falada de "para", e contrai igual: pro, pra, pros, pras.
+  // "para" nao contrai — e a forma escrita, e "paro parque" nao existe.
+  pra: { o: 'pro', a: 'pra', os: 'pros', as: 'pras' },
 }
 
 /** "em" + "a" = "na". Preposicoes sem contracao ("para", "com") ficam soltas. */
@@ -195,29 +267,69 @@ export type SpeakerGender = 'n' | 'm' | 'f'
 export interface ComposeOptions {
   marks?: GrammarMarks
   speakerGender?: SpeakerGender
+  region?: Region
+  register?: Register
 }
 
 export function compose(sentence: Card[], options: ComposeOptions = {}): Composed {
   const marks = options.marks ?? NO_MARKS
   const speakerGender = options.speakerGender ?? 'n'
-  const raw = sentence.map((c) => c.label).join(' ')
+  const region = options.region ?? 'padrao'
+  const register = options.register ?? 'coloquial'
+  const raw = sentence.map((c) => regionalLabel(c.label, region)).join(' ')
 
-  const items: Item[] = sentence.map((card, index) => ({
-    card,
-    index,
-    label: card.label.trim().toLowerCase(),
-    lex: lookup(card.label),
-  }))
+  /** "para" vira "pra" no coloquial — e assim que se fala, e o app fala. */
+  const to = register === 'coloquial' ? 'pra' : 'para'
+
+  const items: Item[] = sentence.map((card, index) => {
+    const label = card.label.trim().toLowerCase()
+    const lex = lookup(label)
+    // A variante regional pode ter OUTRO genero — "o biscoito" vira "a
+    // bolacha", "a mandioca" vira "o aipim". Classe, regencia e contabilidade
+    // continuam vindo da palavra canonica; so o genero (e o plural, que dele
+    // depende) sao relidos da forma que a pessoa vai de fato dizer.
+    const variant = regionalLabel(label, region)
+    if (variant !== label) {
+      const vlex = lookup(variant)
+      const merged: Lexeme = { ...lex }
+      if (vlex.gender) merged.gender = vlex.gender
+      // O plural irregular da palavra canonica nao vale para a variante:
+      // "pão/pães" nao diz nada sobre "cacetinho".
+      if (vlex.pluralForm) merged.pluralForm = vlex.pluralForm
+      else delete merged.pluralForm
+      return { card, index, label, lex: merged }
+    }
+    return { card, index, label, lex }
+  })
 
   if (!items.length) return { text: '', tokens: [], raw, changes: 0 }
 
   /* --- traços globais da frase ------------------------------------------ */
 
-  const pronoun = items.find((it) => it.lex.class === 'pronoun')
-  const person: Person = pronoun?.lex.person ?? '1s'
+  const firstVerbIndex = items.findIndex((it) => it.lex.class === 'verb')
+
+  // Pronome SUJEITO: so conta o que vem antes do primeiro verbo. Depois do
+  // verbo, um pronome e objeto ("eu vejo você"), e vira clitico mais abaixo.
+  const pronoun = items.find(
+    (it) => it.lex.class === 'pronoun' && (firstVerbIndex < 0 || it.index < firstVerbIndex),
+  )
+
+  // Sujeito tambem pode ser substantivo plural antes do verbo — "os meninos
+  // querem", nao "os meninos quer".
+  const subjectNoun = items.find(
+    (it) => it.lex.class === 'noun' && firstVerbIndex >= 0 && it.index < firstVerbIndex,
+  )
+
+  let person: Person = pronoun?.lex.person ?? '1s'
   // Sem pronome, a frase e assumida em 1a pessoa: numa prancha de CAA o
   // enunciado padrao e sobre o proprio falante ("quero agua"). O pronome
   // implicito NAO e escrito na frase — so a flexao do verbo o indica.
+  if (!pronoun && subjectNoun) person = subjectNoun.lex.plural ? '3p' : '3s'
+  // "tu" com registro normativo pede a 2a pessoa de verdade: "tu queres".
+  // No coloquial brasileiro, "tu" leva a forma de 3a — que ja e o valor de 2s.
+  // O card continua sendo o VOCÊ canonico; quem vira "tu" e a variedade.
+  const saysTu = pronoun && (pronoun.label === 'tu' || secondPerson(region) === 'tu')
+  if (saysTu && pronoun.lex.person === '2s' && !tuUsesThirdPerson(register)) person = '2t'
 
   const timeAdverb = items.find((it) => TIME_ADVERBS[it.label])
   const tense: Tense =
@@ -241,10 +353,56 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   let verbDone = false
   let negationDone = false
   let pendingPrep: string | null = null
+  /** Regencia do verbo principal, que se repete em cada item de uma lista. */
+  let regencyPrep: string | null = null
+  /**
+   * Preposicao que liga um adjetivo ou um substantivo abstrato ao verbo
+   * seguinte: "feliz DE ir", "medo DE cair", "cansado DE esperar". Sem ela sai
+   * "estou feliz ir comer", que nao e portugues.
+   */
+  let pendingVerbPrep: string | null = null
   let suppressArticle = false
   let lastNoun: { gender: 'm' | 'f'; plural: boolean; label: string; lex: Lexeme } | null = null
   let previousWasNoun = false
   let questionSeen = false
+
+  /**
+   * Clitico. Um pronome DEPOIS do verbo e objeto, e o portugues brasileiro o
+   * quer colado antes do verbo: "me ajuda", "te amo" — nao "ajuda eu".
+   *
+   * Esta e a segunda e ultima excecao a regra de nao reordenar (a primeira e a
+   * negacao). Nos dois casos a posicao nao e escolha de estilo: e exigida pela
+   * lingua, e manter a ordem tocada produziria frase agramatical.
+   *
+   * Nao se aplica quando o verbo rege preposicao — ai o pronome e complemento
+   * preposicionado e fica onde esta: "gosto de você", nunca "te gosto".
+   */
+  const objectPronoun = items.find(
+    (it) =>
+      it.lex.class === 'pronoun' &&
+      firstVerbIndex >= 0 &&
+      it.index > firstVerbIndex &&
+      (it.lex.person === '1s' || it.lex.person === '2s'),
+  )
+  const clitic =
+    objectPronoun && !items[firstVerbIndex]?.lex.prep
+      ? objectPronoun.lex.person === '1s'
+        ? 'me'
+        : 'te'
+      : null
+
+  // "AJUDAR · EU" nao e "eu ajudo": e um pedido a quem esta ouvindo. Quando o
+  // objeto e a propria pessoa e nao ha sujeito escrito, o sujeito implicito e o
+  // interlocutor, e o verbo vai para a 2a pessoa — "me ajuda", nao "me ajudo".
+  if (!pronoun && clitic === 'me') person = '2s'
+
+  /**
+   * Pedido com sujeito de 2a pessoa explicito nao vira imperativo: "você abra a
+   * porta" nao existe, e "você abre a porta" ja e um pedido em portugues
+   * falado. O marcador so age quando o sujeito esta implicito.
+   */
+  const useImperative =
+    marks.request && !(pronoun && (pronoun.lex.person === '2s' || pronoun.lex.person === '2t'))
 
   const emitNegation = () => {
     if (!negated || negationDone) return
@@ -284,6 +442,15 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         break
 
       case 'pronoun':
+        // O pronome-objeto ja foi (ou sera) emitido como clitico antes do
+        // verbo; repeti-lo aqui daria "me ajuda eu".
+        if (clitic && objectPronoun?.index === it.index) break
+        // Verbo que rege preposicao tambem a exige antes de pronome:
+        // "gosto DE você", "brinco COM você".
+        if (pendingPrep) {
+          push(pendingPrep, 'inserted')
+          pendingPrep = null
+        }
         push(it.card.label, 'card', { cardIndex: it.index })
         previousWasNoun = false
         break
@@ -314,21 +481,45 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           push(it.card.label, 'card', { cardIndex: it.index })
           verbDone = true
         } else if (!verbDone) {
-          const text = conjugate(label, person, tense)
+          if (clitic && objectPronoun) {
+            push(clitic, 'inflected', {
+              cardIndex: objectPronoun.index,
+              original: objectPronoun.card.label,
+            })
+          }
+          const text = useImperative
+            ? imperative(label, register)
+            : marks.progressive
+              ? `${tense === 'past' ? ESTAR_IMPERFECT[person] : conjugate('estar', person, tense)} ${gerund(label)}`
+              : conjugate(label, person, tense)
           push(text, text === label ? 'card' : 'inflected', {
             cardIndex: it.index,
             ...(text === label ? {} : { original: it.card.label }),
           })
           verbDone = true
         } else {
-          // Verbo em cadeia fica no infinitivo: "quero comer", "vou dormir".
+          // Verbo em cadeia fica no infinitivo: "quero comer", "vou dormir" —
+          // mas se o que veio antes foi adjetivo ou estado, a ligacao entra:
+          // "estou feliz DE ir comer".
+          if (pendingVerbPrep) {
+            push(pendingVerbPrep, 'inserted')
+            pendingVerbPrep = null
+          }
           push(it.card.label, 'card', { cardIndex: it.index })
         }
 
-        if (lex.prep) pendingPrep = lex.prep
-        // Movimento + lugar pede "para": "vou para a escola". So se o proximo
-        // for de fato um lugar — "vou dormir" nao leva preposicao alguma.
-        if ((label === 'ir' || label === 'vir') && next?.lex.place) pendingPrep = 'para'
+        if (lex.prep) {
+          pendingPrep = lex.prep
+          regencyPrep = lex.prep
+        }
+        // "vou dormir" nao leva preposicao alguma: so entra quando o proximo
+        // card e mesmo um lugar ou uma pessoa.
+        // Movimento + lugar pede "para": "vou pra escola". Movimento + pessoa
+        // pede "a": "vou ao médico" — nunca "vou o médico".
+        if (label === 'ir' || label === 'vir') {
+          if (next?.lex.place) pendingPrep = to
+          else if (next?.lex.animate) pendingPrep = 'a'
+        }
         previousWasNoun = false
         break
       }
@@ -362,11 +553,35 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           verbDone = true
         }
 
-        // Dois substantivos seguidos pedem ligacao. DOR + parte do corpo e o
-        // caso mais frequente numa prancha ("dor na barriga"); os demais
-        // recebem "de" ("suco de fruta").
+        // Dois substantivos seguidos: o que liga um ao outro depende do que eles
+        // sao.
+        //
+        // Ligar tudo com "de" produzia o absurdo que aparece quando alguem toca
+        // tres pessoas seguidas: MÃE · PAI · AVÓ virava "a mãe do pai da avó" —
+        // uma genealogia que ninguem quis dizer. Tocar tres pessoas e uma
+        // LISTA, e lista se faz com virgula e "e", nao com posse.
         if (previousWasNoun && !pendingPrep && lastNoun) {
-          pendingPrep = lastNoun.label === 'dor' && lex.bodyPart ? 'em' : 'de'
+          if (lastNoun.label === 'dor' && lex.bodyPart) {
+            pendingPrep = 'em'
+          } else if (lastNoun.lex.animate && lex.animate) {
+            // Virgula entre os do meio, "e" antes do ultimo.
+            const maisPessoas = items
+              .slice(i + 1)
+              .some((x) => x.lex.class === 'noun' && x.lex.animate)
+            const last = tokens[tokens.length - 1]
+            if (maisPessoas) {
+              if (last) last.text = `${last.text},`
+            } else {
+              push('e', 'inserted')
+            }
+            // A regencia do verbo vale para TODOS os itens da lista: "gosto da
+            // mãe, do pai e da irmã" — nao "gosto da mãe, o pai e a irmã".
+            if (regencyPrep) pendingPrep = regencyPrep
+          } else {
+            // "suco de fruta", "casa da mãe": aqui a relacao e mesmo de posse
+            // ou de tipo, e "de" e o que a lingua usa.
+            pendingPrep = 'de'
+          }
         }
 
         const gender = lex.gender ?? 'm'
@@ -387,6 +602,9 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         })
 
         lastNoun = { gender, plural: isPlural || Boolean(lex.plural), label, lex }
+        // "medo de cair", "vontade de ir": substantivo de estado tambem liga
+        // ao verbo seguinte por preposicao.
+        if (next?.lex.class === 'verb' && lex.mass) pendingVerbPrep = 'de'
         suppressArticle = false
         previousWasNoun = true
         break
@@ -410,6 +628,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           cardIndex: it.index,
           ...(text === it.card.label ? {} : { original: it.card.label }),
         })
+        // "feliz de ir", "cansado de esperar", "pronto para sair".
+        if (next?.lex.class === 'verb') pendingVerbPrep = 'de'
         previousWasNoun = false
         break
       }
@@ -448,10 +668,21 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     )
   }
 
-  const text = punctuate(tokens.map((t) => t.text).join(' '), question)
-  const changes = tokens.filter((t) => t.kind !== 'card').length
+  // O regionalismo entra aqui, no fim, e nao no lexico: internamente a frase e
+  // sempre montada com o rotulo canonico, para que a gramatica funcione igual
+  // em qualquer variedade. So a saida — o que se ve e o que se fala — muda.
+  const shown =
+    region === 'padrao'
+      ? tokens
+      : tokens.map((t) => {
+          const text = regionalLabel(t.text, region)
+          return text === t.text ? t : { ...t, text }
+        })
 
-  return { text, tokens, raw, changes }
+  const text = punctuate(shown.map((t) => t.text).join(' '), question)
+  const changes = shown.filter((t) => t.kind !== 'card').length
+
+  return { text, tokens: shown, raw, changes }
 }
 
 function isPluralNext(next: Item | undefined, lastNounIndex: number): boolean {

@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import type { Card } from '../types'
 import type { Composed, GrammarMarks } from '../lib/grammar'
+import { regionalLabel, type Region } from '../lib/regional'
 import { Pictogram } from './Pictogram'
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
   /** Frase flexionada pelo motor. `null` quando a gramatica esta desligada. */
   composed: Composed | null
   marks: GrammarMarks
+  region: Region
   onMark: (patch: Partial<GrammarMarks>) => void
   onSpeak: () => void
   onBackspace: () => void
@@ -44,6 +46,7 @@ export function SentenceBar({
   sentence,
   composed,
   marks,
+  region,
   onMark,
   onSpeak,
   onBackspace,
@@ -51,7 +54,9 @@ export function SentenceBar({
   onRemoveAt,
 }: Props) {
   const empty = sentence.length === 0
-  const spoken = composed ? composed.text : sentence.map((c) => c.label).join(' ')
+  const spoken = composed
+    ? composed.text
+    : sentence.map((c) => regionalLabel(c.label, region)).join(' ')
 
   return (
     <div className="sentence">
@@ -67,10 +72,10 @@ export function SentenceBar({
               role="listitem"
               className="chip"
               onClick={() => onRemoveAt(i)}
-              aria-label={`Remover ${card.label}`}
+              aria-label={`Remover ${regionalLabel(card.label, region)}`}
             >
               <Pictogram card={card} eager />
-              <span className="chip__label">{card.label}</span>
+              <span className="chip__label">{regionalLabel(card.label, region)}</span>
             </button>
           ))
         )}
@@ -138,6 +143,28 @@ export function SentenceBar({
           >
             <span aria-hidden="true">?</span>
             <span className="sr-only">Pergunta</span>
+          </button>
+          <button
+            type="button"
+            className={`mark mark--wide ${marks.progressive ? 'mark--on' : ''}`}
+            aria-pressed={marks.progressive}
+            disabled={empty}
+            onClick={() => onMark({ progressive: !marks.progressive })}
+            title="Acontecendo agora — “estou comendo”"
+          >
+            <span aria-hidden="true">…ndo</span>
+            <span className="sr-only">Acontecendo agora</span>
+          </button>
+          <button
+            type="button"
+            className={`mark mark--wide ${marks.request ? 'mark--on' : ''}`}
+            aria-pressed={marks.request}
+            disabled={empty}
+            onClick={() => onMark({ request: !marks.request })}
+            title="Pedido — “abre a porta”"
+          >
+            <span aria-hidden="true">✋</span>
+            <span className="sr-only">Pedido</span>
           </button>
           <button
             type="button"

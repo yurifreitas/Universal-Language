@@ -152,3 +152,32 @@ export const REPAIR_GROUP: PhraseGroup = {
 }
 
 export const ALL_GROUPS: PhraseGroup[] = [...PHRASE_GROUPS, REPAIR_GROUP]
+
+/**
+ * Frases prontas nao passam pelo motor, entao nao herdam a concordancia de
+ * genero dele. Como algumas trazem adjetivo referente a quem fala, elas ficam
+ * no masculino nao marcado por padrao e sao trocadas por inteiro quando o
+ * usuario escolheu feminino em Ajustes.
+ *
+ * Uma tabela e nao uma regra: sao poucas frases, e trocar terminacao por regexp
+ * em texto livre erra ("Chama a minha mae" nao tem nada a flexionar).
+ */
+const FEMININE: Record<string, string> = {
+  'Estou enjoado.': 'Estou enjoada.',
+  'Já estou mais calmo.': 'Já estou mais calma.',
+  'Preciso ficar um tempo sozinho.': 'Preciso ficar um tempo sozinha.',
+  'Obrigado!': 'Obrigada!',
+  'Já chega, obrigado.': 'Já chega, obrigada.',
+}
+
+export function inflectGroup(group: PhraseGroup, gender: 'n' | 'm' | 'f'): PhraseGroup {
+  if (gender !== 'f') return group
+  if (!group.phrases.some((p) => FEMININE[p.label])) return group
+  return {
+    ...group,
+    phrases: group.phrases.map((p) => {
+      const f = FEMININE[p.label]
+      return f ? { ...p, label: f } : p
+    }),
+  }
+}

@@ -1,4 +1,6 @@
 import { DEFAULT_SETTINGS, type Settings } from '../types'
+import type { BoardEdits, CustomBoard } from './boardEdits'
+import type { Script } from './scripts'
 
 const KEY = 'autista-caa:settings:v1'
 
@@ -114,6 +116,81 @@ export const saveMyPhrases = (p: Card[]): void => saveCards(MY_PHRASES_KEY, p)
 export const loadHistory = (): Card[] => loadCards(HISTORY_KEY)
 export const saveHistory = (h: Card[]): void => saveCards(HISTORY_KEY, h)
 
+/* -------------------------------------------------- edicao de pranchas */
+
+const EDITS_KEY = 'autista-caa:board-edits:v1'
+const CUSTOM_KEY = 'autista-caa:custom-boards:v1'
+
+export function loadEdits(): BoardEdits {
+  try {
+    const raw = localStorage.getItem(EDITS_KEY)
+    if (!raw) return {}
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed as BoardEdits
+  } catch {
+    return {}
+  }
+}
+
+export function saveEdits(edits: BoardEdits): void {
+  try {
+    localStorage.setItem(EDITS_KEY, JSON.stringify(edits))
+  } catch {
+    /* idem */
+  }
+}
+
+export function loadCustomBoards(): CustomBoard[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (b): b is CustomBoard =>
+        typeof b === 'object' && b !== null && 'id' in b && 'name' in b && 'cards' in b,
+    )
+  } catch {
+    return []
+  }
+}
+
+export function saveCustomBoards(boards: CustomBoard[]): void {
+  try {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(boards))
+  } catch {
+    /* idem */
+  }
+}
+
+/* --------------------------------------------------------------- roteiros */
+
+const SCRIPTS_KEY = 'autista-caa:scripts:v1'
+
+export function loadScripts(): Script[] {
+  try {
+    const raw = localStorage.getItem(SCRIPTS_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (s): s is Script =>
+        typeof s === 'object' && s !== null && 'id' in s && 'name' in s && 'steps' in s,
+    )
+  } catch {
+    return []
+  }
+}
+
+export function saveScripts(scripts: Script[]): void {
+  try {
+    localStorage.setItem(SCRIPTS_KEY, JSON.stringify(scripts))
+  } catch {
+    /* idem */
+  }
+}
+
 /* -------------------------------------------------------------- perfil */
 
 export interface Profile {
@@ -121,6 +198,10 @@ export interface Profile {
   settings: Partial<Settings>
   favorites: Card[]
   phrases: Card[]
+  /** Ausentes em perfis exportados pela primeira versao do formato. */
+  edits?: BoardEdits
+  customBoards?: CustomBoard[]
+  scripts?: Script[]
 }
 
 /**
@@ -132,9 +213,8 @@ export interface Profile {
  * como o app e offline e nao tem conta, nao ha servidor de onde recuperar.
  * O arquivo tambem e o caminho para levar o mesmo perfil da escola para casa.
  */
-export function exportProfile(settings: Settings, favorites: Card[], phrases: Card[]): string {
-  const profile: Profile = { version: 1, settings, favorites, phrases }
-  return JSON.stringify(profile, null, 2)
+export function exportProfile(profile: Omit<Profile, 'version'>): string {
+  return JSON.stringify({ version: 1, ...profile } satisfies Profile, null, 2)
 }
 
 export function parseProfile(raw: string): Profile | null {
@@ -146,6 +226,9 @@ export function parseProfile(raw: string): Profile | null {
       settings: typeof p.settings === 'object' && p.settings ? p.settings : {},
       favorites: Array.isArray(p.favorites) ? p.favorites : [],
       phrases: Array.isArray(p.phrases) ? p.phrases : [],
+      edits: typeof p.edits === 'object' && p.edits ? p.edits : {},
+      customBoards: Array.isArray(p.customBoards) ? p.customBoards : [],
+      scripts: Array.isArray(p.scripts) ? p.scripts : [],
     }
   } catch {
     return null

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Card, Settings } from '../types'
-import { ALL_GROUPS, type PhraseGroup } from '../lib/phrases'
+import { ALL_GROUPS, inflectGroup, type PhraseGroup } from '../lib/phrases'
 import { useRovingFocus } from '../lib/useRovingFocus'
 import { CardGrid } from './CardGrid'
 import { Dialog } from './Dialog'
@@ -47,9 +47,10 @@ export function PhrasesPanel({
     if (history.length)
       dynamic.push({ id: 'historico', name: 'Disse agora há pouco', icon: '↩', phrases: history })
     // Grupos do usuario entram no FIM, nunca deslocando os fixos: a posicao de
-    // "Urgente" nao pode depender de quantas frases a pessoa salvou.
-    return [...ALL_GROUPS, ...dynamic]
-  }, [mine, history])
+    // "Urgente" nao pode depender de quantas frases a pessoa salvou. As frases
+    // salvas pela propria pessoa nao sao reflexionadas — sao as palavras dela.
+    return [...ALL_GROUPS.map((g) => inflectGroup(g, settings.speakerGender)), ...dynamic]
+  }, [mine, history, settings.speakerGender])
 
   const [active, setActive] = useState(0)
   const tabs = useRovingFocus(groups.length, setActive)

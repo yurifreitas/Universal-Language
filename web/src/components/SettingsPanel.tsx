@@ -2,12 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import type { Card, Settings } from '../types'
 import { loadVoices, portugueseVoices, speak } from '../lib/speech'
 import { exportProfile, parseProfile, type Profile } from '../lib/storage'
+import type { BoardEdits, CustomBoard } from '../lib/boardEdits'
+import type { Script } from '../lib/scripts'
+import { REGIONS } from '../lib/regional'
 import { Dialog } from './Dialog'
 
 interface Props {
   settings: Settings
   favorites: Card[]
   phrases: Card[]
+  edits: BoardEdits
+  customBoards: CustomBoard[]
+  scripts: Script[]
   onChange: (patch: Partial<Settings>) => void
   onImport: (profile: Profile) => void
   onClose: () => void
@@ -17,6 +23,9 @@ export function SettingsPanel({
   settings,
   favorites,
   phrases,
+  edits,
+  customBoards,
+  scripts,
   onChange,
   onImport,
   onClose,
@@ -26,7 +35,7 @@ export function SettingsPanel({
   const [transfer, setTransfer] = useState<string | null>(null)
 
   const download = () => {
-    const blob = new Blob([exportProfile(settings, favorites, phrases)], {
+    const blob = new Blob([exportProfile({ settings, favorites, phrases, edits, customBoards, scripts })], {
       type: 'application/json',
     })
     const url = URL.createObjectURL(blob)
@@ -256,6 +265,47 @@ export function SettingsPanel({
             pessoa.
           </p>
           <label className="field">
+            <span>Como se fala na sua região</span>
+            <select
+              value={settings.region}
+              onChange={(e) => onChange({ region: e.target.value as Settings['region'] })}
+            >
+              {REGIONS.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="settings__note">
+            {REGIONS.find((r) => r.id === settings.region)?.hint}
+          </p>
+          <p className="settings__note">
+            O rótulo de um card não é legenda — é a palavra que a pessoa vai dizer e que ouve em
+            casa. Uma criança do Recife que aponta a mandioca e ouve "mandioca" recebe um modelo
+            de língua que não é o da família dela. Nenhuma variedade é mais correta que outra; o
+            padrão de um app nacional acaba sendo o Sudeste por inércia, e isso é uma escolha,
+            não um fato.
+          </p>
+
+          <label className="field">
+            <span>Registro</span>
+            <select
+              value={settings.register}
+              onChange={(e) => onChange({ register: e.target.value as Settings['register'] })}
+            >
+              <option value="coloquial">Como se fala — "pra", "abre a porta"</option>
+              <option value="normativo">Como a escola cobra — "para", "abra a porta"</option>
+            </select>
+          </label>
+          <p className="settings__note">
+            As duas formas existem e nenhuma é erro. O coloquial serve à conversa do dia a dia; o
+            normativo existe para contexto escolar, onde a pessoa pode precisar da forma que a
+            professora espera. Com "tu", muda também o verbo: <em>tu quer</em> no coloquial,{' '}
+            <em>tu queres</em> no normativo.
+          </p>
+
+          <label className="field">
             <span>Cor por classe de palavra</span>
             <select
               value={settings.wordColors}
@@ -406,8 +456,10 @@ export function SettingsPanel({
             <span>Modo bloqueado</span>
           </label>
           <p className="settings__note">
-            O modo bloqueado esconde busca e configurações, deixando só a prancha. Para sair,
-            mantenha pressionado o cadeado por 2 segundos.
+            O modo bloqueado esconde busca e configurações, deixando só a prancha. As frases
+            prontas continuam acessíveis: elas são fala, não controle de cuidador, e incluem
+            "preciso de ajuda" e "estou com dor". Para sair, mantenha pressionado o cadeado por 2
+            segundos.
           </p>
         </section>
 
@@ -421,9 +473,11 @@ export function SettingsPanel({
           </p>
           <p className="settings__note">
             Vão no arquivo: todos os ajustes, {favorites.length}{' '}
-            {favorites.length === 1 ? 'favorito' : 'favoritos'} e {phrases.length}{' '}
-            {phrases.length === 1 ? 'frase salva' : 'frases salvas'}. O histórico do que foi dito
-            não vai — é conversa, não configuração.
+            {favorites.length === 1 ? 'favorito' : 'favoritos'}, {phrases.length}{' '}
+            {phrases.length === 1 ? 'frase salva' : 'frases salvas'}, {scripts.length}{' '}
+            {scripts.length === 1 ? 'roteiro' : 'roteiros'}, as pranchas que você criou e todas
+            as edições de card. O histórico do que foi dito não vai — é conversa, não
+            configuração.
           </p>
           <button type="button" className="btn btn--ghost btn--wide" onClick={download}>
             ⭳ Exportar perfil

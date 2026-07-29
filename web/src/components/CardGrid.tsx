@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Card, Settings } from '../types'
 import { Pictogram } from './Pictogram'
 import { wordClassOf } from '../lib/lexicon'
+import { regionalLabel } from '../lib/regional'
 import type { ScanState } from '../lib/useScanning'
 
 interface Props {
@@ -136,6 +137,10 @@ export function CardGrid({
         // pela primeira palavra seria pior que nao colorir.
         const wordClass =
           settings.wordColors === 'off' || dense ? null : wordClassOf(card.label)
+        // O rotulo exibido e o da variedade escolhida; o `card.label` interno
+        // continua canonico, para a gramatica e os favoritos nao dependerem da
+        // regiao em que estavam quando foram salvos.
+        const shown = regionalLabel(card.label, settings.region)
         return (
           <button
             key={`${card.id}-${card.label}`}
@@ -157,11 +162,11 @@ export function CardGrid({
             onPointerUp={endPress}
             onPointerLeave={endPress}
             onContextMenu={(e) => e.preventDefault()}
-            title={card.label}
-            aria-label={fav ? `${card.label} (favorito)` : card.label}
+            title={shown}
+            aria-label={fav ? `${shown} (favorito)` : shown}
           >
             <Pictogram card={card} eager={i < cols * 2} />
-            <span className="card__label">{card.label}</span>
+            <span className="card__label">{shown}</span>
             {onToggleFavorite && (
               <span
                 className={`card__fav ${fav ? 'card__fav--on' : ''}`}
@@ -169,10 +174,10 @@ export function CardGrid({
                 tabIndex={-1}
                 aria-label={
                   favoriteLabel
-                    ? `${favoriteLabel}: ${card.label}`
+                    ? `${favoriteLabel}: ${shown}`
                     : fav
-                      ? `Remover ${card.label} dos favoritos`
-                      : `Favoritar ${card.label}`
+                      ? `Remover ${shown} dos favoritos`
+                      : `Favoritar ${shown}`
                 }
                 onClick={(e) => {
                   e.stopPropagation()
