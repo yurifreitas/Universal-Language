@@ -3,7 +3,9 @@ import type { Board, Card, Settings } from './types'
 import { loadFavorites, loadSettings, saveFavorites, saveSettings } from './lib/storage'
 import { speak, speechSupported } from './lib/speech'
 import { useScanning } from './lib/useScanning'
+import { useRovingFocus } from './lib/useRovingFocus'
 import { SentenceBar } from './components/SentenceBar'
+import { BoardTabs, panelId, tabId } from './components/BoardTabs'
 import { CardGrid } from './components/CardGrid'
 import { SearchOverlay } from './components/SearchOverlay'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -12,6 +14,13 @@ import { HelpOverlay } from './components/HelpOverlay'
 const BASE = import.meta.env.BASE_URL
 
 type Panel = 'none' | 'search' | 'settings' | 'help'
+
+const TOOLS = [
+  { key: 'search', icon: '🔍', label: 'Buscar', aria: 'Buscar pictograma' },
+  { key: 'help', icon: '?', label: 'Ajuda', aria: 'Atalhos e acesso' },
+  { key: 'settings', icon: '⚙', label: 'Ajustes', aria: 'Configurações' },
+  { key: 'lock', icon: '🔓', label: 'Travar', aria: 'Travar na prancha' },
+] as const
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
@@ -43,6 +52,7 @@ export default function App() {
   }, [settings.theme, settings.highContrast])
 
   const patch = useCallback((p: Partial<Settings>) => setSettings((s) => ({ ...s, ...p })), [])
+  const tools = useRovingFocus(TOOLS.length)
 
   /** Favoritos entram como prancha extra, no fim: as posicoes fixas nao se movem. */
   const allBoards = useMemo<Board[]>(() => {
@@ -164,6 +174,18 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* WCAG 2.4.1 Bypass Blocks: quem navega por teclado nao deve reatravessar
+          cabecalho, barra da frase e 9 abas para chegar nos cards. */}
+      <a className="skip" href={board ? `#${panelId(board.id)}` : '#'}>
+        Pular para a prancha
+      </a>
+
+      {/* Regiao viva: anuncia a frase em construcao a quem nao ve a tela. Como
+          `polite`, espera a leitura corrente terminar em vez de interromper. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {sentence.length ? `Frase: ${sentenceText}` : 'Frase vazia'}
+      </p>
+
       {/* Controles do cuidador no topo, nao no rodape: longe do alcance de quem
           esta tocando os cards, e fora do caminho do polegar da crianca. */}
       <header className="topbar">
@@ -181,7 +203,9 @@ export default function App() {
             <span className="sr-only"> — prancha de comunicação alternativa</span>
           </h1>
 
-          <div className="topbar__actions">
+          {/* Padrao Toolbar do APG: conjunto de controles agrupados, com roving
+              tabindex e navegacao por setas. Tab entra e sai do grupo inteiro. */}
+          <div className="topbar__actions" role="toolbar" aria-label="Controles do cuidador">
             {settings.locked ? (
               <button
                 type="button"
@@ -202,36 +226,22 @@ export default function App() {
                     ⟳ Varredura
                   </span>
                 )}
-                <button type="button" className="btn btn--ghost" onClick={() => setPanel('search')}>
-                  <span aria-hidden="true">🔍</span>
-                  <span className="btn__text">Buscar</span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() => setPanel('help')}
-                  aria-label="Atalhos e acesso"
-                >
-                  <span aria-hidden="true">?</span>
-                  <span className="btn__text">Ajuda</span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() => setPanel('settings')}
-                >
-                  <span aria-hidden="true">⚙</span>
-                  <span className="btn__text">Ajustes</span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() => patch({ locked: true })}
-                  aria-label="Travar na prancha"
-                >
-                  <span aria-hidden="true">🔓</span>
-                  <span className="btn__text">Travar</span>
-                </button>
+                {TOOLS.map((t, i) => (
+                  <button
+                    key={t.key}
+                    ref={tools.setRef(i)}
+                    type="button"
+                    className="btn btn--ghost"
+                    tabIndex={i === tools.focused ? 0 : -1}
+                    onFocus={() => tools.setFocused(i)}
+                    onKeyDown={(e) => tools.onKeyDown(e, i)}
+                    onClick={() => (t.key === 'lock' ? patch({ locked: true }) : setPanel(t.key))}
+                    aria-label={t.aria}
+                  >
+                    <span aria-hidden="true">{t.icon}</span>
+                    <span className="btn__text">{t.label}</span>
+                  </button>
+                ))}
               </>
             )}
           </div>
@@ -256,27 +266,17 @@ export default function App() {
         </div>
       )}
 
-      <nav className="tabs" aria-label="Pranchas">
-        <div className="shell tabs__inner">
-          {allBoards.map((b, i) => (
-            <button
-              key={b.id}
-              type="button"
-              className={`tab ${i === activeBoard ? 'tab--active' : ''}`}
-              onClick={() => setActiveBoard(i)}
-              aria-current={i === activeBoard ? 'page' : undefined}
-              title={i < 9 ? `${b.name} (tecla ${i + 1})` : b.name}
-            >
-              <span className="tab__icon" aria-hidden="true">
-                {b.icon}
-              </span>
-              <span className="tab__name">{b.name}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+      <BoardTabs boards={allBoards} active={activeBoard} onChange={setActiveBoard} />
 
-      <main className="board">
+      <main
+        className="board"
+        // O painel da aba selecionada. tabIndex=0 porque o painel nao tem
+        // focavel proprio antes dos cards, e o APG pede que ele seja alcancavel
+        // por Tab a partir da aba.
+        role="tabpanel"
+        tabIndex={0}
+        {...(board ? { id: panelId(board.id), 'aria-labelledby': tabId(board.id) } : {})}
+      >
         <div className="shell">
           <CardGrid
             cards={cards}

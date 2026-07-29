@@ -126,6 +126,30 @@ de figuras. Fundamentação em [REFERENCES.md § 5](REFERENCES.md).
 Atalhos: `1`–`9` trocam de prancha, `B` abre a busca, `Backspace` apaga o último
 card, `Esc` interrompe a varredura. A tela **Ajuda** documenta tudo no próprio app.
 
+### Padrões WAI-ARIA aplicados
+
+Implementados conforme o [ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/),
+e cada um verificado em execução no navegador.
+
+| Padrão | Onde | O que garante |
+|---|---|---|
+| **[Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)** | Pranchas | `tablist`/`tab`/`tabpanel`, `aria-selected`, `aria-controls`. Setas + `Home`/`End` com circulação; ativação automática ao focar. O leitor anuncia *"Comida, aba 3 de 9, selecionada, 18 cards"* |
+| **[Dialog (Modal)](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/)** | Busca, Ajustes, Ajuda | `aria-modal`, foco inicial dentro, `Tab`/`Shift+Tab` circulando só no diálogo, e **foco devolvido ao botão que abriu** ao fechar |
+| **[Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/)** | Controles do cuidador | Roving tabindex: `Tab` entra e sai do grupo inteiro em vez de parar em cada botão |
+| **Roving tabindex** | Grade de cards | 1 de 149 tabulável; setas movem o foco |
+| **Live region** | Frase em construção | `role="status"` + `aria-live="polite"` — anuncia a frase sem interromper a leitura corrente |
+| **Bypass Blocks** (WCAG 2.4.1) | Skip link | Pula cabeçalho, barra da frase e 9 abas direto para a prancha |
+
+Duas decisões de padrão que valem registro:
+
+- **A grade de cards não usa `role="grid"`.** O padrão exige elementos `role="row"`
+  entre a grade e as células; aqui as células são filhas diretas do CSS Grid.
+  Declarar `grid` sem linhas produz árvore de acessibilidade inválida. Como
+  `group` de botões nativos, o leitor anuncia *"botão, água"* — que é o útil aqui.
+- **`aria-controls` só na aba selecionada.** Apenas o painel ativo é renderizado;
+  manter o atributo nas outras 8 criaria referências penduradas para IDs
+  inexistentes.
+
 A varredura volta às linhas sozinha se a linha terminar sem acionamento — um erro
 não pode prender a pessoa dentro de uma linha. Velocidade regulável de 0,4 s a
 3 s; o valor certo é individual e clínico, e 1,2 s é só um ponto de partida.

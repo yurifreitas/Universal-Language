@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Settings } from '../types'
 import { loadVoices, portugueseVoices, speak } from '../lib/speech'
+import { Dialog } from './Dialog'
 
 interface Props {
   settings: Settings
@@ -18,34 +19,9 @@ export function SettingsPanel({ settings, onChange, onClose }: Props) {
     })
   }, [])
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="Configurações">
-      <header className="overlay__head">
-        <div className="shell">
-          <h2 className="overlay__title">Configurações</h2>
-          <button
-            type="button"
-            className="btn btn--ghost btn--icon"
-            onClick={onClose}
-            aria-label="Fechar"
-          >
-            ✕
-          </button>
-        </div>
-      </header>
-
-      <p className="overlay__status" />
-
-      <div className="overlay__body">
-        <div className="shell settings">
+    <Dialog title="Configurações" onClose={onClose}>
+      <div className="shell settings">
         <section className="settings__group">
           <h3>Voz</h3>
           {voices.length === 0 ? (
@@ -219,8 +195,7 @@ export function SettingsPanel({ settings, onChange, onClose }: Props) {
             . Uso não comercial.
           </p>
         </section>
-        </div>
       </div>
-    </div>
+    </Dialog>
   )
 }

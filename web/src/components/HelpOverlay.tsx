@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { Dialog } from './Dialog'
 
 interface Props {
   onClose: () => void
@@ -16,34 +16,9 @@ const KEYS: { keys: string; what: string }[] = [
 ]
 
 export function HelpOverlay({ onClose }: Props) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="Ajuda e atalhos">
-      <header className="overlay__head">
-        <div className="shell">
-          <h2 className="overlay__title">Atalhos e acesso</h2>
-          <button
-            type="button"
-            className="btn btn--ghost btn--icon"
-            onClick={onClose}
-            aria-label="Fechar"
-          >
-            ✕
-          </button>
-        </div>
-      </header>
-
-      <p className="overlay__status" />
-
-      <div className="overlay__body">
-        <div className="shell settings">
+    <Dialog title="Atalhos e acesso" onClose={onClose}>
+      <div className="shell settings">
           <section className="settings__group">
             <h3>Teclado</h3>
             <dl className="keys">
@@ -82,8 +57,7 @@ export function HelpOverlay({ onClose }: Props) {
               aprendizado. Favoritos, por isso, vivem numa prancha própria.
             </p>
           </section>
-        </div>
       </div>
-    </div>
+    </Dialog>
   )
 }
