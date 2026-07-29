@@ -63,6 +63,19 @@ export interface Lexeme {
   /** Regencia: verbo que exige preposicao antes do complemento. */
   prep?: string
   /**
+   * Verbo que rege INFINITIVO como complemento: "quero comer", "posso jogar",
+   * "vou dormir". Distingue-se da coordenacao — em "brincar, pintar e
+   * desenhar" os verbos estao em lista, em "quero comer" o segundo e
+   * complemento do primeiro. Sem esta marca o motor produzia "quero e comer".
+   */
+  modal?: boolean
+  /**
+   * Aparelho: depois de verbo de atividade pede locativo — "jogar NO celular",
+   * "ver NA televisao". Depois de verbo de posse continua objeto direto:
+   * "quero o celular".
+   */
+  device?: boolean
+  /**
    * Locucao ja flexionada ou fixa ("acabou", "escovar os dentes"): o motor
    * conjuga so o primeiro elemento, ou nada, conforme o caso.
    */
@@ -233,15 +246,15 @@ export const LEXICON: Record<string, Lexeme> = {
   meu: { class: 'determiner', gender: 'm' },
   minha: { class: 'determiner', gender: 'f' },
 
-  querer: V(),
+  querer: V({ modal: true }),
   não: { class: 'negation' },
   sim: { class: 'affirmation' },
   mais: { class: 'quantifier' },
   acabou: V({ fixed: true }),
   ajudar: V(),
-  gostar: V({ prep: 'de' }),
-  ir: V(),
-  vir: V(),
+  gostar: V({ prep: 'de', modal: true }),
+  ir: V({ modal: true }),
+  vir: V({ modal: true }),
   parar: V(),
   dar: V(),
   pegar: V(),
@@ -363,6 +376,17 @@ export const LEXICON: Record<string, Lexeme> = {
   escrever: V(),
   ler: V(),
   desenhar: V(),
+  pintar: V(),
+  colorir: V(),
+  recortar: V(),
+  colar: V(),
+  montar: V(),
+  construir: V(),
+  cozinhar: V(),
+  passear: V(),
+  nadar: V(),
+  descansar: V(),
+  conversar: V({ prep: 'com' }),
   cantar: V(),
   dançar: V(),
   lavar: V(),
@@ -406,8 +430,8 @@ export const LEXICON: Record<string, Lexeme> = {
      busca na ARASAAC. Sem registro aqui elas caem no `guess()`, que por
      seguranca nao conjuga nem artigula — anotar as mais comuns e barato. */
   ver: V(),
-  saber: V(),
-  poder: V(),
+  saber: V({ modal: true }),
+  poder: V({ modal: true }),
   ter: V(),
   ser: V(),
   estar: V(),
@@ -420,7 +444,7 @@ export const LEXICON: Record<string, Lexeme> = {
   viajar: V(),
   comprar: V(),
   procurar: V(),
-  precisar: V({ prep: 'de' }),
+  precisar: V({ prep: 'de', modal: true }),
   chamar: V(),
   mostrar: V(),
   guardar: V(),
@@ -428,14 +452,48 @@ export const LEXICON: Record<string, Lexeme> = {
   bola: N('f'),
   livro: N('m'),
   brinquedo: N('m'),
-  celular: N('m', { pluralForm: 'celulares' }),
+  celular: N('m', { pluralForm: 'celulares', device: true }),
   música: N('f'),
-  televisão: N('f', { pluralForm: 'televisões' }),
+  televisão: N('f', { pluralForm: 'televisões', device: true }),
   remédio: N('m'),
   roupa: N('f'),
   sapato: N('m'),
   festa: N('f'),
   aniversário: N('m'),
+
+  /* ------------------------------------------- tratamento e adjuntos
+
+     "Mamae" e "papai" nao sao diminutivos decorativos: sao como a maioria das
+     criancas de fato chama, e o rotulo do card e a palavra que a pessoa vai
+     dizer. */
+  mamãe: N('f', { animate: true, pluralForm: 'mamães' }),
+  papai: N('m', { animate: true }),
+  vovó: N('f', { animate: true }),
+  vovô: N('m', { animate: true }),
+  titia: N('f', { animate: true }),
+  titio: N('m', { animate: true }),
+
+  computador: N('m', { device: true, pluralForm: 'computadores' }),
+  tablet: N('m', { device: true }),
+  videogame: N('m', { device: true }),
+  desenho: N('m'),
+  parquinho: N('m', { place: true }),
+
+  /* Locucoes adverbiais de duracao e de parte do dia. Entram inteiras porque
+     "o dia todo" nao e artigo + substantivo + adjetivo: e um adjunto unico, e
+     tratar peca por peca produzia "o dia todo" com artigo duplicado. */
+  'o dia todo': { class: 'adverb' },
+  'a tarde toda': { class: 'adverb' },
+  'a manhã toda': { class: 'adverb' },
+  'a noite toda': { class: 'adverb' },
+  'de manhã': { class: 'adverb' },
+  'de tarde': { class: 'adverb' },
+  'de noite': { class: 'adverb' },
+  'mais tarde': { class: 'adverb' },
+  'depois do almoço': { class: 'adverb' },
+  'todo dia': { class: 'adverb' },
+  'de novo': { class: 'adverb' },
+  junto: { class: 'adverb' },
 
   /* ------------------------------------------------------------- social */
   oi: { class: 'social' },

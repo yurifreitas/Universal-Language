@@ -149,6 +149,47 @@ As duas circulam no Brasil e nenhuma é erro. O marcador **não** se aplica quan
 há sujeito de 2ª pessoa explícito: "você abra a porta" não existe, e "você abre
 a porta" já é um pedido em português falado.
 
+### Sujeito composto
+
+`MAMÃE · EU · VOCÊ · BRINCAR` não são três sujeitos concorrendo: é um só,
+coordenado, e o português manda o verbo para a 1ª do plural.
+
+> Amanhã a mamãe, eu e você **vamos** brincar o dia todo, pintar e desenhar.
+
+Antes o motor olhava só o primeiro pronome e produzia "a mamãe, eu e você
+brinca" — o tipo de erro que faz a frase inteira soar como de máquina. A regra
+de concordância não tem exceção útil aqui:
+
+| Sujeito | Verbo |
+|---|---|
+| qualquer elemento de 1ª pessoa na lista | 1ª do plural — "eu e você **vamos**" |
+| mais de um elemento, sem 1ª pessoa | 3ª do plural — "a mamãe e o papai **vão**" |
+| um só elemento | o que ele for |
+
+### Coordenação de verbos
+
+Dois fenômenos diferentes moram no mesmo lugar, e tratá-los igual produzia
+frase errada:
+
+| | Exemplo | Saída |
+|---|---|---|
+| **complemento** de verbo modal | `QUERER · COMER` | "quero comer" — colado |
+| **coordenação** de verbos | `PINTAR · DESENHAR` | "pintar e desenhar" — vírgula e "e" |
+
+Sem a distinção saía *"quero e comer"*. O léxico marca `modal` em querer, poder,
+ir, vir, saber, precisar e gostar; o que vier depois de um deles é complemento,
+o resto é lista.
+
+Isso compõe com tudo o mais: `EU · NÃO · IR · PULAR · CORRER` →
+**"Eu não vou pular e correr."** — a negação cola no verbo conjugado e vale para
+a lista inteira.
+
+### Locativo de aparelho
+
+`JOGAR · CELULAR` não é "jogar o celular": é **"jogar no celular"**. Verbo de
+atividade seguido de aparelho pede locativo; verbo de posse não —
+`QUERER · CELULAR` continua "quero o celular".
+
 ### Listas de pessoas
 
 `MÃE · PAI · AVÓ` são três pessoas, não uma genealogia. Ligar substantivos

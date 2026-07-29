@@ -5,7 +5,21 @@ import { exportProfile, parseProfile, type Profile } from '../lib/storage'
 import type { BoardEdits, CustomBoard } from '../lib/boardEdits'
 import type { Script } from '../lib/scripts'
 import { REGIONS } from '../lib/regional'
+import { useMediaQuery } from '../lib/useMediaQuery'
 import { Dialog } from './Dialog'
+
+/** Indice das secoes, na mesma ordem em que aparecem no corpo do painel. */
+const SECTIONS = [
+  { id: 'voz', title: 'Voz', icon: '🔊', hint: 'Voz do aparelho, velocidade e tom' },
+  { id: 'grade', title: 'Grade', icon: '▦', hint: 'Quantas colunas e o tamanho do alvo' },
+  { id: 'varredura', title: 'Varredura', icon: '⟳', hint: 'Acesso para quem não aponta' },
+  { id: 'som', title: 'Som', icon: '♪', hint: 'Sons curtos de interface' },
+  { id: 'frases', title: 'Frases', icon: '✍️', hint: 'Motor de frases, região e cor por classe' },
+  { id: 'leitura', title: 'Leitura e cor', icon: '👁', hint: 'Dislexia, fonte, espaçamento, conforto' },
+  { id: 'tela', title: 'Tela', icon: '◐', hint: 'Tema, contraste e modo bloqueado' },
+  { id: 'perfil', title: 'Perfil', icon: '⭳', hint: 'Exportar e importar tudo' },
+  { id: 'creditos', title: 'Créditos', icon: '©', hint: 'ARASAAC e licença' },
+] as const
 
 interface Props {
   settings: Settings
@@ -31,6 +45,22 @@ export function SettingsPanel({
   onClose,
 }: Props) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+
+  /**
+   * Ajustes no celular: indice primeiro, secao depois.
+   *
+   * Sao nove grupos. Numa tela de 390px isso vira um tunel de rolagem de mais
+   * de dez telas, e achar "velocidade da varredura" exige lembrar que ela fica
+   * entre "grade" e "som". O padrao de sistema operacional — lista de secoes,
+   * toca, abre so aquela, volta — existe exatamente para isso.
+   *
+   * Em tela larga nada muda: tudo aberto de uma vez, que e melhor quando ha
+   * espaco, porque permite comparar ajustes sem navegar.
+   */
+  const compact = useMediaQuery('(max-width: 700px)')
+  const [openSection, setOpenSection] = useState<string | null>(null)
+  const show = (id: string) => !compact || openSection === id
+  const atIndex = compact && !openSection
   const fileInput = useRef<HTMLInputElement | null>(null)
   const [transfer, setTransfer] = useState<string | null>(null)
 
@@ -70,8 +100,50 @@ export function SettingsPanel({
   }, [])
 
   return (
-    <Dialog title="Configurações" onClose={onClose}>
+    <Dialog
+      title={
+        atIndex || !compact
+          ? 'Configurações'
+          : (SECTIONS.find((x) => x.id === openSection)?.title ?? 'Configurações')
+      }
+      onClose={onClose}
+    >
       <div className="shell settings">
+        {compact && openSection && (
+          <button
+            type="button"
+            className="btn btn--ghost settings__back"
+            onClick={() => setOpenSection(null)}
+          >
+            ‹ Todos os ajustes
+          </button>
+        )}
+
+        {atIndex && (
+          <nav className="settings__index" aria-label="Seções de configuração">
+            {SECTIONS.map((sec) => (
+              <button
+                key={sec.id}
+                type="button"
+                className="settings__entry"
+                onClick={() => setOpenSection(sec.id)}
+              >
+                <span className="settings__entry-icon" aria-hidden="true">
+                  {sec.icon}
+                </span>
+                <span className="settings__entry-text">
+                  <strong>{sec.title}</strong>
+                  <small>{sec.hint}</small>
+                </span>
+                <span className="settings__entry-go" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {show('voz') && (
         <section className="settings__group">
           <h3>Voz</h3>
           {voices.length === 0 ? (
@@ -141,7 +213,9 @@ export function SettingsPanel({
             pelo dispositivo.
           </p>
         </section>
+        )}
 
+        {show('grade') && (
         <section className="settings__group">
           <h3>Grade</h3>
           <label className="field">
@@ -160,7 +234,9 @@ export function SettingsPanel({
             2 ou 3 colunas costumam funcionar melhor que uma grade cheia.
           </p>
         </section>
+        )}
 
+        {show('varredura') && (
         <section className="settings__group">
           <h3>Varredura (acesso por switch)</h3>
           <label className="switch">
@@ -209,7 +285,9 @@ export function SettingsPanel({
             ouvido, a pista fica privada e só a frase sai no alto-falante.
           </p>
         </section>
+        )}
 
+        {show('som') && (
         <section className="settings__group">
           <h3>Som</h3>
           <label className="switch">
@@ -228,7 +306,9 @@ export function SettingsPanel({
             auditiva. Desligado por padrão.
           </p>
         </section>
+        )}
 
+        {show('frases') && (
         <section className="settings__group">
           <h3>Frases</h3>
           <label className="switch">
@@ -323,7 +403,9 @@ export function SettingsPanel({
             padrão, porque cor a mais também é estímulo a mais.
           </p>
         </section>
+        )}
 
+        {show('leitura') && (
         <section className="settings__group">
           <h3>Leitura e cor</h3>
           <label className="switch">
@@ -428,7 +510,9 @@ export function SettingsPanel({
             Com alto contraste ligado, este ajuste não se aplica.
           </p>
         </section>
+        )}
 
+        {show('tela') && (
         <section className="settings__group">
           <h3>Tela</h3>
           <label className="switch">
@@ -462,7 +546,9 @@ export function SettingsPanel({
             segundos.
           </p>
         </section>
+        )}
 
+        {show('perfil') && (
         <section className="settings__group">
           <h3>Perfil</h3>
           <p className="settings__note">
@@ -510,7 +596,9 @@ export function SettingsPanel({
             aparelho.
           </p>
         </section>
+        )}
 
+        {show('creditos') && (
         <section className="settings__group">
           <h3>Créditos</h3>
           <p className="settings__note">
@@ -529,6 +617,7 @@ export function SettingsPanel({
             . Uso não comercial.
           </p>
         </section>
+        )}
       </div>
     </Dialog>
   )

@@ -128,6 +128,43 @@ const CASES: Record<string, Case[]> = {
     },
     { cards: ['eu', 'ir', 'parque'], register: 'normativo', expect: 'Eu vou para o parque.' },
   ],
+  'sujeito composto e coordenação': [
+    // As frases que o usuario pediu, palavra por palavra.
+    {
+      cards: ['amanhã', 'mamãe', 'eu', 'você', 'brincar', 'o dia todo', 'pintar', 'desenhar'],
+      expect: 'Amanhã a mamãe, eu e você vamos brincar o dia todo, pintar e desenhar.',
+    },
+    { cards: ['eu', 'poder', 'jogar', 'celular'], expect: 'Eu posso jogar no celular.' },
+    {
+      cards: ['eu', 'poder', 'jogar', 'celular'],
+      marks: { question: true },
+      expect: 'Eu posso jogar no celular?',
+    },
+    { cards: ['eu', 'você', 'ir', 'parque'], expect: 'Eu e você vamos pro parque.' },
+    { cards: ['mamãe', 'papai', 'ir', 'trabalhar'], expect: 'A mamãe e o papai vão trabalhar.' },
+    { cards: ['eu', 'querer', 'pintar', 'desenhar'], expect: 'Eu quero pintar e desenhar.' },
+    {
+      cards: ['eu', 'correr', 'pular', 'dançar'],
+      expect: 'Eu corro, pular e dançar.',
+    },
+    { cards: ['eu', 'ver', 'televisão'], expect: 'Eu vejo na televisão.' },
+    { cards: ['eu', 'querer', 'celular'], expect: 'Eu quero o celular.' },
+    // Negacao com verbo modal e coordenacao: o "nao" cola no verbo conjugado e
+    // vale para a lista inteira.
+    { cards: ['eu', 'não', 'ir', 'pular', 'correr'], expect: 'Eu não vou pular e correr.' },
+    {
+      cards: ['eu', 'não', 'querer', 'comer', 'dormir'],
+      expect: 'Eu não quero comer e dormir.',
+    },
+    {
+      cards: ['nós', 'ir', 'cantar', 'dançar', 'brincar'],
+      expect: 'Nós vamos cantar, dançar e brincar.',
+    },
+    {
+      cards: ['amanhã', 'eu', 'mamãe', 'ir', 'praia'],
+      expect: 'Amanhã eu e a mamãe vamos pra praia.',
+    },
+  ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos
     // errado que forma inexistente.

@@ -43,6 +43,28 @@
   --shell: 1380px;
   --gutter: clamp(14px, 3vw, 36px);
 
+  /* --------------------------------------------------- escala fluida
+
+     Mobile-first de verdade nao e "encolher no breakpoint": e a medida crescer
+     junto com a tela, sem degrau. Cada token abaixo comeca no valor que serve a
+     um celular de 320px e chega ao valor de tablet/desktop por interpolacao.
+
+     O ganho pratico e que layout nao "pula" ao girar o aparelho, e que telas
+     entre 600 e 900px — tablet pequeno, celular deitado, janela dividida —
+     param de cair no pior dos dois mundos. */
+  --space-1: clamp(4px, 1vw, 8px);
+  --space-2: clamp(8px, 1.6vw, 14px);
+  --space-3: clamp(12px, 2.4vw, 20px);
+  --space-4: clamp(16px, 3.2vw, 28px);
+
+  /* Areas seguras: notch, ilha dinamica e a barra de gestos do iPhone. Sem
+     isto o botao de fechar de um dialogo cai embaixo do relogio, e a linha
+     inferior de acoes fica sob a barra de gestos — inalcancavel. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.28);
   --shadow-md: 0 2px 4px rgb(0 0 0 / 0.24), 0 12px 28px -16px rgb(0 0 0 / 0.6);
   --shadow-lg: 0 8px 48px -20px rgb(0 0 0 / 0.75);
@@ -320,6 +342,16 @@ body {
   overflow: hidden;
 }
 
+/* Puxar para o lado nao pode deslocar a pagina nem o fundo. Em celular o
+   navegador ainda oferece o "arrasto elastico" horizontal mesmo sem conteudo
+   transbordando, e o efeito e a interface inteira — fundo generativo incluso —
+   escorregando para fora. `overscroll-behavior` corta isso na raiz; o
+   `overflow-x` e o cinto de seguranca para qualquer transbordo residual. */
+html {
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -401,7 +433,10 @@ button,
   width: 100%;
   max-width: var(--shell);
   margin-inline: auto;
-  padding-inline: var(--gutter);
+  /* A area segura entra SOMADA a calha, e nao no lugar dela: num aparelho sem
+     notch o valor e zero e nada muda; num iPhone deitado, o conteudo deixa de
+     ficar sob a camera. */
+  padding-inline: calc(var(--gutter) + var(--safe-left)) calc(var(--gutter) + var(--safe-right));
 }
 .shell--flush {
   padding-block: 0;
@@ -456,7 +491,7 @@ button,
      faltando uma faixa conforme a rolagem. */
   height: 100dvh;
   max-height: 100dvh;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-bottom);
 }
 
 .banner {
@@ -919,6 +954,7 @@ button,
   flex-wrap: nowrap;
   min-width: 0;
   gap: 6px;
+  overscroll-behavior-x: contain;
   padding-block: 10px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -1051,6 +1087,8 @@ button,
   gap: 6px;
   margin-bottom: 14px;
   overflow-x: auto;
+  /* Chegar ao fim da faixa nao pode continuar arrastando a pagina atras. */
+  overscroll-behavior-x: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
@@ -1316,11 +1354,11 @@ button,
   z-index: 20;
   display: grid;
   grid-template-rows: auto auto 1fr;
+  padding-top: var(--safe-top);
   /* Mesma armadilha da grade principal: faixa `auto` cresce ate o max-content
      e estica o dialogo para fora da tela. */
   grid-template-columns: minmax(0, 1fr);
   background: var(--bg);
-  padding-bottom: env(safe-area-inset-bottom);
   animation: overlay-in 0.16s ease-out;
 }
 @keyframes overlay-in {
@@ -1385,7 +1423,16 @@ button,
 .overlay__body {
   min-height: 0;
   overflow-y: auto;
-  padding-block: 4px 28px;
+  /* Chegar ao fim da rolagem do dialogo nao pode passar o gesto para a pagina
+     atras dele — em celular isso faz a prancha deslizar por baixo do dialogo. */
+  overscroll-behavior: contain;
+  /* Nada dentro de um dialogo rola na horizontal. O que precisar de rolagem
+     lateral — as faixas de abas — tem area propria e `overscroll-behavior`
+     para nao repassar o gesto adiante. */
+  overflow-x: hidden;
+  /* Espaco final maior que o visual: a ultima linha precisa subir acima da
+     barra de gestos, senao o ultimo botao do painel fica intocavel. */
+  padding-block: 4px calc(28px + var(--safe-bottom));
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
@@ -1394,6 +1441,11 @@ button,
 
 .settings {
   display: grid;
+  /* Terceira aparicao do mesmo bug: faixa `auto` de grade cresce ate o
+     max-content do filho mais largo — um `<select>` com opcao comprida
+     empurrava a coluna para 397px numa tela de 390, e a sobra de 7px bastava
+     para o dialogo inteiro arrastar para o lado ao toque. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   max-width: 660px;
   margin-inline: auto;
@@ -1401,6 +1453,12 @@ button,
 
 .settings__group {
   display: grid;
+  /* E de novo. Toda grade deste app precisa disto: sem `minmax(0, 1fr)` a
+     faixa cresce ate o max-content, e aqui o max-content e o texto de uma
+     opcao de `<select>` — "Como a escola cobra — 'para', 'abra a porta'" —
+     que empurrava o cartao 5px para fora e dava ao dialogo inteiro um arrasto
+     lateral. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   padding: 20px;
   background: var(--surface);
@@ -1430,6 +1488,7 @@ button,
 
 .field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   font-size: 0.9rem;
   font-weight: 600;
@@ -1441,6 +1500,10 @@ button,
   accent-color: var(--accent);
 }
 .field select {
+  /* `<select>` tem largura intrinseca igual a da maior opcao. Sem teto, uma
+     opcao comprida define a largura do cartao inteiro. */
+  width: 100%;
+  min-width: 0;
   padding: 0 14px;
   font: inherit;
   font-weight: 500;
@@ -1556,8 +1619,9 @@ kbd {
     min-width: 46px;
     padding: 0 12px;
   }
-  .btn--locked .btn__text {
-    display: inline;
+  .btn--locked .btn__text,
+  .settings__back {
+    display: inline-flex;
   }
 
   .topbar__inner {
@@ -1567,6 +1631,18 @@ kbd {
 }
 
 @media (max-width: 560px) {
+  /* Cabecalho de dialogo mais baixo: 76px de titulo num aparelho de 640px de
+     altura sao 12% da tela gastos em moldura. */
+  .overlay__head .shell {
+    min-height: 60px;
+  }
+  .overlay__title {
+    font-size: 1.05rem;
+  }
+  .settings__group {
+    padding: var(--space-3);
+  }
+
   /* Espaco vertical e o recurso escasso do celular: cada pixel gasto em
      cabecalho e um card a menos visivel. Os alvos continuam com 44px, que e o
      minimo da WCAG 2.5.8 para controle de cuidador — os cards, esses, seguem
@@ -1769,4 +1845,67 @@ kbd {
   display: block;
   margin-top: 6px;
   overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------- ajustes: índice mobile
+
+   Nove grupos numa tela de 390px viram um túnel de rolagem. O padrão de
+   sistema — lista de seções, toca, abre só aquela, volta — resolve com uma
+   lista curta e alvos grandes. Em tela larga o índice some e tudo fica aberto,
+   porque aí comparar dois ajustes vale mais que navegar. */
+.settings__index {
+  display: grid;
+  gap: 8px;
+}
+
+.settings__entry {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 20px;
+  gap: 12px;
+  align-items: center;
+  /* Bem acima do mínimo da WCAG 2.5.8: quem ajusta costuma estar com o
+     aparelho numa mão só, em pé, no meio do atendimento. */
+  min-height: 64px;
+  padding: 10px 14px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.settings__entry:hover {
+  border-color: var(--accent);
+}
+.settings__entry-icon {
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+}
+.settings__entry-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.settings__entry-text strong {
+  font-size: 1rem;
+}
+.settings__entry-text small {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+.settings__entry-go {
+  color: var(--text-faint);
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.settings__back {
+  justify-self: start;
+  min-height: 48px;
+}
+.settings__back .btn__text {
+  display: inline;
 }

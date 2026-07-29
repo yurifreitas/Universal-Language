@@ -320,11 +320,36 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     (it) => it.lex.class === 'noun' && firstVerbIndex >= 0 && it.index < firstVerbIndex,
   )
 
+  /**
+   * SUJEITO COMPOSTO.
+   *
+   * "MAMÃE · EU · VOCÊ · BRINCAR" nao e tres sujeitos concorrendo: e um so,
+   * coordenado, e o portugues manda o verbo para a 1a do plural — "a mamãe, eu
+   * e você VAMOS brincar". Antes o motor olhava so o primeiro pronome e
+   * produzia "a mamãe, eu e você brinca", que e o tipo de erro que faz a frase
+   * inteira soar como de maquina.
+   *
+   * A regra de concordancia e simples e nao tem excecao util aqui:
+   *   - qualquer elemento de 1a pessoa na lista  → 1a do plural
+   *   - senao, mais de um elemento               → 3a do plural
+   *   - senao                                    → o que o unico elemento for
+   */
+  const subjectGroup = items.filter(
+    (it) =>
+      (firstVerbIndex < 0 || it.index < firstVerbIndex) &&
+      (it.lex.class === 'pronoun' || (it.lex.class === 'noun' && it.lex.animate)),
+  )
+
   let person: Person = pronoun?.lex.person ?? '1s'
   // Sem pronome, a frase e assumida em 1a pessoa: numa prancha de CAA o
   // enunciado padrao e sobre o proprio falante ("quero agua"). O pronome
   // implicito NAO e escrito na frase — so a flexao do verbo o indica.
   if (!pronoun && subjectNoun) person = subjectNoun.lex.plural ? '3p' : '3s'
+
+  if (subjectGroup.length > 1) {
+    const has1 = subjectGroup.some((it) => it.lex.person === '1s' || it.lex.person === '1p')
+    person = has1 ? '1p' : '3p'
+  }
   // "tu" com registro normativo pede a 2a pessoa de verdade: "tu queres".
   // No coloquial brasileiro, "tu" leva a forma de 3a — que ja e o valor de 2s.
   // O card continua sendo o VOCÊ canonico; quem vira "tu" e a variedade.
@@ -365,6 +390,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   let lastNoun: { gender: 'm' | 'f'; plural: boolean; label: string; lex: Lexeme } | null = null
   let previousWasNoun = false
   let questionSeen = false
+  /** Ultimo verbo visto, para decidir o locativo de aparelho. */
+  let lastVerbLabel: string | null = null
 
   /**
    * Clitico. Um pronome DEPOIS do verbo e objeto, e o portugues brasileiro o
@@ -403,6 +430,43 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
    */
   const useImperative =
     marks.request && !(pronoun && (pronoun.lex.person === '2s' || pronoun.lex.person === '2t'))
+
+  /**
+   * Elemento que entra em lista coordenada: pronome ou substantivo animado.
+   * "MAMÃE · EU · VOCÊ" e "MÃE · PAI · AVÓ" sao o mesmo fenomeno — o primeiro
+   * como sujeito, o segundo como objeto.
+   */
+  const listEligible = (it: Item | undefined): boolean =>
+    Boolean(it) &&
+    (it!.lex.class === 'pronoun' || (it!.lex.class === 'noun' && Boolean(it!.lex.animate)))
+
+  /** Virgula entre os itens do meio, "e" antes do ultimo. */
+  const emitListSeparator = (isLast: boolean) => {
+    if (isLast) {
+      push('e', 'inserted')
+    } else {
+      const last = tokens[tokens.length - 1]
+      if (last) last.text = `${last.text},`
+    }
+  }
+
+  /**
+   * Verbos de atividade pedem locativo antes de aparelho — "jogar NO celular",
+   * "ver NA televisao". Verbo de posse nao: "quero O celular".
+   */
+  const ACTIVITY_VERBS = new Set([
+    'jogar',
+    'brincar',
+    'ver',
+    'assistir',
+    'falar',
+    'ouvir',
+    'escrever',
+    'desenhar',
+    'estudar',
+    'trabalhar',
+    'mexer',
+  ])
 
   const emitNegation = () => {
     if (!negated || negationDone) return
@@ -445,6 +509,10 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // O pronome-objeto ja foi (ou sera) emitido como clitico antes do
         // verbo; repeti-lo aqui daria "me ajuda eu".
         if (clitic && objectPronoun?.index === it.index) break
+        // Sujeito composto: "a mamãe, eu e você".
+        if (listEligible(items[i - 1]) && !pendingPrep) {
+          emitListSeparator(!listEligible(next))
+        }
         // Verbo que rege preposicao tambem a exige antes de pronome:
         // "gosto DE você", "brinco COM você".
         if (pendingPrep) {
@@ -473,14 +541,45 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
       case 'verb': {
         emitNegation()
+
+        const emCadeia = verbDone
+
+        // A separacao vem ANTES de decidir a forma do verbo, e nao dentro de um
+        // dos ramos: verbo adivinhado (fora do lexico, como "pintar") caia no
+        // ramo que so empurra o rotulo e pulava a coordenacao inteira — saia
+        // "brincar o dia todo pintar e desenhar", sem a virgula.
+        if (emCadeia) {
+          // Dois casos diferentes escondidos no mesmo lugar:
+          //
+          //   COMPLEMENTO — "quero comer", "posso jogar", "vou dormir": o
+          //   segundo verbo e complemento de um modal, e entra colado.
+          //
+          //   COORDENACAO — "brincar, pintar e desenhar": verbos em lista, que
+          //   pedem virgula e "e". Sem a distincao saia "quero e comer".
+          //
+          // Sem verbo anterior no texto (o primeiro era uma copula inserida,
+          // como em "estou feliz de ir comer") nao ha o que coordenar.
+          const verboAnterior = [...items.slice(0, i)]
+            .reverse()
+            .find((x) => x.lex.class === 'verb')
+          if (verboAnterior && !verboAnterior.lex.modal) {
+            const maisVerbos = items.slice(i + 1).some((x) => x.lex.class === 'verb')
+            emitListSeparator(!maisVerbos)
+          }
+          // "estou feliz DE ir comer", "medo DE cair".
+          if (pendingVerbPrep) {
+            push(pendingVerbPrep, 'inserted')
+            pendingVerbPrep = null
+          }
+        }
+
         if (lex.fixed || (lex as { guessed?: boolean }).guessed) {
           // Palavra fora do lexico so foi ADIVINHADA como verbo pela
           // terminacao. Conjugar um chute produz forma inexistente ("ver" ->
           // "vo"); manter o infinitivo produz frase telegrafica, que e apenas
           // menos polida. Na duvida, a saida menos errada.
           push(it.card.label, 'card', { cardIndex: it.index })
-          verbDone = true
-        } else if (!verbDone) {
+        } else if (!emCadeia) {
           if (clitic && objectPronoun) {
             push(clitic, 'inflected', {
               cardIndex: objectPronoun.index,
@@ -496,18 +595,13 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
             cardIndex: it.index,
             ...(text === label ? {} : { original: it.card.label }),
           })
-          verbDone = true
         } else {
-          // Verbo em cadeia fica no infinitivo: "quero comer", "vou dormir" —
-          // mas se o que veio antes foi adjetivo ou estado, a ligacao entra:
-          // "estou feliz DE ir comer".
-          if (pendingVerbPrep) {
-            push(pendingVerbPrep, 'inserted')
-            pendingVerbPrep = null
-          }
+          // Verbo em cadeia fica no infinitivo.
           push(it.card.label, 'card', { cardIndex: it.index })
         }
+        verbDone = true
 
+        lastVerbLabel = label
         if (lex.prep) {
           pendingPrep = lex.prep
           regencyPrep = lex.prep
@@ -560,28 +654,24 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // tres pessoas seguidas: MÃE · PAI · AVÓ virava "a mãe do pai da avó" —
         // uma genealogia que ninguem quis dizer. Tocar tres pessoas e uma
         // LISTA, e lista se faz com virgula e "e", nao com posse.
-        if (previousWasNoun && !pendingPrep && lastNoun) {
+        if (!pendingPrep && listEligible(items[i - 1]) && listEligible(it)) {
+          emitListSeparator(!listEligible(next))
+          // A regencia do verbo vale para TODOS os itens da lista: "gosto da
+          // mãe, do pai e da irmã" — nao "gosto da mãe, o pai e a irmã".
+          if (regencyPrep) pendingPrep = regencyPrep
+        } else if (previousWasNoun && !pendingPrep && lastNoun) {
           if (lastNoun.label === 'dor' && lex.bodyPart) {
             pendingPrep = 'em'
-          } else if (lastNoun.lex.animate && lex.animate) {
-            // Virgula entre os do meio, "e" antes do ultimo.
-            const maisPessoas = items
-              .slice(i + 1)
-              .some((x) => x.lex.class === 'noun' && x.lex.animate)
-            const last = tokens[tokens.length - 1]
-            if (maisPessoas) {
-              if (last) last.text = `${last.text},`
-            } else {
-              push('e', 'inserted')
-            }
-            // A regencia do verbo vale para TODOS os itens da lista: "gosto da
-            // mãe, do pai e da irmã" — nao "gosto da mãe, o pai e a irmã".
-            if (regencyPrep) pendingPrep = regencyPrep
           } else {
             // "suco de fruta", "casa da mãe": aqui a relacao e mesmo de posse
             // ou de tipo, e "de" e o que a lingua usa.
             pendingPrep = 'de'
           }
+        }
+
+        // Aparelho depois de verbo de atividade: "jogar no celular".
+        if (!pendingPrep && lex.device && lastVerbLabel && ACTIVITY_VERBS.has(lastVerbLabel)) {
+          pendingPrep = 'em'
         }
 
         const gender = lex.gender ?? 'm'
