@@ -410,6 +410,35 @@ button,
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ARRASTAR NAO PODE MOVER NADA.
+ *
+ * Tres comportamentos nativos do navegador se somavam e davam a impressao de
+ * que a tela "escorrega" quando se arrasta e solta:
+ *
+ *   1. arrastar a IMAGEM do pictograma — o navegador inicia um drag-and-drop
+ *      nativo e leva um fantasma da figura junto;
+ *   2. arrastar SELECIONANDO texto — o rotulo do card vira selecao e a pagina
+ *      acompanha o dedo;
+ *   3. encadeamento de rolagem — chegar ao fim da prancha passa o gesto para o
+ *      documento atras dela.
+ *
+ * Nenhum dos tres faz sentido numa prancha: aqui o dedo so aponta. */
+img,
+.picto,
+.picto--fallback {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+.card,
+.chip,
+.tab,
+.mark,
+.step,
+.crash__phrase {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 :focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
@@ -1000,6 +1029,8 @@ button,
 .board {
   min-height: 0;
   overflow-y: auto;
+  /* Chegar ao fim da prancha nao repassa o gesto para o documento. */
+  overscroll-behavior: contain;
   padding-block: 18px 26px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;

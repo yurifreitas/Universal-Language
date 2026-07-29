@@ -440,6 +440,55 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     Boolean(it) &&
     (it!.lex.class === 'pronoun' || (it!.lex.class === 'noun' && Boolean(it!.lex.animate)))
 
+  /**
+   * Compostos reais de substantivo + substantivo, que pedem "de".
+   *
+   * Isto e uma tabela e nao uma regra de proposito. A regra antes era "dois
+   * substantivos seguidos = de", e ela produzia o absurdo que aparece assim que
+   * alguem toca tres comidas: FEIJÃO · PÃO · BANANA virava "feijão de pão de
+   * banana". Numa prancha, tocar tres comidas e uma LISTA — a pessoa esta
+   * dizendo o que quer comer, nao descrevendo uma receita.
+   *
+   * Entao o padrao passou a ser lista, e "de" ficou para os poucos casos em que
+   * ele e mesmo o que a lingua usa.
+   */
+  const COMPOUND = new Set([
+    'suco|fruta',
+    'suco|laranja',
+    'suco|maçã',
+    'suco|uva',
+    'bolo|chocolate',
+    'bolo|cenoura',
+    'sorvete|chocolate',
+    'sorvete|morango',
+    'pão|queijo',
+    'vitamina|banana',
+    'salada|fruta',
+    'copo|água',
+    'copo|leite',
+    'prato|comida',
+    'escova|dente',
+    'papel|desenho',
+  ])
+
+  /**
+   * O que liga dois substantivos seguidos.
+   *
+   *   `em`   — DOR + parte do corpo: "dor na barriga"
+   *   `de`   — composto conhecido ("suco de fruta") ou posse, quando o segundo
+   *            e pessoa e o primeiro nao ("a casa da mãe")
+   *   `list` — todo o resto: "feijão, pão e banana"
+   */
+  const nounLink = (
+    prev: { label: string; lex: Lexeme },
+    cur: { label: string; lex: Lexeme },
+  ): 'em' | 'de' | 'list' => {
+    if (prev.label === 'dor' && cur.lex.bodyPart) return 'em'
+    if (COMPOUND.has(`${prev.label}|${cur.label}`)) return 'de'
+    if (!prev.lex.animate && cur.lex.animate) return 'de'
+    return 'list'
+  }
+
   /** Virgula entre os itens do meio, "e" antes do ultimo. */
   const emitListSeparator = (isLast: boolean) => {
     if (isLast) {
@@ -660,18 +709,41 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // mãe, do pai e da irmã" — nao "gosto da mãe, o pai e a irmã".
           if (regencyPrep) pendingPrep = regencyPrep
         } else if (previousWasNoun && !pendingPrep && lastNoun) {
-          if (lastNoun.label === 'dor' && lex.bodyPart) {
-            pendingPrep = 'em'
+          const link = nounLink(lastNoun, { label, lex })
+          if (link === 'list') {
+            const proximoTambemLista =
+              next?.lex.class === 'noun' && nounLink({ label, lex }, next) === 'list'
+            emitListSeparator(!proximoTambemLista)
+            if (regencyPrep) pendingPrep = regencyPrep
+            // Lista de coisas vai sem artigo: "quero feijão, arroz e carne".
+            // Com artigo em alguns itens e nao em outros — porque incontavel
+            // nao leva — saia "feijão, o pão e a banana", que soa quebrado.
+            // Lista de PESSOAS mantem o artigo: "a mãe, o pai e a avó" e como
+            // se fala.
+            if (!lex.animate) suppressArticle = true
           } else {
-            // "suco de fruta", "casa da mãe": aqui a relacao e mesmo de posse
-            // ou de tipo, e "de" e o que a lingua usa.
-            pendingPrep = 'de'
+            pendingPrep = link
           }
         }
 
         // Aparelho depois de verbo de atividade: "jogar no celular".
         if (!pendingPrep && lex.device && lastVerbLabel && ACTIVITY_VERBS.has(lastVerbLabel)) {
           pendingPrep = 'em'
+        }
+
+        // O PRIMEIRO item da lista tambem vai sem artigo, e isso so se decide
+        // olhando para frente: quando "bolo" e emitido ainda nao se sabe que
+        // "sorvete" vem depois. Sem esta olhada saia "o bolo e sorvete".
+        // Parte do corpo seguida de DOR nao e lista: vira verbo ("as costas
+        // doem"), e ali o artigo continua sendo necessario.
+        const seguidoDeDor = next?.label === 'dor' && Boolean(lex.bodyPart)
+        if (
+          !lex.animate &&
+          !seguidoDeDor &&
+          next?.lex.class === 'noun' &&
+          nounLink({ label, lex }, next) === 'list'
+        ) {
+          suppressArticle = true
         }
 
         const gender = lex.gender ?? 'm'

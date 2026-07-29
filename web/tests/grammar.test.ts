@@ -165,6 +165,19 @@ const CASES: Record<string, Case[]> = {
       expect: 'Amanhã eu e a mamãe vamos pra praia.',
     },
   ],
+  'lista de coisas': [
+    // Tocar tres comidas e uma LISTA. Antes virava "feijão de pão de banana".
+    { cards: ['feijão', 'pão', 'banana'], expect: 'Feijão, pão e banana.' },
+    {
+      cards: ['eu', 'querer', 'feijão', 'arroz', 'carne'],
+      expect: 'Eu quero feijão, arroz e carne.',
+    },
+    { cards: ['eu', 'querer', 'bolo', 'sorvete'], expect: 'Eu quero bolo e sorvete.' },
+    // Compostos de verdade continuam com "de".
+    { cards: ['eu', 'querer', 'suco', 'fruta'], expect: 'Eu quero suco de fruta.' },
+    { cards: ['casa', 'mãe'], expect: 'A casa da mãe.' },
+    { cards: ['eu', 'dor', 'barriga'], expect: 'Eu estou com dor na barriga.' },
+  ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos
     // errado que forma inexistente.

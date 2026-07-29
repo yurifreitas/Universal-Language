@@ -16,6 +16,8 @@ Makaton, Minspeak, LAMP e o que cada um ensina a este app
 mandioca, e o que ele se recusa a fazer
 🎨 **[Cor, tipografia e som](SENSORY.md)** — conforto sensorial, dislexia,
 pattern glare e earcons
+🗺️ **[Roadmap](ROADMAP.md)** — conversa do cotidiano, navegação e as dívidas
+em aberto, em ordem de impacto
 ⚖️ **[Legislação](LEGISLATION.md)** — CDPD/ONU, ADA, European Accessibility Act e
 o arcabouço brasileiro de direitos de neurodivergentes
 

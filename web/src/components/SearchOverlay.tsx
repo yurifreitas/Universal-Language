@@ -57,6 +57,21 @@ export function SearchOverlay({ settings, baseUrl, onPick, onClose }: Props) {
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
+          // Dicas para o teclado do celular: sem maiuscula automatica (rotulo
+          // de pictograma e minusculo), e a tecla de acao vira "buscar" em vez
+          // de "enter" — o teclado nao some ao confirmar.
+          autoCapitalize="none"
+          enterKeyHint="search"
+          inputMode="search"
+          // O `x` nativo do type=search some em alguns navegadores; o campo
+          // sempre pode ser esvaziado pelo teclado, mas em celular apagar
+          // letra por letra e caro.
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && query) {
+              e.stopPropagation()
+              setQuery('')
+            }
+          }}
         />
       }
     >
