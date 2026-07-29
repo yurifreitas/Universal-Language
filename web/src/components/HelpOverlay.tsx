@@ -50,6 +50,20 @@ export function HelpOverlay({ onClose }: Props) {
           </section>
 
           <section className="settings__group">
+            <h3>Roteiros e edição</h3>
+            <p className="settings__note">
+              <strong>Roteiros</strong> guardam a ordem do que se costuma dizer numa situação que
+              se repete — médico, padaria, chegar na escola. Nenhum passo é obrigatório: tocar
+              qualquer um fala e avança a marcação, e sair não exige nada. Roteiros próprios são
+              montados com as frases que você salvou e as que disse há pouco.
+            </p>
+            <p className="settings__note">
+              <strong>Editar</strong> renomeia, esconde, acrescenta e move cards, e cria pranchas
+              suas. As pranchas de fábrica não são alteradas — tudo é uma camada por cima, e
+              "restaurar" desfaz. Renomear é a edição que mais compensa: o pictograma genérico com
+              o nome que a família usa de verdade.
+            </p>
+
             <h3>Frases prontas</h3>
             <p className="settings__note">
               Um toque fala a frase inteira. Existem porque montar card a card leva tempo, e a
@@ -73,8 +87,9 @@ export function HelpOverlay({ onClose }: Props) {
             <p className="settings__note">
               Com "compor frase em português" ligado, a faixa abaixo da frase traz os
               marcadores: <strong>tempo</strong> (automático, passado, agora, futuro),{' '}
-              <strong>não</strong>, <strong>?</strong> e <strong>+1</strong> (plural). Eles valem
-              para a frase atual e somem quando ela é limpa.
+              <strong>não</strong>, <strong>?</strong> (pergunta), <strong>…ndo</strong>{' '}
+              (acontecendo agora), <strong>✋</strong> (pedido) e <strong>+1</strong> (plural).
+              Eles valem para a frase atual e somem quando ela é limpa.
             </p>
             <p className="settings__note">
               O tempo automático segue as próprias palavras: escolher ONTEM já põe a frase no

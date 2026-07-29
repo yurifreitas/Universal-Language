@@ -43,12 +43,15 @@ pode fazer:
 
 ### 2.1 Não reordena
 
-A ordem das células tocadas é a ordem da frase. A **única** exceção é a
-partícula de negação, que o português obriga a ficar antes do verbo: tocar
-`ÁGUA · NÃO · QUERER` produz "Não quero água", porque não existe posição
-alternativa gramatical para o "não".
+A ordem das células tocadas é a ordem da frase. Há **exatamente duas exceções**,
+e nas duas a posição não é escolha de estilo — é exigida pela língua:
 
-Reordenar seria dizer pela pessoa algo que ela não montou.
+| Exceção | Exemplo | Por quê |
+|---|---|---|
+| partícula de negação | `ÁGUA · NÃO · QUERER` → "Não quero água" | não existe posição alternativa gramatical para o "não" |
+| pronome átono (clítico) | `AJUDAR · EU` → "Me ajuda" | "ajuda eu" não é a forma que o português usa; o pronome objeto vem colado antes do verbo |
+
+Fora disso, reordenar seria dizer pela pessoa algo que ela não montou.
 
 ### 2.2 Não acrescenta conteúdo
 
@@ -126,6 +129,54 @@ verbo que falta, escolhendo qual:
 Adjetivo concorda com o último substantivo nomeado ("a casa está bonit**a**").
 Sem substantivo, concorda com o falante — e aí entra a decisão abaixo.
 
+### Progressivo e imperfeito
+
+O marcador **…ndo** produz a perífrase progressiva: `EU · COMER` → "Eu estou
+comendo". Combinado com o passado, dá **"eu estava comendo"** — a única forma de
+imperfeito que o motor gera, e ela vem de graça: a perífrase resolve com um
+verbo só (`estar`) o que exigiria conjugar o imperfeito de todos os outros.
+
+### Pedido (imperativo)
+
+O marcador **✋** põe o verbo no imperativo. Qual imperativo depende do registro:
+
+| Registro | `ABRIR · PORTA` |
+|---|---|
+| coloquial | "Abre a porta." |
+| normativo | "Abra a porta." |
+
+As duas circulam no Brasil e nenhuma é erro. O marcador **não** se aplica quando
+há sujeito de 2ª pessoa explícito: "você abra a porta" não existe, e "você abre
+a porta" já é um pedido em português falado.
+
+### Listas de pessoas
+
+`MÃE · PAI · AVÓ` são três pessoas, não uma genealogia. Ligar substantivos
+sempre com "de" produzia **"a mãe do pai da avó"** — algo que ninguém quis
+dizer. Quando os dois substantivos são animados, a ligação é de lista:
+
+> "A mãe, o pai e a avó."
+
+E a regência do verbo se repete em cada item: "Eu gosto **da** mãe, **do** pai e
+**da** irmã" — não "gosto da mãe, o pai e a irmã".
+
+Quando só um deles é animado, "de" é mesmo o que a língua usa: `CASA · MÃE` →
+"a casa da mãe".
+
+### Ligação com o verbo seguinte
+
+Adjetivo ou substantivo de estado seguido de verbo pede preposição, senão sai
+"estou feliz ir comer", que não é português:
+
+| Seleção | Saída |
+|---|---|
+| `EU · FELIZ · IR · COMER` | "Eu estou feliz **de** ir comer." |
+| `EU · CANSADO · ESPERAR` | "Eu estou cansado **de** esperar." |
+| `EU · MEDO · IR · MÉDICO` | "Eu tenho medo **de** ir **ao** médico." |
+
+Verbo de movimento com pessoa leva "a" ("vou ao médico"); com lugar, leva
+"para/pra" ("vou pra escola"). Com outro verbo, não leva nada ("vou dormir").
+
 ### Casos idiomáticos de prancha
 
 Duas construções frequentes o bastante para merecerem regra própria:
@@ -158,7 +209,58 @@ tratar uma limitação da língua como se fosse escolha do usuário.
 
 ---
 
-## 5. Palavras que o léxico não conhece
+## 5. Regionalismos
+
+Código: [`web/src/lib/regional.ts`](web/src/lib/regional.ts).
+
+O rótulo de um card não é legenda: é a palavra que a pessoa vai dizer, e que ela
+ouve os outros dizerem em casa. Uma criança do Recife que aponta a mandioca e
+ouve o aparelho falar "mandioca" recebe um modelo de língua que não é o da
+família dela — e aprende, de quebra, que o jeito dela de falar não está no
+aparelho. **Nenhuma variedade é mais correta que outra**; o padrão de um app
+nacional acaba sendo o Sudeste por inércia, e isso é uma escolha, não um fato.
+
+Duas camadas independentes:
+
+**Lexical** — a palavra muda.
+
+| Padrão | Sul | Nordeste / Norte |
+|---|---|---|
+| mandioca | aipim | macaxeira |
+| biscoito | bolacha | biscoito |
+| mexerica | bergamota | tangerina |
+| abóbora | abóbora | jerimum |
+| menino / menina | guri / guria | menino / menina |
+| mãe / pai | mãe / pai | mainha / painho |
+| pão francês | cacetinho | pão de sal |
+
+**Pronominal e verbal** — o card VOCÊ passa a mostrar e falar "tu" nas
+variedades que o usam, e a conjugação segue o **registro**:
+
+| Região | Registro | `VOCÊ · IR · ESCOLA` |
+|---|---|---|
+| Nordeste | coloquial | "Tu vai pra escola." |
+| Nordeste | normativo | "Tu vais para a escola." |
+| Padrão | coloquial | "Você vai pra escola." |
+| Padrão | normativo | "Você vai para a escola." |
+
+O registro também decide "pra" vs "para" e o imperativo ("abre" vs "abra"). O
+coloquial é o padrão porque uma prancha serve primeiro à conversa; o normativo
+existe para contexto escolar, onde a pessoa pode precisar da forma que a
+professora espera. **O app nunca corrige ninguém** — segue o que foi escolhido.
+
+Detalhe de implementação que importa: internamente a frase é **sempre** montada
+com o rótulo canônico, e o regionalismo entra só na saída. Assim a gramática
+funciona igual em qualquer variedade, e um favorito salvo no Sul não quebra
+quando o perfil vai para a Bahia. A única coisa relida da variante é o
+**gênero** — "o biscoito" vira "a bolacha", e o artigo tem de acompanhar.
+
+O que **não** é feito: sotaque, prosódia e fonologia. Isso é da voz do sistema,
+e o navegador expõe pouquíssimo controle.
+
+---
+
+## 6. Palavras que o léxico não conhece
 
 O usuário pode trazer para a frase qualquer um dos **13.801** pictogramas da
 ARASAAC pela busca, e nenhum deles está anotado. Para essas, `guess()` adivinha
@@ -176,7 +278,7 @@ com mais frequência pela busca. Ampliá-lo é trabalho incremental e barato.
 
 ---
 
-## 6. O que o motor não faz, e não deve fazer
+## 7. O que o motor não faz, e não deve fazer
 
 - **Não prediz.** Nada de sugerir a próxima palavra. Se algum dia houver
   predição, ela aparece em faixa separada e nunca reorganiza o grid (LAMP).
@@ -191,7 +293,7 @@ com mais frequência pela busca. Ampliá-lo é trabalho incremental e barato.
 
 ---
 
-## 7. Cor por classe gramatical
+## 8. Cor por classe gramatical
 
 Ligada ao mesmo léxico, mas é decisão visual e não de motor: a célula pode ser
 colorida pela **classe** da palavra, seguindo a **chave de Fitzgerald
@@ -219,7 +321,7 @@ Duas restrições que o modo respeita:
 
 ---
 
-## 8. Frases prontas — quando a frase não precisa ser montada
+## 9. Frases prontas — quando a frase não precisa ser montada
 
 Código: [`web/src/lib/phrases.ts`](web/src/lib/phrases.ts).
 
@@ -270,7 +372,61 @@ a mesma regra de estabilidade posicional que vale na prancha (LAMP).
 
 ---
 
-## 9. Limites conhecidos
+## 10. Roteiros — quando o que falta é a ordem
+
+Código: [`web/src/lib/scripts.ts`](web/src/lib/scripts.ts).
+
+Um roteiro é uma **sequência** de frases para uma situação que se repete: ir ao
+médico, comprar pão, se apresentar, chegar na escola, aguentar uma sobrecarga.
+Não é frase nova — é a ordem, que é justamente o que uma prancha não guarda.
+
+Roteiro social é recurso corrente no trabalho com autismo: saber de antemão a
+sequência do que vai acontecer e do que se pode dizer reduz a carga de uma
+situação imprevisível. Numa prancha de CAA soma-se um segundo ganho — a pessoa
+não precisa remontar cada frase no meio de uma interação com um estranho, que é
+quando a pressa alheia mais atrapalha.
+
+O passo atual fica marcado e avança quando um passo é falado, mas **nada
+trava**: qualquer passo pode ser tocado a qualquer momento, e sair do roteiro
+não exige nada. Conversa real não segue roteiro, e um app que obrigasse a seguir
+seria pior que nenhum.
+
+Os roteiros de fábrica não são editáveis — fazem-se cópias. Roteiros próprios
+montam-se **a partir do histórico e das frases salvas**: o que a pessoa já disse
+vira o passo do que ela vai dizer de novo.
+
+Um roteiro **não** é treino de fala nem script a decorar. É lembrete.
+
+---
+
+## 11. Editar as pranchas
+
+Código: [`web/src/lib/boardEdits.ts`](web/src/lib/boardEdits.ts).
+
+O vocabulário de fábrica é um chute razoável sobre uma pessoa que não existe. O
+nome do irmão, a comida daquela casa, o apelido do cachorro e o jeito que a
+família chama o banheiro não estão lá — e são justamente as palavras que a
+pessoa mais precisa dizer. **Uma prancha que não se edita é a prancha de outra
+pessoa.**
+
+Quatro operações: renomear, esconder, acrescentar e mover. Mais criar prancha
+própria e restaurar a de fábrica.
+
+**As pranchas de fábrica nunca são alteradas.** O que o usuário faz vira uma
+camada de sobreposição guardada à parte e aplicada na leitura. Assim uma
+atualização do app pode corrigir um pictograma errado ou acrescentar
+vocabulário sem apagar a personalização — e "restaurar" é sempre um botão,
+nunca uma reinstalação.
+
+Três dessas operações são baratas. **Mover é cara**, e tem aviso próprio no
+editor: mover uma célula apaga memória motora (LAMP). Quem edita raramente é
+quem usa, e o custo recai sobre quem usa. Por isso card acrescentado entra
+sempre **no fim**, onde não desloca nada já aprendido, e pranchas próprias
+entram **depois** das de fábrica.
+
+---
+
+## 12. Limites conhecidos
 
 1. **Nada disso foi validado com o público-alvo.** É aplicação de gramática
    descritiva e de convenção de CAA, não resultado de teste com usuários.
@@ -278,17 +434,27 @@ a mesma regra de estabilidade posicional que vale na prancha (LAMP).
    para telegráfico — por escolha, mas degrada.
 3. **A 1ª pessoa implícita é uma aposta.** "querer água" vira "Quero água". Se o
    usuário falava de terceiro, sai errado. O pronome explícito resolve.
-4. **Sem pretérito imperfeito.** "eu comia" não é gerável; só "eu comi". Para o
-   vocabulário de uma prancha isso raramente aparece, mas é uma lacuna real.
+4. **O imperfeito só existe no progressivo.** "eu estava comendo" sai; "eu
+   comia" não. Para o vocabulário de uma prancha isso raramente aparece, mas é
+   uma lacuna real.
 5. **A regra de dois substantivos é uma generalização.** "suco fruta" → "suco de
-   fruta" funciona; combinações mais raras podem produzir ligação estranha.
-6. **Não há teste automatizado.** O motor foi verificado por uma bateria manual
-   de ~30 frases durante a implementação. Uma suíte de regressão é a próxima
-   dívida técnica a pagar.
+   fruta" e "mãe pai" → "a mãe e o pai" funcionam porque o léxico marca quem é
+   animado. Um par em que essa marcação falta cai no "de" e pode soar estranho.
+6. **A cobertura de teste é uma tabela, não uma prova.** `npm run test:grammar`
+   fixa 52 casos de entrada e saída (`web/tests/grammar.test.ts`); combinações
+   fora dela continuam sem rede. A tabela existe para que uma mudança de regra
+   não altere calado o que já funcionava.
 7. **As frases prontas são um chute informado.** Foram escritas a partir dos
    contextos que a literatura de CAA descreve como recorrentes, não de registro
    de uso real. Quais faltam só se descobre observando alguém usar.
-8. **A concordância das frases prontas é por tabela, não por regra.** Como elas
+8. **A tabela de regionalismos é pequena e discutível.** São ~20 palavras, e
+   fronteira dialetal não coincide com fronteira de estado: há quem diga
+   "bolacha" no Nordeste e "biscoito" em São Paulo. A tabela reflete o uso mais
+   frequente de cada região, não uma regra — e o ajuste certo continua sendo o
+   editor de cards, onde a família escreve a palavra que usa de verdade.
+9. **Regionalismo não alcança as frases prontas nem os roteiros.** Eles têm
+   texto fixo em português geral; só os rótulos de card passam pela tabela.
+10. **A concordância das frases prontas é por tabela, não por regra.** Como elas
    não passam pelo motor, as poucas com adjetivo referente a quem fala têm uma
    versão feminina escrita à mão, trocada conforme o ajuste da seção 4. Frase
    nova com adjetivo exige entrada nova na tabela — e não há nada que avise

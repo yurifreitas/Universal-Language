@@ -11,8 +11,9 @@ voz em português, funciona offline.
 metodologias de CAA e normas técnicas
 🧩 **[Sistemas de linguagem visual](LANGUAGE-SYSTEMS.md)** — Bliss, Isotype,
 Makaton, Minspeak, LAMP e o que cada um ensina a este app
-✍️ **[Motor de frases](GRAMMAR.md)** — como `EU · QUERER · ÁGUA` vira
-"Eu quero água", e o que o motor se recusa a fazer
+✍️ **[Motor de frases, regionalismos, roteiros e edição](GRAMMAR.md)** — como
+`EU · QUERER · ÁGUA` vira "Eu quero água", como o app fala macaxeira em vez de
+mandioca, e o que ele se recusa a fazer
 🎨 **[Cor, tipografia e som](SENSORY.md)** — conforto sensorial, dislexia,
 pattern glare e earcons
 ⚖️ **[Legislação](LEGISLATION.md)** — CDPD/ONU, ADA, European Accessibility Act e
@@ -129,8 +130,25 @@ de figuras. Fundamentação em [REFERENCES.md § 5](REFERENCES.md).
 | **Switch** | `Espaço`/`Enter` — é como switches comerciais se apresentam ao sistema |
 | **Toque longo** | Fala o card **sem** inseri-lo na frase — explorar sem consequência |
 
-Atalhos: `1`–`9` trocam de prancha, `B` abre a busca, `Backspace` apaga o último
-card, `Esc` interrompe a varredura. A tela **Ajuda** documenta tudo no próprio app.
+Atalhos: `1`–`9` trocam de prancha, `B` abre a busca, `F` abre as frases prontas,
+`Backspace` apaga o último card, `Esc` interrompe a varredura. A tela **Ajuda**
+documenta tudo no próprio app.
+
+## Além da prancha
+
+| Recurso | O que resolve | Onde |
+|---|---|---|
+| **Motor de frases** | `EU · QUERER · ÁGUA` → "Eu quero água." Conjuga, concorda e insere artigo/preposição — sempre reversível e auditável | [GRAMMAR.md](GRAMMAR.md) |
+| **Marcadores** | Tempo, negação, pergunta, plural, progressivo e pedido, em faixa separada da grade | GRAMMAR.md § 3 |
+| **Regionalismos** | O app fala "macaxeira", "bolacha", "guri" e "tu" conforme a variedade escolhida | GRAMMAR.md § 5 |
+| **Frases prontas** | Um toque fala a frase inteira. Urgência, regulação sensorial e comunicação de reparo vêm primeiro | GRAMMAR.md § 9 |
+| **Roteiros** | A ordem do que se diz numa situação que se repete — montáveis a partir do histórico | GRAMMAR.md § 10 |
+| **Editar pranchas** | Renomear, esconder, acrescentar, mover e criar prancha própria, sem tocar nas de fábrica | GRAMMAR.md § 11 |
+| **Perfil** | Exportar/importar ajustes, favoritos, frases, roteiros e edições — o app é offline e não tem conta | Ajustes → Perfil |
+
+```bash
+npm run test:grammar   # 52 casos de entrada/saída do motor de frases
+```
 
 ### Padrões WAI-ARIA aplicados
 

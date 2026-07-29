@@ -675,7 +675,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     region === 'padrao'
       ? tokens
       : tokens.map((t) => {
-          const text = regionalLabel(t.text, region)
+          // A virgula de lista fica grudada na palavra ("mãe,"), e sem separa-la
+          // a busca na tabela falha justamente no meio de uma enumeracao.
+          const m = /^(.*?)([,;:.!?]*)$/.exec(t.text)
+          const word = m?.[1] ?? t.text
+          const punct = m?.[2] ?? ''
+          const text = regionalLabel(word, region) + punct
           return text === t.text ? t : { ...t, text }
         })
 
