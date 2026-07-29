@@ -419,6 +419,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   let lastVerbLabel: string | null = null
   /** A pessoa escolheu a preposicao; o motor nao sobrepoe a dele. */
   let explicitPrep = false
+  /** Indice do card de preposicao pendente, para atribuir o token a ele. */
+  let pendingPrepCard: number | null = null
   /** A pessoa escolheu o conectivo; o motor nao insere virgula nem "e". */
   let explicitConnector = false
   /**
@@ -821,8 +823,14 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         const wantsArticle = decideArticle({ lex, prep, suppressArticle })
         const art = wantsArticle ? article(gender, isPlural || Boolean(lex.plural)) : null
 
-        if (prep && art) contract(prep, art).forEach((t) => push(t, 'inserted'))
-        else if (prep) push(prep, 'inserted')
+        const prepCard = pendingPrepCard
+        pendingPrepCard = null
+        const emitPrep = (t: string, primeiro: boolean) =>
+          push(t, primeiro && prepCard !== null ? 'card' : 'inserted', {
+            ...(primeiro && prepCard !== null ? { cardIndex: prepCard } : {}),
+          })
+        if (prep && art) contract(prep, art).forEach((t, k) => emitPrep(t, k === 0))
+        else if (prep) emitPrep(prep, true)
         else if (art) push(art, 'inserted')
 
         const text = isPlural ? pluralize(it.card.label, lex) : it.card.label
@@ -885,8 +893,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
        * "mãe" escolheu artigo definido, nao escolheu masculino.
        */
       case 'preposition':
-        push(it.card.label, 'card', { cardIndex: it.index })
+        // Nao se emite aqui. Vira preposicao pendente e sai junto do que vier
+        // depois — assim contrai com o artigo ("em" + "o" = "no") e substitui
+        // a regencia do verbo em vez de duplicar ("brinco com a mãe", nunca
+        // "brinco com com a mãe").
         pendingPrep = label
+        pendingPrepCard = it.index
         explicitPrep = true
         previousWasNoun = false
         break
@@ -897,25 +909,29 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         const plural = Boolean(alvo?.plural) || next?.index === lastNounIndex
         const forms = ARTICLES[label]
         const text = forms ? forms[gender][plural ? 1 : 0] : it.card.label
-        // A preposicao pendente contrai com o artigo escolhido: EM + O = "no".
+        const mudou = text !== it.card.label
+
         if (pendingPrep) {
           const merged = contract(pendingPrep, text)
+          const prepCard = pendingPrepCard
           pendingPrep = null
+          pendingPrepCard = null
           if (merged.length === 1) {
-            // Some o token da preposicao ja emitido e entra a forma contraida.
-            const last = tokens[tokens.length - 1]
-            if (last?.text === label || last?.kind === 'card') tokens.pop()
+            // "em" + "o" = "no": um token so, atribuido ao card do artigo.
             push(merged[0]!, 'inflected', { cardIndex: it.index, original: it.card.label })
           } else {
-            push(text, text === it.card.label ? 'card' : 'inflected', {
+            push(merged[0]!, prepCard === null ? 'inserted' : 'card', {
+              ...(prepCard === null ? {} : { cardIndex: prepCard }),
+            })
+            push(text, mudou ? 'inflected' : 'card', {
               cardIndex: it.index,
-              ...(text === it.card.label ? {} : { original: it.card.label }),
+              ...(mudou ? { original: it.card.label } : {}),
             })
           }
         } else {
-          push(text, text === it.card.label ? 'card' : 'inflected', {
+          push(text, mudou ? 'inflected' : 'card', {
             cardIndex: it.index,
-            ...(text === it.card.label ? {} : { original: it.card.label }),
+            ...(mudou ? { original: it.card.label } : {}),
           })
         }
         suppressArticle = true
@@ -951,7 +967,6 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       case 'adverb':
       case 'affirmation':
       case 'social':
-      case 'connector':
       default:
         push(it.card.label, 'card', { cardIndex: it.index })
         previousWasNoun = false

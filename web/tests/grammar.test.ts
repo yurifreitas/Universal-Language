@@ -177,6 +177,20 @@ const CASES: Record<string, Case[]> = {
     { cards: ['casa', 'mãe'], expect: 'A casa da mãe.' },
     { cards: ['eu', 'dor', 'barriga'], expect: 'Eu estou com dor na barriga.' },
   ],
+  'palavras de ligação escolhidas pela pessoa': [
+    // A escolha da pessoa vence a do motor — mas a forma continua concordada.
+    { cards: ['o', 'mãe'], expect: 'A mãe.' },
+    { cards: ['eu', 'querer', 'um', 'bolo'], expect: 'Eu quero um bolo.' },
+    { cards: ['eu', 'brincar', 'com', 'mãe'], expect: 'Eu brinco com a mãe.' },
+    { cards: ['eu', 'querer', 'suco', 'sem', 'açúcar'], expect: 'Eu quero suco sem açúcar.' },
+    { cards: ['eu', 'ir', 'em', 'o', 'parque'], expect: 'Eu vou no parque.' },
+    // Conectivo posto pela pessoa: o motor nao poe outro por cima.
+    { cards: ['feijão', 'e', 'arroz'], expect: 'Feijão e arroz.' },
+    { cards: ['eu', 'querer', 'bolo', 'e', 'sorvete'], expect: 'Eu quero bolo e sorvete.' },
+    // Interjeicao chama alguem: vocativo, sem artigo.
+    { cards: ['ah', 'mãe'], expect: 'Ah, mãe.' },
+    { cards: ['ei', 'você'], expect: 'Ei, você.' },
+  ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos
     // errado que forma inexistente.
