@@ -3,6 +3,7 @@ import type { Card, Settings } from '../types'
 import { Pictogram } from './Pictogram'
 import { wordClassOf } from '../lib/lexicon'
 import { regionalLabel } from '../lib/regional'
+import { useEffectiveColumns } from '../lib/useMediaQuery'
 import type { ScanState } from '../lib/useScanning'
 
 interface Props {
@@ -55,7 +56,11 @@ export function CardGrid({
   // No modo denso a coluna nao segue o ajuste da prancha: aquele numero foi
   // calibrado para o tamanho do alvo de uma palavra, e frases precisam de
   // largura, nao de altura.
-  const cols = dense ? Math.max(2, Math.min(3, settings.columns)) : settings.columns
+  //
+  // Fora dele, o ajuste do usuario vale — com teto por tamanho de tela, que e
+  // propriedade do aparelho e nao preferencia. Ver `useEffectiveColumns`.
+  const fitted = useEffectiveColumns(settings.columns)
+  const cols = dense ? Math.max(1, Math.min(2, fitted)) : fitted
 
   // A prancha mudou: o foco volta ao inicio, senao apontaria para celula ausente.
   useEffect(() => setFocus(0), [cards])

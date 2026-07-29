@@ -310,6 +310,16 @@ body,
   margin: 0;
 }
 
+/* Quem rola e a PRANCHA, nunca o documento.
+ *
+ * Com o documento tambem rolavel apareciam duas barras de rolagem, e o
+ * cabecalho saia da tela junto — a barra da frase e os marcadores, que
+ * precisam estar sempre visiveis, desapareciam ao rolar os cards. Os dialogos
+ * nao dependem disto: sao `position: fixed` com area de rolagem propria. */
+body {
+  overflow: hidden;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -434,7 +444,17 @@ button,
 .app {
   display: grid;
   grid-template-rows: auto auto auto auto 1fr;
-  height: 100%;
+  /* `minmax(0, 1fr)` e nao o padrao `auto`: uma faixa `auto` de grade cresce
+     ate o max-content do filho mais largo, e um unico filho teimoso — a barra
+     superior com seis botoes — esticava o documento inteiro para 599px numa
+     tela de 390. A interface deslizava para fora pela direita, levando junto a
+     barra de marcadores. E o "grid blowout" classico, e o sintoma dele nunca
+     aparece no elemento culpado. */
+  grid-template-columns: minmax(0, 1fr);
+  /* `100dvh` e nao `100%`: em celular a altura da janela muda quando a barra
+     do navegador recolhe, e `100%` fica preso ao valor inicial — sobrando ou
+     faltando uma faixa conforme a rolagem. */
+  height: 100dvh;
   max-height: 100dvh;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -462,11 +482,24 @@ button,
   align-items: center;
   justify-content: space-between;
   min-height: 60px;
+  /* Sem isto o conteudo minimo da barra define a largura do documento
+     inteiro, e a pagina desliza para fora da tela num celular. */
+  min-width: 0;
 }
 .topbar__actions {
   display: flex;
+  /* Os controles do cuidador sao seis. `wrap` e incondicional: em tela larga
+     nunca quebra, e em tela estreita quebra em vez de sair pela direita.
+     Sumir para fora da tela e o pior desfecho possivel num botao que pode ser
+     "Ajustes" no meio de uma crise. */
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.topbar__inner {
+  flex-wrap: wrap;
 }
 
 /* Conteudo so para leitor de tela: fora da tela, mas dentro da arvore de
@@ -655,6 +688,7 @@ button,
 .gram,
 .marks {
   grid-column: 1;
+  min-width: 0;
 }
 
 .sentence__actions {
@@ -811,6 +845,8 @@ button,
 }
 .tabs__inner {
   display: flex;
+  flex-wrap: nowrap;
+  min-width: 0;
   gap: 6px;
   padding-block: 10px;
   overflow-x: auto;
@@ -1209,6 +1245,9 @@ button,
   z-index: 20;
   display: grid;
   grid-template-rows: auto auto 1fr;
+  /* Mesma armadilha da grade principal: faixa `auto` cresce ate o max-content
+     e estica o dialogo para fora da tela. */
+  grid-template-columns: minmax(0, 1fr);
   background: var(--bg);
   padding-bottom: env(safe-area-inset-bottom);
   animation: overlay-in 0.16s ease-out;
@@ -1419,7 +1458,26 @@ kbd {
 
 /* ------------------------------------------------------------ responsivo */
 
-@media (max-width: 720px) {
+/* =========================================================================
+   Telas estreitas
+
+   O modo de uso mais comum de uma prancha de CAA e um aparelho na mao, nao um
+   monitor. O que quebra aqui nao e cosmetico: se a barra de marcadores sai da
+   tela, o tempo verbal deixa de existir para quem usa celular.
+
+   REGRA DE OURO DESTE BLOCO: **nada pode esticar o documento**. Um unico
+   elemento com largura minima maior que a tela empurra o `body` inteiro, e o
+   resultado e a interface deslizando para fora pela direita — foi exatamente
+   o que aconteceu: a barra superior media 599px numa tela de 390px e levava
+   junto a barra da frase e os marcadores.
+
+   Por isso todo container em linha aqui tem `min-width: 0` ou `flex-wrap`.
+   ========================================================================= */
+
+/* Rotulo dos botoes some cedo: com seis controles, o texto e o que empurra a
+   barra para uma segunda linha — e uma segunda linha de cabecalho custa um
+   card inteiro de altura no celular deitado. */
+@media (max-width: 900px) {
   .btn__text {
     display: none;
   }
@@ -1430,24 +1488,63 @@ kbd {
   .btn--locked .btn__text {
     display: inline;
   }
+
+  .topbar__inner {
+    gap: 8px;
+    padding-block: 8px;
+  }
 }
 
-/* Em tela estreita a barra da frase empilha, para os controles nao espremerem
-   os cards ja escolhidos. */
 @media (max-width: 560px) {
+  /* Espaco vertical e o recurso escasso do celular: cada pixel gasto em
+     cabecalho e um card a menos visivel. Os alvos continuam com 44px, que e o
+     minimo da WCAG 2.5.8 para controle de cuidador — os cards, esses, seguem
+     com o alvo grande de sempre. */
+  .btn--ghost {
+    min-width: 44px;
+    padding: 0 6px;
+  }
+  .topbar__actions {
+    gap: 4px;
+  }
   .sentence {
-    flex-direction: column;
+    padding-block: 8px;
+    gap: 8px;
+  }
+  .sentence__strip {
+    min-height: 76px;
+  }
+  .mark {
+    min-width: 44px;
+    padding: 0 6px;
+  }
+  .tabs__inner {
+    padding-block: 6px;
+  }
+  .tab {
+    min-height: 44px;
+  }
+
+  /* A barra da frase empilha: tira dos controles a coluna que espremia os
+     cards ja escolhidos. Era `flex-direction: column`, que deixou de valer
+     quando a barra virou grade — e nada avisou. */
+  .sentence {
+    grid-template-columns: minmax(0, 1fr);
   }
   .sentence__actions {
-    justify-content: stretch;
+    grid-column: 1;
+    grid-row: auto;
   }
   .btn--speak {
     flex: 1;
   }
-  .tab__name {
+
+  /* Só as abas de prancha viram ícone puro. As abas de frases e roteiros nao
+     tem icone — esconder o nome delas deixava botoes VAZIOS. */
+  .tabs .tab__name {
     display: none;
   }
-  .tab {
+  .tabs .tab {
     padding: 0 16px;
   }
   .tab__icon {
@@ -1455,6 +1552,46 @@ kbd {
   }
   .brand__name {
     display: none;
+  }
+
+  /* Diálogos ocupam a tela inteira: em 390px nao ha espaco para moldura. */
+  .phrases__tabs .tab {
+    padding: 0 12px;
+    font-size: 0.92rem;
+  }
+  .editor__row {
+    grid-template-columns: 40px minmax(0, 1fr);
+    row-gap: 6px;
+  }
+  .editor__row .editor__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+  .step {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+  .step .editor__actions {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+  .phrases__save {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Celular deitado: sobra largura e falta altura. O pictograma encolhe para
+   caber mais de uma linha de cards na tela. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .picto,
+  .picto--fallback {
+    max-height: 18vh;
+  }
+  .sentence__strip {
+    min-height: 72px;
+  }
+  .topbar__inner {
+    min-height: 48px;
   }
 }
 
