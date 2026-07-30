@@ -813,8 +813,17 @@ img,
   border-radius: var(--r-md);
 }
 
-.gram__word:first-of-type {
-  text-transform: capitalize;
+/* `::first-letter`, e não `text-transform: capitalize`.
+ *
+ * `capitalize` maiúscula a primeira letra de CADA palavra do elemento — e um
+ * token do motor pode ter mais de uma: o futuro é perifrástico ("vou estar"),
+ * e locuções inteiras ("tomar banho", "escovar os dentes") são um token só.
+ * O resultado na tela era "Vou Estar feliz", com maiúscula no meio da frase.
+ *
+ * Só a primeira letra do primeiro token deve subir, que é o que `::first-letter`
+ * faz — e ele respeita a acentuação, coisa que fatiar a string não faria. */
+.gram__word:first-of-type::first-letter {
+  text-transform: uppercase;
 }
 
 /* Palavra que o motor inseriu e o usuario nao escolheu: tom apagado e

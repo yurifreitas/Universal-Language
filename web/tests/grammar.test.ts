@@ -195,6 +195,60 @@ const CASES: Record<string, Case[]> = {
     { cards: ['eu', 'precisar', 'dormir'], expect: 'Eu preciso dormir.' },
   ],
 
+  /**
+   * Duas orações justapostas não ficam coladas.
+   *
+   * Achado varrendo combinações, não usando o app: `EU · PODER · VOCÊ · VIR`
+   * saía "Eu posso você vem" — duas orações grudadas, sem nada entre elas, que
+   * não é frase em língua nenhuma.
+   *
+   * "Poder" não rege oração encaixada como "querer" rege, então não cabe pôr
+   * "que". O que cabe é **não colar**. A vírgula é a saída conservadora de
+   * propósito: não inventa relação nenhuma entre as duas orações, só marca que
+   * são duas. Escolher um conectivo ("e", "mas", "então") seria o motor
+   * decidindo o que a pessoa quis dizer.
+   *
+   * De quebra, a mesma vírgula conserta a subordinada deslocada — "quando o
+   * papai chegar, eu brinco" —, onde ela é obrigatória pela norma e faltava.
+   */
+  'orações justapostas': [
+    { cards: ['eu', 'poder', 'você', 'vir'], expect: 'Eu posso, você vem.' },
+    { cards: ['eu', 'poder', 'mãe', 'ajudar'], expect: 'Eu posso, a mãe ajuda.' },
+    // O volitivo continua encaixando, e não ganha vírgula.
+    { cards: ['eu', 'querer', 'você', 'vir'], expect: 'Eu quero que você venha.' },
+  ],
+
+  /**
+   * Achados pela varredura em lote — `ferramentas/gramatica/`.
+   *
+   * Uma rodada de 20.000 casos com cobertura de 100% dos pares e trios levou 8
+   * segundos e achou estes três. Nenhum aparece isolado: todos precisam de uma
+   * COMBINAÇÃO — negação + posição, plural + região —, que é exatamente o que
+   * uma tabela escrita à mão não alcança e o que custou caro achar usando o app.
+   */
+  'combinações achadas em lote': [
+    // 191 casos. O card "não" entre o adjetivo e o verbo escondia o verbo de
+    // quem olhava uma posição à frente, e a preposição da ligação sumia.
+    { cards: ['eu', 'cansado', 'esperar'], expect: 'Eu estou cansado de esperar.' },
+    { cards: ['eu', 'cansado', 'não', 'esperar'], expect: 'Eu não estou cansado de esperar.' },
+    { cards: ['eu', 'não', 'cansado', 'esperar'], expect: 'Eu não estou cansado de esperar.' },
+    { cards: ['eu', 'feliz', 'não', 'ir', 'comer'], expect: 'Eu não estou feliz de ir comer.' },
+
+    // 74 casos. O plural era formado sobre a palavra canônica e só depois a
+    // saída tentava regionalizar — mas o mapa de variantes só conhece o
+    // singular. Saía "Os crianças": o gênero da variante com a palavra de
+    // fábrica.
+    { cards: ['criança'], region: 'sul', expect: 'O guri.' },
+    { cards: ['criança'], region: 'sul', marks: { plural: true }, expect: 'Os guris.' },
+    {
+      cards: ['eu', 'querer', 'biscoito'],
+      region: 'sul',
+      marks: { plural: true },
+      expect: 'Eu quero as bolachas.',
+    },
+    { cards: ['criança'], marks: { plural: true }, expect: 'As crianças.' },
+  ],
+
   'listas de pessoas': [
     { cards: ['mãe', 'pai', 'avó'], expect: 'A mãe, o pai e a avó.' },
     { cards: ['eu', 'querer', 'mãe', 'pai'], expect: 'Eu quero a mãe e o pai.' },
@@ -379,14 +433,14 @@ const CASES: Record<string, Case[]> = {
     // Regulares: a forma e identica ao infinitivo, e so por isso ja saia certo
     // por acidente. Os irregulares e que denunciavam a falta.
     { cards: ['quando', 'papai', 'chegar', 'eu', 'brincar'],
-      expect: 'Quando o papai chegar eu brinco.' },
-    { cards: ['se', 'você', 'querer', 'eu', 'ir'], expect: 'Se você quiser eu vou.' },
+      expect: 'Quando o papai chegar, eu brinco.' },
+    { cards: ['se', 'você', 'querer', 'eu', 'ir'], expect: 'Se você quiser, eu vou.' },
     { cards: ['quando', 'eu', 'ser', 'grande', 'eu', 'querer', 'dirigir'],
-      expect: 'Quando eu for grande eu quero dirigir.' },
+      expect: 'Quando eu for grande, eu quero dirigir.' },
     { cards: ['se', 'eu', 'poder', 'eu', 'comer', 'bolo'],
-      expect: 'Se eu puder eu como o bolo.' },
+      expect: 'Se eu puder, eu como o bolo.' },
     { cards: ['quando', 'mamãe', 'vir', 'eu', 'falar'],
-      expect: 'Quando a mamãe vier eu falo.' },
+      expect: 'Quando a mamãe vier, eu falo.' },
   ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos

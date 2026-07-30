@@ -164,9 +164,10 @@ evidência de que o corte está apertado o bastante.
 
 `gerar.mjs` produz duas saídas:
 
-- **`web/public/data/lexico.json`** — 4.851 entradas, só confiança alta.
-  3.244 substantivos, 990 verbos, 617 adjetivos.
-- **`ferramentas/lexico/revisar.jsonl`** — 1.304 termos, uma linha por termo,
+- **`web/public/data/lexico.json`** — 4.906 entradas, só confiança alta.
+  3.299 substantivos (dos quais **132 comuns de dois gêneros, sem gênero de
+  propósito**), 990 verbos, 617 adjetivos.
+- **`ferramentas/lexico/revisar.jsonl`** — 1.249 termos, uma linha por termo,
   com os sinais que cada um produziu. Fila de revisão humana.
 
 **A confiança baixa não entra no app.** Errar o artigo é pior do que não ter
@@ -207,3 +208,31 @@ acima. É o que impede a ferramenta de piorar sem ninguém ver.
 `guess()`. Tudo falha para o comportamento de antes: se o JSON não carregar,
 vier corrompido ou trouxer versão desconhecida, o app funciona exatamente como
 funcionava. **A prancha tem de abrir sem ele.**
+
+## Em aberto: o motor ainda não sabe ficar sem gênero
+
+Conferido em `grammar.ts`, no ramo que escolhe artigo de substantivo:
+
+```ts
+const gender = lex.gender ?? 'm'
+```
+
+Ou seja: hoje, substantivo sem gênero **não** faz o motor omitir o artigo — ele
+cai no masculino. Para os 132 comuns de dois gêneros isso ainda é a melhor das
+três opções disponíveis, e por larga margem:
+
+| o que a palavra recebe | o que sai para "dentista" |
+|---|---|
+| `gender: 'f'` (o bug corrigido) | "a dentista" — sempre, inclusive para homem |
+| fora do léxico, cai em `guess()` | "a dentista" — `guess()` também lê o `-a` |
+| classe sem gênero (**hoje**) | "o dentista" — masculino não-marcado |
+
+O masculino não-marcado é a convenção do português para quando não se sabe, e é
+o que a pessoa espera ver; o feminino automático não é. Então esta correção é um
+ganho real mesmo com o motor como está.
+
+O passo seguinte, que é mudança em `grammar.ts` e não nesta ferramenta: fazer o
+ramo do artigo distinguir "gênero desconhecido" e omitir o artigo, ou usar o
+gênero do alvo da fala — que o motor já conhece em outros ramos
+(`target?.gender`, `speakerGender`). Aí "dentista" concordaria com quem está
+sendo falado, que é a resposta certa de verdade.

@@ -389,6 +389,14 @@ interface Item {
   lex: Lexeme
   index: number
   label: string
+  /**
+   * A forma regional, quando ela difere da canonica — "guri" para "criança".
+   *
+   * O `label` continua canonico porque toda regra do motor (regencia, classe,
+   * contabilidade, lexico) e escrita sobre ele. O que a pessoa VAI DIZER e
+   * isto, e e sobre isto que se forma o plural.
+   */
+  variante?: string
 }
 
 /**
@@ -448,7 +456,16 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       // "pão/pães" nao diz nada sobre "cacetinho".
       if (vlex.pluralForm) merged.pluralForm = vlex.pluralForm
       else delete merged.pluralForm
-      return { card, index, label, lex: merged }
+      // A VARIANTE viaja junto, e nao so o genero dela.
+      //
+      // Achado pela varredura em lote, em 74 casos: o plural era formado sobre
+      // a palavra canonica ("criança" -> "crianças") e so depois a saida
+      // tentava regionalizar — mas o mapa de variantes so conhece o SINGULAR,
+      // entao "crianças" passava intacto e ficava com o artigo do genero de
+      // "guri". Resultado: "Os crianças".
+      //
+      // Pluralizar a variante resolve na origem: "guri" -> "guris".
+      return { card, index, label, lex: merged, variante: variant }
     }
     return { card, index, label, lex }
   })
@@ -493,6 +510,40 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const clauseQue = new Set<number>()
   /** O "que" sai uma vez por oracao, antes do sujeito dela. */
   const queEmitido = new Set<number>()
+  /**
+   * O proximo item que IMPORTA para a regencia — pulando a negacao.
+   *
+   * Um card "nao" no meio nao muda a relacao entre as palavras em volta: ele
+   * nega a oracao inteira, e nao a ligacao entre um adjetivo e o verbo que vem
+   * depois. Quem le so `items[i + 1]` para decidir regencia precisa pular por
+   * cima dele.
+   */
+  const proximoIgnorandoNegacao = (i: number) => {
+    for (let j = i + 1; j < items.length; j++) {
+      const x = items[j]
+      if (x && x.lex.class !== 'negation') return x
+    }
+    return undefined
+  }
+
+  /** Oracoes justapostas: separadas por virgula, sem conectivo inventado. */
+  const clauseVirgula = new Set<number>()
+  const virgulaEmitida = new Set<number>()
+
+  /**
+   * Põe a vírgula que separa duas orações justapostas.
+   *
+   * Vai no token ANTERIOR, e não como token próprio: vírgula é pontuação presa
+   * à palavra que a precede, e um token separado apareceria com espaço antes
+   * dela na saída falada e na barra da frase.
+   */
+  const virgulaDeOracao = (oracao: number) => {
+    if (!clauseVirgula.has(oracao) || virgulaEmitida.has(oracao)) return
+    virgulaEmitida.add(oracao)
+    const ultimo = tokens[tokens.length - 1]
+    // Sem nada antes não há o que separar — a oração é a primeira da frase.
+    if (ultimo && !/[,.;:!?]$/.test(ultimo.text)) ultimo.text = `${ultimo.text},`
+  }
 
   const CLAUSE_STARTERS = new Set([
     'porque',
@@ -570,6 +621,23 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // encaixa o que vem depois dela.
           if (verboAntes && VOLITIVOS.has(verboAntes.label) && !clauseSubjunctive[c - 1]) {
             clauseQue.add(c)
+          } else {
+            /**
+             * Oração nova SEM conectivo e sem verbo que a encaixe: separa por
+             * vírgula.
+             *
+             * Achado varrendo combinações: `EU · PODER · VOCÊ · VIR` saía como
+             * "Eu posso você vem" — duas orações coladas, sem nada entre elas,
+             * que não é frase em língua nenhuma. "Poder" não rege oração
+             * encaixada como "querer" rege, então não cabe pôr "que" aqui; o
+             * que cabe é **não colar**.
+             *
+             * A vírgula é a saída conservadora de propósito: ela não inventa
+             * relação nenhuma entre as duas orações — só marca que são duas.
+             * Escolher um conectivo ("e", "mas", "então") seria o motor
+             * decidindo o que a pessoa quis dizer, e isso ele não faz.
+             */
+            clauseVirgula.add(c)
           }
         }
         verboNaOracao = false
@@ -908,15 +976,43 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   // que de fato locativizam: joga-se NO celular, fala-se NO telefone.
   const ACTIVITY_VERBS = new Set(['jogar', 'brincar', 'falar', 'mexer', 'estudar'])
 
-  const emitNegation = () => {
+  /**
+   * A negação sai no predicado ONDE O CARD ESTÁ — não no primeiro da frase.
+   *
+   * Achado numa tela do app: `EU · QUERER · ÁGUA · NÃO · QUERER · PÃO` saía
+   * como "Eu **não** quero água e quero o pão". A pessoa pôs o "não" antes do
+   * SEGUNDO querer, e o motor o levou para o primeiro — invertendo as duas
+   * metades da frase de uma vez.
+   *
+   * O critério é o mesmo do resto: a posição do card é a intenção. Um card de
+   * negação só pode ser emitido quando o predicado que está sendo construído
+   * vem DEPOIS dele.
+   *
+   * `ateIndice` é o índice do item que está sendo emitido agora. Sem ele, um
+   * predicado anterior consumiria a negação de um posterior.
+   */
+  const negacaoDisponivel = (ateIndice: number): boolean => {
+    if (!negated) return false
+    // Marcador da faixa (sem card): vale para a oração toda, e sai no primeiro
+    // predicado — é o que a pessoa pediu ao marcar a frase inteira.
+    if (negationCards.length === 0) return true
+    return negationCards.some((n) => !negacoesUsadas.has(n.index) && n.index < ateIndice)
+  }
+
+  const emitNegation = (ateIndice = Number.MAX_SAFE_INTEGER) => {
     if (!negated || negationDone) return
+    if (!negacaoDisponivel(ateIndice)) return
     negationDone = true
-    if (negationCard) {
-      // Este card já virou o "não" do primeiro predicado: não pode virar "nem"
-      // outra vez lá na coordenação. É o que distingue um "não" (contraste —
-      // "não quero suco, quero leite") de dois ("não quero suco, nem leite").
-      negacoesUsadas.add(negationCard.index)
-      push('não', 'card', { cardIndex: negationCard.index })
+    // O card consumido é o primeiro AINDA disponível, e não sempre o primeiro
+    // da frase: é isso que faz a negação sair no predicado certo quando ela
+    // está no meio.
+    const usado = negationCards.find((n) => !negacoesUsadas.has(n.index) && n.index < ateIndice)
+    if (usado) {
+      // Este card já virou o "não" deste predicado: não pode virar "nem" outra
+      // vez lá na coordenação. É o que distingue um "não" (contraste — "não
+      // quero suco, quero leite") de dois ("não quero suco, nem leite").
+      negacoesUsadas.add(usado.index)
+      push('não', 'card', { cardIndex: usado.index })
     } else push('não', 'inserted')
   }
 
@@ -1018,6 +1114,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           queEmitido.add(clauseOf[it.index] ?? 0)
           push('que', 'inserted')
         }
+        virgulaDeOracao(clauseOf[it.index] ?? 0)
         previousWasSubject = subjectGroup.some((x) => x.index === it.index)
         // Sujeito composto: "a mamãe, eu e você".
         if (listEligible(items[i - 1]) && !pendingPrep) {
@@ -1281,8 +1378,23 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
         const modo = articles[it.index] ?? 'auto'
         const plural = isPlural || Boolean(lex.plural)
+        /**
+         * O artigo escolhido no bloco não vence a supressão estrutural.
+         *
+         * Achado pela varredura em lote: `UM · TITIA`, com o segundo bloco
+         * marcado como indefinido, saía **"Umas umas titias"** — o quantificador
+         * "um" já ocupa o lugar do artigo, e o modo explícito punha outro por
+         * cima dele.
+         *
+         * O toque no bloco escolhe QUAL artigo, não SE existe um: a pessoa não
+         * está pedindo dois determinantes seguidos, e nenhuma escolha dela no
+         * bloco significa isso. Onde a estrutura já não comporta artigo, o modo
+         * explícito é ignorado — e o "nenhum" continua valendo, porque tirar é
+         * sempre um pedido possível.
+         */
+        const cabeArtigo = !suppressArticle
         const art =
-          modo === 'none'
+          modo === 'none' || !cabeArtigo
             ? null
             : modo === 'def'
               ? article(gender, plural)
@@ -1298,6 +1410,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           queEmitido.add(clauseOf[it.index] ?? 0)
           push('que', 'inserted')
         }
+        virgulaDeOracao(clauseOf[it.index] ?? 0)
 
         const prepCard = pendingPrepCard
         pendingPrepCard = null
@@ -1316,7 +1429,10 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           queEmitido.add(clauseOf[it.index] ?? 0)
           push('que', 'inserted')
         }
-        const text = pluralizar ? pluralize(it.card.label, lex) : it.card.label
+        // Com variante regional, e ELA que se pluraliza — ver o comentario na
+        // montagem dos itens.
+        const baseDoNome = it.variante ?? it.card.label
+        const text = pluralizar ? pluralize(baseDoNome, lex) : baseDoNome
         push(text, text === it.card.label ? 'card' : 'inflected', {
           cardIndex: it.index,
           ...(text === it.card.label ? {} : { original: it.card.label }),
@@ -1372,7 +1488,18 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           ...(text === it.card.label ? {} : { original: it.card.label }),
         })
         // "feliz de ir", "cansado de esperar", "pronto para sair".
-        if (next?.lex.class === 'verb') pendingVerbPrep = 'de'
+        //
+        // O próximo item é lido IGNORANDO a negação. Achado pela varredura em
+        // lote, em 191 casos:
+        //
+        //     EU · CANSADO · ESPERAR        → "Eu estou cansado de esperar."
+        //     EU · CANSADO · NÃO · ESPERAR  → "Eu não estou cansado esperar."
+        //
+        // O card "não" entre o adjetivo e o verbo escondia o verbo de quem
+        // olhava só uma posição à frente, e a preposição sumia. A negação não
+        // muda a relação entre o adjetivo e o verbo — ela nega a oração — e
+        // por isso não pode entrar no meio dessa leitura.
+        if (proximoIgnorandoNegacao(i)?.lex.class === 'verb') pendingVerbPrep = 'de'
         previousWasNoun = false
         break
       }
@@ -1576,6 +1703,20 @@ function decideArticle(args: {
   // Palavra fora do lexico: o genero e chute pela terminacao. Errar o artigo
   // ("o mão") e pior que nao ter artigo, entao nao se arrisca.
   if ((lex as { guessed?: boolean }).guessed) return false
+  /**
+   * Substantivo COM classe e SEM gênero: também não leva artigo.
+   *
+   * O caso existe desde que o léxico gerado passou a publicar comuns de dois
+   * gêneros sem gênero — *o* dentista e *a* dentista são os dois corretos, e a
+   * palavra legitimamente não tem um. O motor caía no masculino por omissão
+   * (`lex.gender ?? 'm'`), o que transformava "não sei" em "é homem".
+   *
+   * Numa prancha de CAA isso não é erro de concordância: é o app pondo a
+   * pessoa errada na frase, e quem usa fala de si e de quem está por perto o
+   * tempo todo. Sem artigo — "quero dentista" — a frase fica telegráfica e
+   * verdadeira, que é a troca que este arquivo já faz em todo lugar.
+   */
+  if (lex.class === 'noun' && !lex.gender) return false
   if (lex.bareAfterPrep && prep) return false
   if (lex.mass) return false
   if (prep === 'de' && !lex.animate && !lex.place) return false

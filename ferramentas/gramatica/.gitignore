@@ -1,0 +1,6 @@
+# As saídas da ferramenta são grandes e reproduzíveis a partir da semente —
+# versionar o JSONL seria carregar megabytes para guardar o que `--semente=1`
+# devolve em segundos. O que MERECE versão é o corpus revisado (Eixo D4), que
+# não sai daqui.
+casos.jsonl
+suspeitas.jsonl

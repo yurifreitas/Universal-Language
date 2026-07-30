@@ -93,6 +93,19 @@ const comLexico = frase(['eu', 'querer', 'girafa'])
 eq('sem léxico: sem artigo', semLexico, 'Eu quero girafa.')
 eq('com léxico: artigo certo', comLexico, 'Eu quero a girafa.')
 
+/* ------------------------------- comum de dois gêneros: sem artigo */
+
+/**
+ * "o dentista" e "a dentista" são os dois corretos, então a palavra
+ * legitimamente não tem gênero — e o gerador a publica sem. O motor caía no
+ * masculino por omissão, o que transformava "não sei" em "é homem". Numa
+ * prancha de CAA isso põe a pessoa errada na frase.
+ */
+definirLexicoGerado({ dentista: { class: 'noun' } })
+eq('comum de dois: classe fica', lookup('dentista').class, 'noun')
+eq('comum de dois: sem gênero', lookup('dentista').gender, undefined)
+eq('comum de dois: sem artigo, e não masculino', frase(['eu', 'querer', 'dentista']), 'Eu quero dentista.')
+
 /* --------------------------------------- plural vindo do acervo */
 
 definirLexicoGerado({ pão: { class: 'noun', gender: 'm', pluralForm: 'pães' } })
