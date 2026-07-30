@@ -576,6 +576,15 @@ export default function App() {
           onMoveAt={moveInSentence}
           articles={articles}
           onCycleArticle={cycleArticle}
+          onSave={() => {
+            if (!currentPhrase) return
+            setMyPhrases((list) =>
+              list.some((x) => x.label === currentPhrase.label)
+                ? list.filter((x) => x.label !== currentPhrase.label)
+                : [...list, currentPhrase],
+            )
+          }}
+          saved={Boolean(currentPhrase && myPhrases.some((x) => x.label === currentPhrase.label))}
           onSpeakWord={(card, inflected) => speak(inflected ?? word(card), settings)}
         />
       </div>

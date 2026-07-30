@@ -24,6 +24,10 @@ interface Props {
   /** Artigo escolhido por posicao da frase. */
   articles: ArticleMode[]
   onCycleArticle: (index: number) => void
+  /** Guarda a frase montada em "Minhas frases", sem sair da tela. */
+  onSave: () => void
+  /** Esta frase ja esta guardada? */
+  saved: boolean
 }
 
 /** O que o botao de artigo mostra e anuncia em cada estado. */
@@ -74,6 +78,8 @@ export function SentenceBar({
   onSpeakWord,
   articles,
   onCycleArticle,
+  onSave,
+  saved,
 }: Props) {
   const empty = sentence.length === 0
   const spoken = composed
@@ -304,6 +310,26 @@ export function SentenceBar({
             />
           </svg>
           <span>Falar</span>
+        </button>
+        {/* Guardar a frase ali mesmo.
+            Antes era preciso abrir Frases prontas e achar a faixa de salvar —
+            tres toques e uma troca de tela para guardar algo que a pessoa
+            acabou de montar e vai repetir amanha. */}
+        <button
+          type="button"
+          className={`btn btn--ghost ${saved ? 'btn--saved' : ''}`}
+          onClick={onSave}
+          disabled={empty}
+          aria-label={
+            empty
+              ? 'Guardar frase (frase vazia)'
+              : saved
+                ? `Já guardada em Minhas frases: ${spoken}`
+                : `Guardar em Minhas frases: ${spoken}`
+          }
+          aria-pressed={saved}
+        >
+          {saved ? '★' : '☆'}
         </button>
         <button
           type="button"

@@ -2143,3 +2143,92 @@ textarea {
 .step--done .step__n {
   color: var(--accent);
 }
+
+/* Frase já guardada: a estrela acesa. Estado, não decoração — é o que diz que
+   tocar de novo desfaz. */
+.btn--saved {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* =========================================================================
+   RESPIROS — a revisão de espaçamento
+
+   O app cresceu por acréscimo: cada recurso novo entrou com o espaçamento que
+   coube no momento, e o resultado é ritmo irregular — dois blocos colados aqui,
+   um vão grande ali. Esta seção não muda nada de layout; só põe as distâncias
+   na mesma escala fluida (`--space-*`), que já cresce com a tela.
+
+   A regra que guiou: **o que é da mesma ideia fica junto; o que muda de assunto
+   ganha ar.** Rótulo e seu campo têm menos espaço entre si do que dois campos
+   diferentes — senão o olho não sabe qual rótulo pertence a qual controle.
+   ========================================================================= */
+
+.settings {
+  gap: var(--space-4);
+}
+.settings__group {
+  padding: var(--space-4);
+  gap: var(--space-3);
+}
+/* Nota explicativa cola no controle que explica, e afasta do próximo. */
+.settings__note {
+  margin-block: calc(var(--space-1) * -1) 0;
+}
+.settings__note + .settings__note {
+  margin-top: var(--space-2);
+}
+.settings__group h3 + * {
+  margin-top: var(--space-1);
+}
+
+.phrases {
+  padding-block: var(--space-2);
+}
+.phrases__intro {
+  margin-bottom: var(--space-3);
+}
+.steps {
+  gap: var(--space-2);
+}
+.editor__list {
+  gap: var(--space-2);
+}
+
+/* =========================================================================
+   TABLET — 700 a 1024px
+
+   A faixa que ninguém revisa: larga demais para as regras de celular, estreita
+   demais para a de desktop. É também o formato mais usado em terapia — tablet
+   apoiado na mesa entre a criança e quem acompanha.
+   ========================================================================= */
+@media (min-width: 700px) and (max-width: 1024px) {
+  /* Alvo maior: a mão que toca aqui costuma estar apoiada, e o tablet aguenta
+     célula grande sem virar cartaz. */
+  :root {
+    --tap: 104px;
+  }
+
+  /* Ajustes em duas colunas: o índice de seções não faz sentido nesta largura
+     — cabe tudo aberto, e comparar dois ajustes passa a valer mais que
+     navegar. */
+  .settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  /* Grupos que têm texto longo ocupam a linha inteira, senão a coluna fica
+     alta e desalinhada. */
+  .settings__group:has(h3) {
+    break-inside: avoid;
+  }
+
+  /* A barra da frase volta a ter os controles à direita, como no desktop:
+     nesta largura a coluna extra não espreme os cards. */
+  .sentence {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .sentence__actions {
+    grid-column: 2;
+    grid-row: 1 / -1;
+  }
+}

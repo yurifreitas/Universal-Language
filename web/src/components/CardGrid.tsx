@@ -60,7 +60,10 @@ export function CardGrid({
   // Fora dele, o ajuste do usuario vale — com teto por tamanho de tela, que e
   // propriedade do aparelho e nao preferencia. Ver `useEffectiveColumns`.
   const fitted = useEffectiveColumns(settings.columns)
-  const cols = dense ? Math.max(1, Math.min(2, fitted)) : fitted
+  // O numero de colunas do modo denso e decidido AQUI, e nao em CSS: a
+  // navegacao por setas move o foco de `cols` em `cols`, entao um valor que
+  // so existisse no estilo faria a seta pular a celula errada.
+  const cols = dense ? (fitted >= 4 ? 3 : Math.max(1, Math.min(2, fitted))) : fitted
 
   // A prancha mudou: o foco volta ao inicio, senao apontaria para celula ausente.
   useEffect(() => setFocus(0), [cards])
