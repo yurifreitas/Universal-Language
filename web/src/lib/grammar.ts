@@ -3,6 +3,7 @@ import {
   ESTAR_IMPERFECT,
   TER_IMPERFECT,
   GERUND,
+  FUTURE_SUBJUNCTIVE,
   IMPERFECT_IRREGULAR,
   IRREGULAR_VERBS,
   LEXICON,
@@ -131,6 +132,19 @@ function verbGroup(head: string): 'ar' | 'er' | 'ir' | null {
   if (head.endsWith('er')) return 'er'
   if (head.endsWith('ir')) return 'ir'
   return null
+}
+
+/**
+ * Futuro do subjuntivo. Nos regulares e identico ao infinitivo — "quando ele
+ * chegar", "se voce comer" —, entao so os irregulares consultam a tabela.
+ */
+export function futuroDoSubjuntivo(infinitive: string, person: Person): string {
+  const parts = infinitive.split(' ')
+  const head = parts[0] ?? infinitive
+  const tail = parts.slice(1).join(' ')
+  const irr = FUTURE_SUBJUNCTIVE[head]?.[person]
+  const forma = irr ?? (person === '1p' ? `${head}mos` : person === '3p' ? `${head}em` : head)
+  return tail ? `${forma} ${tail}` : forma
 }
 
 /** Gerundio: falar → falando, comer → comendo, partir → partindo. */
@@ -412,6 +426,15 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
      verbo abre oracao nova. "E" e "ou" NAO abrem — eles coordenam dentro da
      mesma oracao ("quero comer e beber"), e trata-los como fronteira quebraria
      a coordenacao de verbos que ja funcionava. */
+  /**
+   * Conectivos que exigem FUTURO DO SUBJUNTIVO no verbo da oracao que abrem.
+   *
+   * "Quando o papai CHEGAR", "se voce QUISER". Sem isto saia "quando o papai
+   * chega", que troca uma condicao futura por um habito — a diferenca entre
+   * "vou brincar quando ele chegar" e "brinco sempre que ele chega".
+   */
+  const SUBJUNTIVO_FUTURO = new Set(['quando', 'se', 'enquanto', 'assim que', 'depois que'])
+
   const CLAUSE_STARTERS = new Set([
     'porque',
     'que',
@@ -427,6 +450,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
   /** A que oracao pertence cada posicao da frase. */
   const clauseOf: number[] = []
+  /** Oracoes que o conectivo pos no futuro do subjuntivo. */
+  const clauseSubjunctive: boolean[] = [false]
   {
     let c = 0
     for (const it of items) {
@@ -439,7 +464,10 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       const abreOracao =
         CLAUSE_STARTERS.has(it.label) &&
         depois.some((x) => x.lex.class === 'verb' || x.lex.class === 'pronoun')
-      if (abreOracao) c++
+      if (abreOracao) {
+        c++
+        clauseSubjunctive[c] = SUBJUNTIVO_FUTURO.has(it.label)
+      }
     }
   }
 
@@ -921,7 +949,10 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // Verbo modal ja carrega a futuridade em portugues falado: "eu quero
           // ir amanhã" — a perifrase produzia "eu VOU QUERER ir amanhã".
           const tempoDoVerbo = tense === 'future' && lex.modal ? 'present' : tense
-          const text = useImperative
+          const subjFuturo = clauseSubjunctive[oracaoAtual] === true
+          const text = subjFuturo
+            ? futuroDoSubjuntivo(label, person)
+            : useImperative
             ? imperative(label, register)
             : marks.progressive
               ? `${tense === 'past' || tense === 'imperfect' ? ESTAR_IMPERFECT[person] : conjugate('estar', person, tense)} ${gerund(label)}`

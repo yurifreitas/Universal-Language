@@ -302,6 +302,64 @@ export const SUBJUNCTIVE: Record<string, string> = {
   começar: 'comece',
 }
 
+/**
+ * FUTURO DO SUBJUNTIVO — o tempo que "quando" e "se" exigem.
+ *
+ * "Quando o papai CHEGAR", "se voce QUISER", "quando eu FOR". E uma forma que
+ * o portugues usa o tempo todo e que quase nenhuma outra lingua tem, entao ela
+ * passa despercebida — mas sem ela sai "quando o papai chega eu brinco", que
+ * troca uma condicao futura por um habito.
+ *
+ * Barato de implementar: nos verbos REGULARES a forma e identica ao
+ * infinitivo. So os irregulares precisam de tabela — e sao estes.
+ */
+export const FUTURE_SUBJUNCTIVE: Record<string, Record<Person, string>> = {
+  ser: { '1s': 'for', '2s': 'for', '2t': 'fores', '3s': 'for', '1p': 'formos', '3p': 'forem' },
+  ir: { '1s': 'for', '2s': 'for', '2t': 'fores', '3s': 'for', '1p': 'formos', '3p': 'forem' },
+  estar: {
+    '1s': 'estiver', '2s': 'estiver', '2t': 'estiveres', '3s': 'estiver',
+    '1p': 'estivermos', '3p': 'estiverem',
+  },
+  ter: {
+    '1s': 'tiver', '2s': 'tiver', '2t': 'tiveres', '3s': 'tiver',
+    '1p': 'tivermos', '3p': 'tiverem',
+  },
+  vir: {
+    '1s': 'vier', '2s': 'vier', '2t': 'vieres', '3s': 'vier',
+    '1p': 'viermos', '3p': 'vierem',
+  },
+  ver: { '1s': 'vir', '2s': 'vir', '2t': 'vires', '3s': 'vir', '1p': 'virmos', '3p': 'virem' },
+  fazer: {
+    '1s': 'fizer', '2s': 'fizer', '2t': 'fizeres', '3s': 'fizer',
+    '1p': 'fizermos', '3p': 'fizerem',
+  },
+  poder: {
+    '1s': 'puder', '2s': 'puder', '2t': 'puderes', '3s': 'puder',
+    '1p': 'pudermos', '3p': 'puderem',
+  },
+  querer: {
+    '1s': 'quiser', '2s': 'quiser', '2t': 'quiseres', '3s': 'quiser',
+    '1p': 'quisermos', '3p': 'quiserem',
+  },
+  saber: {
+    '1s': 'souber', '2s': 'souber', '2t': 'souberes', '3s': 'souber',
+    '1p': 'soubermos', '3p': 'souberem',
+  },
+  dizer: {
+    '1s': 'disser', '2s': 'disser', '2t': 'disseres', '3s': 'disser',
+    '1p': 'dissermos', '3p': 'disserem',
+  },
+  trazer: {
+    '1s': 'trouxer', '2s': 'trouxer', '2t': 'trouxeres', '3s': 'trouxer',
+    '1p': 'trouxermos', '3p': 'trouxerem',
+  },
+  dar: { '1s': 'der', '2s': 'der', '2t': 'deres', '3s': 'der', '1p': 'dermos', '3p': 'derem' },
+  pôr: {
+    '1s': 'puser', '2s': 'puser', '2t': 'puseres', '3s': 'puser',
+    '1p': 'pusermos', '3p': 'puserem',
+  },
+}
+
 /** Gerundios que a regra (-ar→ando, -er→endo, -ir→indo) nao acerta. */
 export const GERUND: Record<string, string> = {
   vir: 'vindo',
