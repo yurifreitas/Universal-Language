@@ -53,6 +53,49 @@ que não se deve arriscar. Empate não produz gênero nenhum.
 Verbo e adjetivo entram direto — não carregam gênero no léxico, então o único
 dado em jogo é a classe.
 
+### Comum de dois gêneros — a palavra que não tem gênero para inferir
+
+*O* dentista e *a* dentista. *O* estudante e *a* estudante. A forma é uma só;
+quem muda é o artigo.
+
+A auditoria do primeiro `lexico.json` publicado achou **72 palavras em `-ista`,
+todas marcadas `gender: 'f'`** — alergologista, artista, camionista, dentista,
+jornalista, taxista. A terminação em `-a` estava enganando a regra, e ia enganar
+a classe inteira, sempre. Junto vieram `-iatra` (pediatra, psiquiatra),
+`-nauta` (astronauta), `-cida` e as soltas `colega`, `atleta`, `guia`.
+
+Não é imprecisão que dê para apertar: são palavras que **não têm** gênero para
+inferir. Então a entrada sai com **classe e sem gênero**.
+
+**Por que omitir é mais seguro que arriscar.** Numa prancha de CAA a pessoa fala
+de si ou de quem está na frente dela o tempo todo. "A dentista" para um homem
+não é um errinho de concordância — é o app pondo a pessoa errada na frase, no
+único canal que aquela pessoa tem para se fazer entender. Perder o gênero de uma
+palavra que tinha custa uma concordância; inventar gênero numa que não tem custa
+a identidade de quem está falando. Os dois custos não são da mesma ordem, e a
+regra segue o mais caro.
+
+Por isso a lista é de **sufixos com exceções tabeladas**, e não de uma regra
+larga. As exceções são a mesma armadilha do *arte-são*: em `lista`, `pista`,
+`vista`, `crista`, `entrevista`, `revista` e `restaurante`, aquelas letras não
+são sufixo nenhum. E `guia` está na lista palavra a palavra, não como regra
+`-guia$`, porque *águia*, *enguia* e *audioguia* são femininas de verdade.
+
+**Não confundir com SOBRECOMUM.** `criança`, `pessoa`, `vítima` e `testemunha`
+têm gênero **fixo**, o mesmo para homem e mulher: diz-se "a criança" de um
+menino e "a testemunha" de um homem. Elas ficam com o gênero. Incluí `criança`
+por engano numa versão desta regra e a medição contra o gabarito pegou no ato —
+que é para isso que ela existe.
+
+Uma entrada assim sai com **confiança alta**: a ausência de gênero ali é a
+resposta, não uma lacuna, e a classe sozinha já é dado bom. `gerar.mjs` sabe
+distinguir "sem gênero de propósito" de "sem gênero por ignorância" — a segunda
+continua indo para revisão.
+
+`medir.mjs` trava isto: uma lista de comuns de dois gêneros conhecidos, e a
+asserção de que nenhum sai com `gender`. Não é medida, é trava — o erro volta
+silencioso quando alguém mexer nas terminações.
+
 ### As regras de terminação
 
 O que importa nelas é o que ficou **de fora**. O `-e` final é ambíguo em pt-BR
@@ -102,7 +145,13 @@ revisadas à mão:
   gênero (tudo que inferi)        104/106     98,1%
   gênero (só confiança alta)       82/82     100,0%
   plural irregular                 15/15     100,0%
+
+  COMUNS DE DOIS GÊNEROS — nenhum pode sair com gênero
+    OK — 12 conferidos, nenhum com gênero
 ```
+
+`medir.mjs` sai com código 1 se a trava falhar ou se a meta de 96% cair — dá
+para pendurar em CI.
 
 Erros restantes: `colher` classificada como verbo (é as duas coisas, e o acervo
 escolheu o verbo); `sorvete` e `febre` sem gênero, pela regra do `-e`.

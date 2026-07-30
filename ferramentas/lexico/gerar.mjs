@@ -44,6 +44,7 @@ const entradas = {}
 const revisar = []
 const porClasse = { noun: 0, verb: 0, adjective: 0 }
 let semGenero = 0
+let doisGeneros = 0
 
 for (const [termo, linhas] of [...acervo].sort((a, b) => a[0].localeCompare(b[0], 'pt'))) {
   // O manual sempre vence. Nem sequer entra na fila de revisão: já foi revisado.
@@ -53,15 +54,18 @@ for (const [termo, linhas] of [...acervo].sort((a, b) => a[0].localeCompare(b[0]
   if (!r) continue
 
   if (r.confianca === 'alta') {
-    // Substantivo sem gênero não serve para nada que o motor precise fazer
-    // (artigo, concordância) e ocuparia espaço fingindo ser dado.
-    if (r.entrada.class === 'noun' && !r.entrada.gender) {
+    // Substantivo sem gênero por IGNORÂNCIA não serve para nada que o motor
+    // precise fazer e ocuparia espaço fingindo ser dado. Já o comum de dois
+    // gêneros (`doisGeneros`) não tem gênero para dar — ali a omissão é o
+    // resultado, e a classe sozinha já vale a entrada.
+    if (r.entrada.class === 'noun' && !r.entrada.gender && !r.doisGeneros) {
       semGenero += 1
       revisar.push({ palavra: termo, motivo: 'substantivo sem gênero', ...r.entrada, sinais: r.sinais })
       continue
     }
     entradas[termo] = r.entrada
     porClasse[r.entrada.class] += 1
+    if (r.doisGeneros) doisGeneros += 1
   } else {
     revisar.push({ palavra: termo, motivo: 'sinais insuficientes', ...r.entrada, sinais: r.sinais })
   }
@@ -96,7 +100,7 @@ console.log(`
   já revisados à mão (preservados)  ${manual.size}
 
   PUBLICADAS  web/public/data/lexico.json      ${total}
-      noun        ${porClasse.noun}
+      noun        ${porClasse.noun}   (${doisGeneros} comuns de dois gêneros, sem gênero de propósito)
       verb        ${porClasse.verb}
       adjective   ${porClasse.adjective}
 

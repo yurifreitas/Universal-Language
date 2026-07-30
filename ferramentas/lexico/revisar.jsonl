@@ -9,17 +9,13 @@
 {"palavra":"açaí","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"acção","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"acessórios","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"acidente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"acne","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"acompanhante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"actriz","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"adjectivos","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"adn","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"adolescente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"adolescentes","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"aeronave","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"afia-lápis","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"agente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"agrafador","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"agrafo","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"agrafos","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
@@ -47,7 +43,6 @@
 {"palavra":"almôndegas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"alpargatas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"alpendre","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"altifalante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"alzheimer","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"ameixas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"ameixeira","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
@@ -87,7 +82,6 @@
 {"palavra":"árvore","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"arvoredo","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"aspas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"assistente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"ateliê","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"aterragem","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"ateu","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -96,7 +90,6 @@
 {"palavra":"auriculares","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"aurresku","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"auscultadores","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"autocolante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"autocolantes","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"avalanche","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"ave","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
@@ -129,14 +122,11 @@
 {"palavra":"banquete","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"baobá","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"baozi","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"bar-restaurante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"barbatanas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"barman","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"barreiras","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"basculante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"base","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"batedeira","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
-{"palavra":"batente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"baton","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"baú","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"bebé","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -161,7 +151,6 @@
 {"palavra":"biomoléculas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"biquini","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"biscoitos","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"bisonte","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"bisturi","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"blazer","motivo":"sinais insuficientes","class":"noun","pluralForm":"blazers","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"blocos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -409,18 +398,13 @@
 {"palavra":"dedos","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"defesas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"degraus","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"delinquente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"dentes","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"derbake","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"desastre","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"descolagem","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"desempregados","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"designer","motivo":"sinais insuficientes","class":"noun","pluralForm":"designers","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"desinfectante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"desinfetante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"desodorizante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"detective","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"detergente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"detetive","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"diabetes","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"diamante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -453,7 +437,6 @@
 {"palavra":"eletrodomésticos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"elixir","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"embraiagem","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
-{"palavra":"emigrante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"emt","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"encaixes","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"encomenda","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
@@ -461,7 +444,6 @@
 {"palavra":"enfeite","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"enfiamentos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"envelope","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"envolvente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"enxame","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"epi","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"equimose","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -485,13 +467,11 @@
 {"palavra":"especiarias","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"espectadores","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"espermatozóide","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"espessante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"espeto","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"espinafre","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"espinafres","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"espinhos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"esplai","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"espumante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"esquadro","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"esquentador","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"esqui","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -499,12 +479,10 @@
 {"palavra":"esquimó","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"estame","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"estandarte","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"estante","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"estilete","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"estore","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"estrelas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"estrofe","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"estudante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"estufa","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"esvaziadores","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"euros","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -539,7 +517,6 @@
 {"palavra":"fénix","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"férias","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"ferry","motivo":"sinais insuficientes","class":"noun","pluralForm":"ferries","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"fertilizante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"festas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"festividades","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"fiambre","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -554,7 +531,6 @@
 {"palavra":"flash","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"flor-de-lis","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"flores","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"fluorescente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"foguete","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"folhas","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"fondue","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
@@ -592,8 +568,6 @@
 {"palavra":"gaze","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"gengibre","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"gente","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"gerente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"gigante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"gigantones","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"giz","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"glucofone","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -607,7 +581,6 @@
 {"palavra":"gomas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"gorila","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"gotas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"governante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"gps","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"grade","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"gráfico","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
@@ -642,7 +615,6 @@
 {"palavra":"homens","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"honra","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"hóquei","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"horizonte","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"horta","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"hortaliças","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"hub","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -658,10 +630,8 @@
 {"palavra":"ilhota","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"imã","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"íman","motivo":"sinais insuficientes","class":"noun","pluralForm":"ímanes","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"imigrante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"imperatriz","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"índice","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
-{"palavra":"indigente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"inglês","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"ingredientes","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"inhame","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -670,7 +640,6 @@
 {"palavra":"instante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"instrumentos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"internet","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"intérprete","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"ioga","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"ioiô","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"íris","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -678,7 +647,6 @@
 {"palavra":"irritação","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"jacuzzi","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"jambé","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"jante","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"javali","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"jersey","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"joelho","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
@@ -706,7 +674,6 @@
 {"palavra":"lápis","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"laranjeira","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"lava-cabeças","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"lavagante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"lavanda","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"lazer","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"lebre","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
@@ -785,7 +752,6 @@
 {"palavra":"menorá","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"menu","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"menú","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"mercante","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"merengue","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"metade","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"metalofone","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -822,7 +788,6 @@
 {"palavra":"moradia","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"morte","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"motociclo","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
-{"palavra":"motorista","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"mudança","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"muffin","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"muletas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
@@ -831,7 +796,6 @@
 {"palavra":"museu","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"nachos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"nádegas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"nascente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"naturais","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"náuseas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"nautilus","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -868,7 +832,6 @@
 {"palavra":"olimpíadas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"oliveira","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"omelete","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"optometrista","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"origem","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"ortótese","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"ossículos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -880,7 +843,6 @@
 {"palavra":"pá","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"pacemaker","motivo":"sinais insuficientes","class":"noun","pluralForm":"pacemakers","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pacharán","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"paciente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":null,"artigo":"m"}}
 {"palavra":"pacman","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pacote","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"padre","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":null,"artigo":"m"}}
@@ -910,7 +872,6 @@
 {"palavra":"pára-choques","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pára-quedas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"parafusos","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
-{"palavra":"parapente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"parede","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"parêntese","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"parêntesis","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -940,11 +901,9 @@
 {"palavra":"pélvis","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"pen","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"penálti","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"pendente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"pendentes","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"pendrive","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pénis","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"pente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"percebes","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"peregrinos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pereira","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
@@ -973,7 +932,6 @@
 {"palavra":"pilhas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pin","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pinças","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"pingente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"pingue-pongue","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"pinos","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"pintas","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
@@ -1017,7 +975,6 @@
 {"palavra":"preguiça","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"prenda","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"presente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"presidente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":null,"artigo":"m"}}
 {"palavra":"primas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"primos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"princípios","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -1026,7 +983,6 @@
 {"palavra":"propess","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pt","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pufe","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"pugilista","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"pullboy","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"pullover","motivo":"sinais insuficientes","class":"noun","pluralForm":"pullovers","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"pulôver","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -1065,18 +1021,15 @@
 {"palavra":"raviolis","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"reboque","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"rebote","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"recipiente","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"rede","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"rei","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"reiki","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"religião","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"rena","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
-{"palavra":"representante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"representantes","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"resíduos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"retrete","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"réu","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"rinoceronte","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"rins","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"rios","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"ripa","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
@@ -1085,7 +1038,6 @@
 {"palavra":"rm","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"robot","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"rock","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"roda-gigante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"rolha","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"rosca","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"roulotte","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -1126,7 +1078,6 @@
 {"palavra":"semente","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"sentidos","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"sentimentos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"serpente","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"serrote","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"sexta-feira","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"showdown","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -1179,7 +1130,6 @@
 {"palavra":"tablete","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"tachinos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"tajine","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"talhante","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"talheres","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"talho","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":"m","definicao":"f","artigo":null}}
 {"palavra":"talit","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -1244,7 +1194,6 @@
 {"palavra":"transvase","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"tremoços","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"tríceps","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"tridente","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"trilobites","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"trinquete","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"trinxat","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -1259,7 +1208,6 @@
 {"palavra":"tsunami","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"tsunâmi","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"tulipas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"turbante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"tv","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"twister","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"txistu","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
@@ -1278,14 +1226,11 @@
 {"palavra":"vez","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
 {"palavra":"vezes","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"viagem","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":"f","definicao":"m","artigo":null}}
-{"palavra":"viajante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"videoclube","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"vigas","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
-{"palavra":"vigilante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"virgem","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
 {"palavra":"vírus","motivo":"sinais insuficientes","class":"noun","gender":"m","sinais":{"terminacao":null,"definicao":"m","artigo":null}}
 {"palavra":"vitaminas","motivo":"sinais insuficientes","class":"noun","gender":"f","sinais":{"terminacao":null,"definicao":"f","artigo":null}}
-{"palavra":"volante","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"vómitos","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"waffle","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}
 {"palavra":"walkie-talkie","motivo":"sinais insuficientes","class":"noun","sinais":{"terminacao":null,"definicao":null,"artigo":null}}

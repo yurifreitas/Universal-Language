@@ -101,6 +101,81 @@ const TERMINACOES = [
   [/o$/, 'm'],
 ]
 
+/* ------------------------------------------- comuns de dois gêneros */
+
+/**
+ * Sufixos de substantivo COMUM DE DOIS GÊNEROS: *o* dentista e *a* dentista,
+ * *o* estudante e *a* estudante. A forma é uma só; quem muda é o artigo.
+ *
+ * Isto não é uma imprecisão da inferência que dá para apertar — é uma classe
+ * inteira de palavras que **não tem** gênero para inferir. A terminação em `-a`
+ * mentia sobre as 72 palavras em `-ista` do acervo e ia mentir sempre.
+ */
+const SUFIXOS_DOIS_GENEROS = [
+  /ista$/,
+  /nte$/,
+  /ense$/,
+  /crata$/,
+  /iatra$/,
+  /nauta$/,
+  // -cida é ambíguo por dois motivos ao mesmo tempo: como agente é comum de
+  // dois gêneros (o/a suicida) e como substância é masculino (o inseticida).
+  // Nenhum dos dois é feminino, que é o que a terminação dizia.
+  /cida$/,
+]
+
+/**
+ * Onde aquelas letras finais não são sufixo nenhum — mesma armadilha do
+ * "arte-são". `lista`, `pista` e `vista` não são profissões, e `restaurante`
+ * não é quem restaura.
+ */
+const NAO_SAO_AGENTES = new Set([
+  'lista', 'pista', 'vista', 'crista', 'entrevista', 'revista', 'conquista',
+  'restaurante', 'elefante', 'diamante', 'ponte', 'fonte', 'monte', 'dente',
+  'ambiente', 'presente', 'ingrediente', 'continente', 'instante', 'semente',
+  'corrente', 'lente', 'ponte-levadiça', 'gente', 'mente', 'frente', 'ventre',
+  'defesa',
+])
+
+/**
+ * Palavra a palavra, para as que nenhum sufixo pega. `guia` está aqui e não
+ * como regra `-guia$` de propósito: águia, enguia e audioguia são femininas de
+ * verdade, e uma regra larga levaria as três junto.
+ */
+const PALAVRAS_DOIS_GENEROS = new Set([
+  'colega', 'jovem', 'intérprete', 'interprete', 'atleta', 'guia', 'chefe',
+  'cliente', 'estudante', 'gerente', 'agente', 'paciente', 'doente', 'parente',
+  'adolescente', 'assistente', 'ajudante', 'cantante', 'personagem', 'mártir',
+  'indígena', 'camarada', 'suicida', 'homicida',
+])
+
+/**
+ * NÃO confundir com SOBRECOMUM. `criança`, `pessoa`, `vítima` e `testemunha`
+ * têm gênero FIXO, o mesmo para homem e mulher: diz-se "a criança" de um menino
+ * e "a testemunha" de um homem. Tirar o gênero delas seria estragar concordância
+ * certa para consertar um problema que não existe ali — a medição pegou
+ * `criança` no ato quando a incluí por engano.
+ */
+
+/**
+ * Esta palavra tem os dois gêneros?
+ *
+ * Quando a resposta é sim, a entrada sai com CLASSE e sem gênero. Numa prancha
+ * de CAA a pessoa fala de si ou de quem está na frente dela o tempo todo, e
+ * "a dentista" para um homem não é um errinho de concordância: é o app pondo a
+ * pessoa errada na frase. Pela mesma política que rege o resto — errar é pior
+ * que omitir — a resposta certa aqui é calar sobre o gênero.
+ *
+ * Perder o gênero de uma palavra que tinha custa uma concordância. Inventar
+ * gênero numa que não tem custa a identidade de quem está falando.
+ */
+export function comumDeDoisGeneros(palavra) {
+  const p = palavra.toLowerCase()
+  if (NAO_SAO_AGENTES.has(p)) return false
+  if (PALAVRAS_DOIS_GENEROS.has(p)) return true
+  return SUFIXOS_DOIS_GENEROS.some((re) => re.test(p))
+}
+
 /** Sinal 1: a terminação. */
 export function generoPorTerminacao(palavra) {
   const p = palavra.toLowerCase()
@@ -239,7 +314,14 @@ export function inferir(termo, linhas) {
   if (plural && classe === 'noun') entrada.pluralForm = plural
 
   if (classe !== 'noun') {
-    return { entrada, confianca: 'alta', sinais: {}, votos: 0 }
+    return { entrada, confianca: 'alta', sinais: {}, pontos: 0 }
+  }
+
+  // Comum de dois gêneros: a ausência de gênero aqui é a RESPOSTA, não uma
+  // lacuna. Por isso sai com confiança alta e vai para o app — a classe é o que
+  // ela tem para dar, e é dado bom.
+  if (comumDeDoisGeneros(termo)) {
+    return { entrada, confianca: 'alta', sinais: {}, pontos: 0, doisGeneros: true }
   }
 
   // Cada sinal vota uma vez pelo termo inteiro, não uma vez por linha: um termo

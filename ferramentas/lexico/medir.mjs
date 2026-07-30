@@ -95,8 +95,41 @@ for (const [nome, lista] of Object.entries(erros)) {
   for (const e of lista) console.log(`    - ${e}`)
 }
 
+/* ------------------------------------- comuns de dois gêneros: nenhum gênero */
+
+/**
+ * Não é uma medida, é uma trava.
+ *
+ * Estas palavras têm os dois gêneros, e qualquer uma delas sair do gerador com
+ * `gender` é regressão — o app passaria a dizer "a dentista" de um homem, que
+ * numa prancha de CAA é pôr a pessoa errada na frase. É exatamente o tipo de
+ * erro que volta silencioso quando alguém mexer nas regras de terminação, e por
+ * isso ele mora aqui e não numa revisão de código.
+ */
+const DOIS_GENEROS = [
+  'dentista', 'artista', 'estudante', 'cliente', 'jornalista', 'motorista',
+  'colega', 'jovem', 'intérprete', 'atleta', 'pediatra', 'astronauta',
+]
+
+const vazaram = []
+for (const palavra of DOIS_GENEROS) {
+  const linhas = acervo.get(palavra)
+  if (!linhas) continue
+  const r = inferir(palavra, linhas)
+  if (r?.entrada.gender) vazaram.push(`${palavra} saiu como ${r.entrada.gender}`)
+}
+
+console.log('\n  COMUNS DE DOIS GÊNEROS — nenhum pode sair com gênero')
+console.log(
+  vazaram.length
+    ? `    FALHOU: ${vazaram.join('; ')}`
+    : `    OK — ${DOIS_GENEROS.length} conferidos, nenhum com gênero`,
+)
+
 const meta = conta.generoAltoTotal ? conta.generoAltoOk / conta.generoAltoTotal : 1
 console.log(
   `\n  META: gênero em confiança alta ≥ 96% → ${pc(conta.generoAltoOk, conta.generoAltoTotal)}` +
     ` ${meta >= 0.96 ? 'OK' : 'ABAIXO DA META'}\n`,
 )
+
+if (vazaram.length || meta < 0.96) process.exit(1)
