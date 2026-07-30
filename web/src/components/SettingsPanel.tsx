@@ -257,6 +257,22 @@ export function SettingsPanel({
           <label className="switch">
             <input
               type="checkbox"
+              checked={settings.suggestions}
+              onChange={(e) => onChange({ suggestions: e.target.checked })}
+            />
+            <span>Sugerir a próxima palavra</span>
+          </label>
+          <p className="settings__note">
+            Uma faixa discreta acima da prancha com o que costuma vir depois da última palavra
+            escolhida. Ela aprende <strong>só do que esta pessoa já disse</strong> — não há modelo
+            de linguagem, não há corpus, nada sai do aparelho. Usuários de CAA relatam perda de
+            voz própria quando a sugestão não é deles; aqui é sempre uma palavra só, e sempre uma
+            que já foi usada naquela posição. A faixa nunca reorganiza a grade.
+          </p>
+
+          <label className="switch">
+            <input
+              type="checkbox"
               checked={settings.coreStrip}
               onChange={(e) => onChange({ coreStrip: e.target.checked })}
             />

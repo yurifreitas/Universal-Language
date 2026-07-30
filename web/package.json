@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "test:grammar": "esbuild tests/grammar.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/grammar-test.mjs --log-level=warning && node node_modules/.cache/grammar-test.mjs"
+    "test:grammar": "esbuild tests/grammar.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/grammar-test.mjs --log-level=warning && node node_modules/.cache/grammar-test.mjs",
+    "test:predict": "esbuild tests/predict.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/predict-test.mjs --log-level=warning && node node_modules/.cache/predict-test.mjs",
+    "test": "npm run test:grammar && npm run test:predict && npm run test:game",
+    "test:game": "esbuild tests/game.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/game-test.mjs --log-level=warning && node node_modules/.cache/game-test.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

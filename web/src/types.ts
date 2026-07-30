@@ -111,6 +111,11 @@ export interface Settings {
    * planejamento motor mais penaliza. Ver `lib/coreStrip.ts`.
    */
   coreStrip: boolean
+  /**
+   * Faixa de sugestao da proxima palavra, aprendida do que a propria pessoa
+   * disse. Nunca reorganiza a grade. Ver `lib/predict.ts`.
+   */
+  suggestions: boolean
 
   /** `auto` segue o modo dislexia; o resto sao pilhas de fonte do sistema. */
   font: 'auto' | 'verdana' | 'tahoma' | 'century' | 'comic'
@@ -143,6 +148,7 @@ export const DEFAULT_SETTINGS: Settings = {
   region: 'padrao',
   register: 'coloquial',
   coreStrip: true,
+  suggestions: true,
   font: 'auto',
   textScale: 1,
   letterSpacing: 0,

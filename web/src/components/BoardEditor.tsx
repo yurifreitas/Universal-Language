@@ -59,6 +59,8 @@ export function BoardEditor({
   const [results, setResults] = useState<Card[]>([])
   const [ready, setReady] = useState(false)
   const [newBoard, setNewBoard] = useState('')
+  /** Apagar prancha exige dois toques — destroi trabalho inteiro. */
+  const [confirmar, setConfirmar] = useState<string | null>(null)
 
   useEffect(() => {
     loadIndex(baseUrl)
@@ -67,7 +69,14 @@ export function BoardEditor({
   }, [baseUrl])
 
   useEffect(() => {
-    setResults(ready && query.trim().length >= 2 ? search(query, 12) : [])
+    // Debounce: a busca varre ~20 mil termos de forma sincrona, e rodar a cada
+    // tecla travava o proprio campo enquanto se digitava — parte da sensacao
+    // de "campo ruim".
+    const t = setTimeout(
+      () => setResults(ready && query.trim().length >= 2 ? search(query, 12) : []),
+      140,
+    )
+    return () => clearTimeout(t)
   }, [query, ready])
 
   const isCustom = customBoards.some((b) => b.id === boardId)
@@ -124,7 +133,7 @@ export function BoardEditor({
     const id = name
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
     const unique = boards.some((b) => b.id === id) ? `${id}-${boards.length}` : id || 'prancha'
@@ -166,13 +175,20 @@ export function BoardEditor({
           {board && isCustom && (
             <button
               type="button"
-              className="btn btn--ghost btn--wide"
+              className="btn btn--ghost btn--wide btn--danger"
               onClick={() => {
+                if (confirmar !== board.id) {
+                  setConfirmar(board.id)
+                  return
+                }
                 onCustomBoards(customBoards.filter((b) => b.id !== board.id))
+                setConfirmar(null)
                 setBoardId(factory[0]?.id ?? '')
               }}
             >
-              ✕ Apagar esta prancha
+              {confirmar === board.id
+                ? '✕ Tocar de novo para apagar mesmo'
+                : '✕ Apagar esta prancha'}
             </button>
           )}
         </section>
@@ -217,6 +233,13 @@ export function BoardEditor({
             setas só quando o ganho compensar.
           </p>
 
+          {board?.cards.length === 0 && (
+            <p className="settings__note">
+              Prancha vazia. Use a busca <strong>Acrescentar card</strong>, logo acima, para pôr
+              a primeira palavra.
+            </p>
+          )}
+
           <ul className="editor__list">
             {(board?.cards ?? []).map((card, i) => (
               <li key={cardKey(card)} className="editor__row">
@@ -225,8 +248,20 @@ export function BoardEditor({
                   type="text"
                   className="editor__name"
                   defaultValue={regionalLabel(card.label, settings.region)}
-                  aria-label={`Nome do card ${card.label}`}
+                  // O rotulo tem de bater com o que esta escrito no campo: era
+                  // o canonico ("mandioca") num campo mostrando o regional
+                  // ("macaxeira"), e o leitor de tela anunciava outra palavra.
+                  aria-label={`Nome do card ${regionalLabel(card.label, settings.region)}`}
                   onBlur={(e) => rename(card, e.target.value)}
+                  // Salvar tambem no Enter: fechar o dialogo pelo ✕ podia
+                  // desmontar o campo antes do blur e perder a edicao.
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      rename(card, (e.target as HTMLInputElement).value)
+                      ;(e.target as HTMLInputElement).blur()
+                    }
+                  }}
                 />
                 <span className="editor__actions">
                   <button
@@ -259,12 +294,18 @@ export function BoardEditor({
               </li>
             ))}
           </ul>
-          {board?.cards.length === 0 && (
-            <p className="settings__note">Prancha vazia. Use a busca acima para acrescentar.</p>
+          {!board && (
+            <p className="settings__note">Nenhuma prancha selecionada.</p>
           )}
         </section>
 
-        <section className="settings__group">
+        <form
+          className="settings__group"
+          onSubmit={(e) => {
+            e.preventDefault()
+            createBoard()
+          }}
+        >
           <h3>Nova prancha</h3>
           <label className="field">
             <span>Nome</span>
@@ -272,16 +313,17 @@ export function BoardEditor({
               type="text"
               value={newBoard}
               placeholder="Casa da vó, Terapia, Futebol…"
+              enterKeyHint="done"
               onChange={(e) => setNewBoard(e.target.value)}
             />
           </label>
-          <button type="button" className="btn btn--ghost btn--wide" onClick={createBoard}>
+          <button type="submit" className="btn btn--speak btn--wide" disabled={!newBoard.trim()}>
             + Criar prancha
           </button>
           <p className="settings__note">
             Pranchas próprias entram depois das de fábrica, nunca no meio delas.
           </p>
-        </section>
+        </form>
       </div>
     </Dialog>
   )

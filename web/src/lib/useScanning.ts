@@ -15,6 +15,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type ScanPhase = 'idle' | 'rows' | 'cells'
 
+/** Uma acao alcancavel pela varredura, fora da grade de cards. */
+export interface ScanAction {
+  label: string
+  run: () => void
+  /** Acao indisponivel agora (ex.: "Falar" com a frase vazia) e pulada. */
+  disabled?: boolean
+}
+
 interface Options {
   enabled: boolean
   /** ms entre passos */
@@ -30,13 +38,31 @@ interface Options {
   onStep?: (phase: 'rows' | 'cells', index: number) => void
   /** Se falso, a varredura pausa (ex.: um overlay esta aberto). */
   active?: boolean
+  /**
+   * Comandos que a varredura alcanca ANTES da grade, como uma linha zero.
+   *
+   * Sem isto, quem usa switch conseguia empilhar palavras indefinidamente e
+   * **nunca falar**: a varredura so percorria os cards, e Espaco/Enter
+   * pertenciam ao switch, o que desativava o atalho de falar. A frase era
+   * montada e morria na tela.
+   *
+   * A linha zero vem primeiro de proposito: e a acao mais frequente depois de
+   * escolher palavras, e esperar a varredura percorrer a prancha inteira para
+   * chegar em "Falar" custaria dezenas de segundos.
+   */
+  actions?: ScanAction[]
 }
 
 export interface ScanState {
   phase: ScanPhase
+  /** Linha da GRADE em destaque; -1 quando o destaque esta na linha de acoes. */
   row: number
   index: number
   rows: number
+  /** O destaque esta na linha de acoes? */
+  onActions: boolean
+  /** Qual acao esta em destaque, quando `onActions`. */
+  actionIndex: number
 }
 
 export function useScanning({
@@ -47,8 +73,14 @@ export function useScanning({
   onSelect,
   onStep,
   active = true,
+  actions = [],
 }: Options): ScanState {
-  const rows = Math.max(1, Math.ceil(total / columns))
+  // Acoes indisponiveis nao entram na varredura: parar em "Falar" com a frase
+  // vazia gasta um ciclo inteiro de quem tem menos tempo a gastar.
+  const acoes = actions.filter((a) => !a.disabled)
+  const temAcoes = acoes.length > 0
+  const gridRows = Math.max(1, Math.ceil(total / columns))
+  const rows = gridRows + (temAcoes ? 1 : 0)
   const [phase, setPhase] = useState<ScanPhase>('idle')
   const [row, setRow] = useState(0)
   const [col, setCol] = useState(0)
@@ -62,9 +94,14 @@ export function useScanning({
   rowRef.current = row
   colRef.current = col
 
+  /** Linha 0 e a de acoes quando ela existe; o resto e deslocado em 1. */
   const cellsInRow = useCallback(
-    (r: number) => Math.min(columns, Math.max(0, total - r * columns)),
-    [columns, total],
+    (r: number) => {
+      if (temAcoes && r === 0) return acoes.length
+      const g = temAcoes ? r - 1 : r
+      return Math.min(columns, Math.max(0, total - g * columns))
+    },
+    [columns, total, temAcoes, acoes.length],
   )
 
   // Reinicia quando a prancha muda de tamanho, para nao destacar celula ausente.
@@ -72,7 +109,7 @@ export function useScanning({
     setPhase('idle')
     setRow(0)
     setCol(0)
-  }, [total, columns, enabled])
+  }, [total, columns, enabled, temAcoes])
 
   // Avanco automatico.
   useEffect(() => {
@@ -119,7 +156,15 @@ export function useScanning({
         setCol(0)
         setPhase('cells')
       } else {
-        const index = rowRef.current * columns + colRef.current
+        if (temAcoes && rowRef.current === 0) {
+          acoes[colRef.current]?.run()
+          setPhase('rows')
+          setRow(0)
+          setCol(0)
+          return
+        }
+        const g = temAcoes ? rowRef.current - 1 : rowRef.current
+        const index = g * columns + colRef.current
         if (index < total) onSelect(index)
         // Volta a varrer linhas a partir do topo: a proxima palavra quase nunca
         // esta na mesma linha da anterior.
@@ -130,7 +175,7 @@ export function useScanning({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [enabled, active, columns, total, onSelect])
+  }, [enabled, active, columns, total, onSelect, temAcoes, acoes])
 
   // Notifica o passo depois do render, para que o destaque visual e a pista
   // sonora cheguem juntos.
@@ -143,13 +188,19 @@ export function useScanning({
     const key = `${phase}:${row}:${col}`
     if (key === lastStep.current) return
     lastStep.current = key
-    onStep?.(phase, phase === 'rows' ? row * columns : row * columns + col)
-  }, [enabled, active, phase, row, col, columns, onStep])
+    const g = temAcoes ? row - 1 : row
+    onStep?.(phase, phase === 'rows' ? g * columns : g * columns + col)
+  }, [enabled, active, phase, row, col, columns, onStep, temAcoes])
+
+  const naLinhaDeAcoes = temAcoes && row === 0
+  const gradeRow = temAcoes ? row - 1 : row
 
   return {
     phase: enabled ? phase : 'idle',
-    row,
-    index: row * columns + col,
+    row: gradeRow,
+    index: gradeRow * columns + col,
     rows,
+    onActions: enabled && phase !== 'idle' && naLinhaDeAcoes,
+    actionIndex: col,
   }
 }

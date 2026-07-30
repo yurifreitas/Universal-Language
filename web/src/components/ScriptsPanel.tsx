@@ -30,6 +30,10 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
   const [newName, setNewName] = useState('')
   /** Passos ja falados nesta passagem pelo roteiro. */
   const [done, setDone] = useState<number[]>([])
+  /** Roteiro a selecionar assim que ele aparecer na lista. */
+  const [pendingId, setPendingId] = useState<string | null>(null)
+  /** Apagar exige dois toques: destruir trabalho num toque so e caro demais. */
+  const [confirmar, setConfirmar] = useState<string | null>(null)
   const tabs = useRovingFocus(all.length, setActive)
 
   useEffect(() => tabs.setFocused(active), [active, tabs])
@@ -40,6 +44,16 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
   useEffect(() => {
     if (active >= all.length) setActive(0)
   }, [active, all.length])
+
+  // Seleciona pelo ID quando o roteiro novo entra na lista.
+  useEffect(() => {
+    if (!pendingId) return
+    const i = all.findIndex((s) => s.id === pendingId)
+    if (i >= 0) {
+      setActive(i)
+      setPendingId(null)
+    }
+  }, [pendingId, all])
 
   const script = all[active]
   const editable = Boolean(script && !script.builtIn)
@@ -96,7 +110,9 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
               onKeyDown={(e) => tabs.onKeyDown(e, i)}
             >
               <span className="tab__name">{s.name}</span>
-              <span className="sr-only">{`, ${s.steps.length} passos`}</span>
+              <span className="sr-only">
+                {`, ${s.steps.length} ${s.steps.length === 1 ? 'passo' : 'passos'}`}
+              </span>
             </button>
           ))}
         </div>
@@ -167,7 +183,7 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
                       className="btn btn--ghost"
                       onClick={() => patch((s) => moveStep(s, i, i - 1))}
                       disabled={i === 0}
-                      aria-label="Mover passo para cima"
+                      aria-label={`Mover "${card.label}", passo ${i + 1}, para cima`}
                     >
                       ↑
                     </button>
@@ -176,7 +192,7 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
                       className="btn btn--ghost"
                       onClick={() => patch((s) => moveStep(s, i, i + 1))}
                       disabled={i === script.steps.length - 1}
-                      aria-label="Mover passo para baixo"
+                      aria-label={`Mover "${card.label}", passo ${i + 1}, para baixo`}
                     >
                       ↓
                     </button>
@@ -184,7 +200,7 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
                       type="button"
                       className="btn btn--ghost"
                       onClick={() => patch((s) => ({ ...s, steps: s.steps.filter((_, j) => j !== i) }))}
-                      aria-label="Remover passo"
+                      aria-label={`Remover "${card.label}", passo ${i + 1}`}
                     >
                       ✕
                     </button>
@@ -206,7 +222,9 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
               onClick={() => {
                 const copy = duplicate(script, mine)
                 onChange([...mine, copy])
-                setActive(BUILT_IN_SCRIPTS.length + mine.length)
+                // Pelo ID, e nao por indice: o indice era calculado com o
+                // `mine` ANTIGO e so acertava por coincidencia de ordem.
+                setPendingId(copy.id)
               }}
             >
               Fazer uma cópia editável
@@ -239,18 +257,38 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
             )}
             <button
               type="button"
-              className="btn btn--ghost btn--wide"
+              className="btn btn--ghost btn--wide btn--danger"
               onClick={() => {
+                if (confirmar !== script.id) {
+                  setConfirmar(script.id)
+                  return
+                }
                 onChange(mine.filter((s) => s.id !== script.id))
+                setConfirmar(null)
                 setActive(0)
               }}
             >
-              ✕ Apagar este roteiro
+              {confirmar === script.id
+                ? '✕ Tocar de novo para apagar mesmo'
+                : '✕ Apagar este roteiro'}
             </button>
           </section>
         )}
 
-        <section className="settings__group">
+        {/* `form` de verdade: digitar o nome e apertar Enter no teclado virtual
+            e a acao obvia em celular, e antes nao fazia nada. */}
+        <form
+          className="settings__group"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const name = newName.trim()
+            if (!name) return
+            const created: Script = { id: scriptId(name, mine), name, icon: 7072, steps: [] }
+            onChange([...mine, created])
+            setNewName('')
+            setPendingId(created.id)
+          }}
+        >
           <h3>Novo roteiro</h3>
           <label className="field">
             <span>Nome da situação</span>
@@ -258,20 +296,14 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
               type="text"
               value={newName}
               placeholder="Ir ao dentista, aniversário, ônibus…"
+              enterKeyHint="done"
               onChange={(e) => setNewName(e.target.value)}
             />
           </label>
           <button
-            type="button"
-            className="btn btn--ghost btn--wide"
-            onClick={() => {
-              const name = newName.trim()
-              if (!name) return
-              const created: Script = { id: scriptId(name, mine), name, icon: 7072, steps: [] }
-              onChange([...mine, created])
-              setNewName('')
-              setActive(BUILT_IN_SCRIPTS.length + mine.length)
-            }}
+            type="submit"
+            className="btn btn--speak btn--wide"
+            disabled={!newName.trim()}
           >
             + Criar roteiro
           </button>
@@ -279,7 +311,7 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
             Depois de criar, os passos são escolhidos entre as frases que você salvou e as que
             disse há pouco — é assim que o histórico vira roteiro.
           </p>
-        </section>
+        </form>
       </div>
     </Dialog>
   )

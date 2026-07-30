@@ -123,10 +123,40 @@ export function scriptId(name: string, existing: Script[]): string {
   return `${slug}-${n}`
 }
 
-/** Copia de um roteiro de fabrica, ja editavel. */
+/** Copia de um roteiro, ja editavel. */
 export function duplicate(script: Script, existing: Script[]): Script {
-  const name = `${script.name} (minha versão)`
+  const name = script.builtIn ? `${script.name} (minha versão)` : `${script.name} (cópia)`
   return { id: scriptId(name, existing), name, icon: script.icon, steps: [...script.steps] }
+}
+
+/**
+ * Pictograma padrao de um passo escrito a mao: um balao de fala.
+ *
+ * Um passo sem desenho nenhum quebraria a leitura de quem nao le — e todo o
+ * resto do app assume que existe figura. Quem quiser troca depois pela busca.
+ */
+export const STEP_ICON = 8109
+
+/**
+ * Passo escrito a mao.
+ *
+ * Antes, os passos so podiam vir do historico ou das frases salvas — entao um
+ * roteiro recem-criado nascia vazio e IMPOSSIVEL de preencher para quem ainda
+ * nao tinha dito nada no app. Preparar a ida ao dentista na vespera, que e o
+ * uso obvio de roteiro, era justamente o caso que nao funcionava.
+ */
+export function handStep(text: string, icon = STEP_ICON): Card {
+  return { id: icon, label: text.trim() }
+}
+
+/** Troca o texto de um passo, preservando o pictograma. */
+export function editStep(script: Script, index: number, label: string): Script {
+  const text = label.trim()
+  if (!text) return script
+  return {
+    ...script,
+    steps: script.steps.map((s, i) => (i === index ? { ...s, label: text } : s)),
+  }
 }
 
 export function moveStep(script: Script, from: number, to: number): Script {

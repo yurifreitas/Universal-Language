@@ -50,7 +50,16 @@ function pickVoice(settings: Settings): SpeechSynthesisVoice | undefined {
   return portugueseVoices(cachedVoices)[0] ?? cachedVoices[0]
 }
 
-export function speak(text: string, settings: Settings): void {
+/**
+ * `onEnd` roda quando a locucao TERMINA de fato — e o que permite encadear
+ * falas (o roteiro inteiro, passo a passo) sem cronometro chutado: a duracao
+ * depende da voz, da velocidade e do tamanho da frase, e um `setTimeout` ou
+ * cortaria a fala no meio ou deixaria um silencio constrangedor entre passos.
+ *
+ * Nao roda quando a fala e CANCELADA (outro toque, botao de parar): cancelar e
+ * justamente o pedido de nao continuar a sequencia.
+ */
+export function speak(text: string, settings: Settings, onEnd?: () => void): void {
   if (!text.trim() || !('speechSynthesis' in window)) return
   // Cancelar antes de falar evita fila acumulada quando a pessoa toca rapido.
   speechSynthesis.cancel()
@@ -64,6 +73,14 @@ export function speak(text: string, settings: Settings): void {
   }
   u.rate = settings.rate
   u.pitch = settings.pitch
+  if (onEnd) {
+    u.onend = () => onEnd()
+    // `error` cobre o caso em que a voz falha no meio: sem isto a sequencia
+    // ficaria pendurada para sempre no passo que nao saiu.
+    u.onerror = (e) => {
+      if (e.error !== 'canceled' && e.error !== 'interrupted') onEnd()
+    }
+  }
   speechSynthesis.speak(u)
 }
 

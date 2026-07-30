@@ -44,12 +44,21 @@ export function usePanelHistory(isOpen: boolean, close: () => void): void {
 
   useEffect(() => {
     const onPop = () => {
-      if (!pushed.current) return
+      // A guarda e liberada SEMPRE, inclusive quando este popstate veio do
+      // `history.back()` do proprio fechamento pelo ✕. Antes o `return` de
+      // baixo saia antes da liberacao, `ignore` ficava preso em `true`, e a
+      // partir do segundo fechamento o `history.back()` deixava de ser
+      // chamado — cada painel aberto passava a deixar uma entrada pendurada.
+      // Fechar cinco paineis exigia quatro "voltar" para sair do app, que e
+      // exatamente o que este arquivo existe para evitar.
+      const eraNossa = pushed.current
+      ignore.current = false
+      if (!eraNossa) return
+
       // Veio do botao voltar: a entrada ja saiu do historico sozinha.
       pushed.current = false
       ignore.current = true
       close()
-      // Solta a guarda no proximo ciclo, depois que o efeito de cima rodou.
       queueMicrotask(() => {
         ignore.current = false
       })

@@ -23,6 +23,8 @@ import { speak, speakCue, speechSupported } from './lib/speech'
 import { compose, NO_MARKS, type ArticleMode, type GrammarMarks } from './lib/grammar'
 import { regionalLabel } from './lib/regional'
 import { CORE_STRIP } from './lib/coreStrip'
+import { learn, loadModel, saveModel, suggest, type PredictModel } from './lib/predict'
+import { comecar, elogio, pista, responder, type GameState } from './lib/game'
 import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
@@ -70,6 +72,7 @@ type Panel = 'none' | 'search' | 'settings' | 'help' | 'phrases' | 'scripts' | '
 const TOOLS = [
   { key: 'phrases', icon: '💬', label: 'Frases', aria: 'Frases prontas', group: 'falar' },
   { key: 'scripts', icon: '📋', label: 'Roteiros', aria: 'Roteiros de situações', group: 'falar' },
+  { key: 'jogo', icon: '🎯', label: 'Achar', aria: 'Jogo de achar a palavra', group: 'falar' },
   { key: 'search', icon: '🔍', label: 'Buscar', aria: 'Buscar pictograma', group: 'ajustar' },
   { key: 'editor', icon: '✎', label: 'Editar', aria: 'Editar pranchas e cards', group: 'ajustar' },
   { key: 'help', icon: '?', label: 'Ajuda', aria: 'Atalhos e acesso', group: 'ajustar' },
@@ -85,6 +88,11 @@ export default function App() {
   const [edits, setEdits] = useState<BoardEdits>(loadEdits)
   const [customBoards, setCustomBoards] = useState<CustomBoard[]>(loadCustomBoards)
   const [scripts, setScripts] = useState<Script[]>(loadScripts)
+  /** Modelo de sugestao: pares de palavras que a propria pessoa ja disse. */
+  const [predict, setPredict] = useState<PredictModel>(loadModel)
+  /** Jogo de achar a palavra. `null` quando nao esta jogando. */
+  const [jogo, setJogo] = useState<GameState | null>(null)
+  const [jogoFim, setJogoFim] = useState(false)
   const [boards, setBoards] = useState<Board[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeBoard, setActiveBoard] = useState(0)
@@ -122,6 +130,7 @@ export default function App() {
   useEffect(() => saveEdits(edits), [edits])
   useEffect(() => saveCustomBoards(customBoards), [customBoards])
   useEffect(() => saveScripts(scripts), [scripts])
+  useEffect(() => saveModel(predict), [predict])
 
   useEffect(() => {
     const root = document.documentElement
@@ -187,6 +196,30 @@ export default function App() {
 
   const board = allBoards[activeBoard] ?? allBoards[0]
   const cards = board?.cards ?? []
+
+  /**
+   * Rotulo → card, de TODAS as pranchas mais a faixa de nucleo.
+   *
+   * A sugestao so vale se puder trazer palavra de qualquer prancha: se ela
+   * ficasse restrita a prancha aberta, sugeriria justamente o que ja esta na
+   * tela — e o custo que ela existe para cortar e o de trocar de prancha.
+   */
+  const vocabulario = useMemo(() => {
+    const m = new Map<string, Card>()
+    for (const c of CORE_STRIP) m.set(c.label, c)
+    for (const b of allBoards) for (const c of b.cards) if (!m.has(c.label)) m.set(c.label, c)
+    return m
+  }, [allBoards])
+
+  const sugestoes = useMemo(
+    () =>
+      settings.suggestions
+        ? suggest(predict, sentence.at(-1)?.label ?? null, vocabulario).filter(
+            (c) => c.label !== sentence.at(-1)?.label,
+          )
+        : [],
+    [settings.suggestions, predict, sentence, vocabulario],
+  )
 
   /**
    * A frase, nas duas formas. `composed` e null com a gramatica desligada — e
@@ -273,9 +306,13 @@ export default function App() {
    * o parceiro nao ouviu, chegou alguem novo, o ambiente estava barulhento.
    */
   const say = useCallback(
-    (phrase: Card) => {
+    (phrase: Card, onEnd?: () => void) => {
       if (!phrase.label.trim()) return
-      speak(phrase.label, settings)
+      speak(phrase.label, settings, onEnd)
+      // Aprende no momento em que a pessoa FALA — frase montada e desfeita sem
+      // ser dita nao e fala, e aprender com ela ensinaria o modelo a sugerir os
+      // enganos.
+      if (sentence.length > 1) setPredict((m) => learn(m, sentence))
       setHistory((h) => {
         // Repetir a mesma frase nao cria entrada nova: o historico e atalho,
         // e uma lista com a mesma frase seis vezes nao ajuda ninguem.
@@ -283,7 +320,7 @@ export default function App() {
         return [phrase, ...h.filter((x) => x.label !== phrase.label)].slice(0, HISTORY_LIMIT)
       })
     },
-    [settings],
+    [settings, sentence],
   )
 
   /** A frase montada como um card unico — icone do primeiro pictograma dela. */
@@ -294,13 +331,37 @@ export default function App() {
 
   const pick = useCallback(
     (card: Card) => {
+      // Com o jogo ativo, tocar um card e uma RESPOSTA — nao entra na frase.
+      // Errar nao penaliza: o app so repete a pista.
+      if (jogo) {
+        const r = responder(jogo, card, cards)
+        if (!r.acertou) {
+          speak(pista(regionalLabel(jogo.target.label, settings.region), jogo.acertos), settings)
+          return
+        }
+        if (settings.sounds) earcon.select()
+        if (r.terminou) {
+          setJogo(null)
+          setJogoFim(true)
+          speak('Você achou todas! Muito bem.', settings)
+        } else if (r.proximo) {
+          setJogo(r.proximo)
+          const fala = `${elogio(jogo.acertos)} ${pista(
+            regionalLabel(r.proximo.target.label, settings.region),
+            r.proximo.acertos,
+          )}`
+          speak(fala, settings)
+        }
+        return
+      }
+
       setSentence((s) => [...s, card])
       setArticles((a) => [...a, 'auto'])
       if (settings.sounds) earcon.select()
       if (settings.speakOnTap) speak(regionalLabel(card.label, settings.region), settings)
       setPanel('none')
     },
-    [settings],
+    [settings, jogo, cards],
   )
 
   const pickByIndex = useCallback(
@@ -315,6 +376,11 @@ export default function App() {
     (phase: 'rows' | 'cells', index: number) => {
       if (settings.sounds) (phase === 'rows' ? earcon.scanRow : earcon.scanCell)()
       if (!settings.auditoryScanning) return
+      // Indice negativo = linha de acoes; ela tem nome proprio, nao card.
+      if (index < 0) {
+        speakCue('comandos', settings)
+        return
+      }
       if (phase === 'cells') {
         const c = cards[index]
         if (c) speakCue(regionalLabel(c.label, settings.region), settings)
@@ -328,8 +394,37 @@ export default function App() {
     [cards, settings],
   )
 
+  /**
+   * A linha zero da varredura.
+   *
+   * Sem ela, quem usa switch montava a frase e nunca conseguia falar: a
+   * varredura so alcancava a grade, e Espaco/Enter — que seriam o atalho de
+   * falar — pertencem ao switch. A frase morria na tela.
+   */
+  const scanActions = useMemo(
+    () => [
+      { label: 'Falar', run: () => currentPhrase && say(currentPhrase), disabled: !currentPhrase },
+      {
+        label: 'Apagar o último',
+        run: () => {
+          setSentence((x) => x.slice(0, -1))
+          setArticles((a) => a.slice(0, -1))
+        },
+        disabled: sentence.length === 0,
+      },
+      { label: 'Limpar a frase', run: clearSentence, disabled: sentence.length === 0 },
+      {
+        label: 'Próxima prancha',
+        run: () => setActiveBoard((i) => (i + 1) % Math.max(1, allBoards.length)),
+        disabled: allBoards.length < 2,
+      },
+    ],
+    [currentPhrase, say, sentence.length, clearSentence, allBoards.length],
+  )
+
   const scan = useScanning({
     enabled: settings.scanning,
+    actions: scanActions,
     speed: settings.scanSpeed,
     total: cards.length,
     columns: settings.columns,
@@ -546,7 +641,19 @@ export default function App() {
                     tabIndex={i === tools.focused ? 0 : -1}
                     onFocus={() => tools.setFocused(i)}
                     onKeyDown={(e) => tools.onKeyDown(e, i)}
-                    onClick={() => (t.key === 'lock' ? patch({ locked: true }) : setPanel(t.key))}
+                    onClick={() => {
+                      if (t.key === 'lock') return patch({ locked: true })
+                      if (t.key === 'jogo') {
+                        const inicio = comecar(cards)
+                        setJogoFim(false)
+                        setJogo(inicio)
+                        if (inicio) {
+                          speak(pista(regionalLabel(inicio.target.label, settings.region), 0), settings)
+                        }
+                        return
+                      }
+                      setPanel(t.key)
+                    }}
                     aria-label={t.aria}
                   >
                     <span aria-hidden="true">{t.icon}</span>
@@ -560,6 +667,89 @@ export default function App() {
         </div>
       </header>
 
+      {(jogo || jogoFim) && (
+        <div className="shell">
+          <div className="jogo" role="status">
+            {jogo ? (
+              <>
+                <p className="jogo__pista">
+                  <span className="jogo__cade">Cadê</span>{' '}
+                  <strong>{regionalLabel(jogo.target.label, settings.region)}</strong>?
+                </p>
+                <div className="jogo__acoes">
+                  <span className="jogo__placar" aria-live="polite">
+                    {jogo.acertos} de {jogo.total}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() =>
+                      speak(
+                        pista(regionalLabel(jogo.target.label, settings.region), jogo.acertos),
+                        settings,
+                      )
+                    }
+                  >
+                    🔊 Repetir
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => setJogo(null)}>
+                    Parar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="jogo__pista">
+                  <strong>Você achou todas!</strong>
+                </p>
+                <div className="jogo__acoes">
+                  <button
+                    type="button"
+                    className="btn btn--speak"
+                    onClick={() => {
+                      const novo = comecar(cards)
+                      setJogoFim(false)
+                      setJogo(novo)
+                      if (novo) {
+                        speak(pista(regionalLabel(novo.target.label, settings.region), 0), settings)
+                      }
+                    }}
+                  >
+                    Jogar de novo
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => setJogoFim(false)}>
+                    Voltar a falar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {settings.scanning && scan.phase !== 'idle' && (
+        <div className="shell">
+          <div
+            className={`scan-actions ${scan.onActions ? 'scan-actions--on' : ''}`}
+            role="status"
+            aria-label="Comandos alcançados pela varredura"
+          >
+            {scanActions
+              .filter((a) => !a.disabled)
+              .map((a, i) => (
+                <span
+                  key={a.label}
+                  className={`scan-actions__item ${
+                    scan.onActions && scan.actionIndex === i ? 'scan-actions__item--on' : ''
+                  }`}
+                >
+                  {a.label}
+                </span>
+              ))}
+          </div>
+        </div>
+      )}
+
       <div className="shell shell--flush">
         <SentenceBar
           sentence={sentence}
@@ -570,6 +760,10 @@ export default function App() {
           onEnableGrammar={() => patch({ grammar: true })}
           onSpeak={() => currentPhrase && say(currentPhrase)}
           onBackspace={() => {
+            // Esvaziar card a card tem de zerar os marcadores igual a limpar de
+            // uma vez: heranca silenciosa de "não"/"pergunta"/passado para a
+            // frase seguinte e o pior tipo de bug — so aparece falando.
+            if (sentence.length <= 1) setMarks(NO_MARKS)
             setSentence((s) => s.slice(0, -1))
             setArticles((a) => a.slice(0, -1))
           }}
@@ -619,7 +813,12 @@ export default function App() {
       >
         {/* A faixa fica FORA da grade e antes dela: posicao identica em toda
             prancha, sem deslocar nenhuma celula existente. */}
-        {settings.coreStrip && (
+        {/* Na propria prancha Nucleo a faixa nao aparece: as seis palavras ja
+            estao ali, e ver o mesmo pictograma duas vezes na mesma tela e pior
+            que a inconsistencia de posicao — a crianca fica sem saber qual
+            tocar. Nas outras dez pranchas a faixa esta sempre no mesmo lugar,
+            que e onde o ganho de plano motor existe. */}
+        {settings.coreStrip && board?.id !== 'nucleo' && (
           <div className="shell">
             <div className="core" role="group" aria-label="Palavras que servem em qualquer prancha">
               {CORE_STRIP.map((card) => (
@@ -629,6 +828,28 @@ export default function App() {
                   className="core__cell"
                   onClick={() => pick(card)}
                   aria-label={regionalLabel(card.label, settings.region)}
+                >
+                  <Pictogram card={card} eager />
+                  <span>{regionalLabel(card.label, settings.region)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sugestoes.length > 0 && (
+          <div className="shell">
+            <div className="sugestoes" role="group" aria-label="Sugestões de próxima palavra">
+              <span className="sugestoes__rotulo" aria-hidden="true">
+                talvez
+              </span>
+              {sugestoes.map((card) => (
+                <button
+                  key={card.label}
+                  type="button"
+                  className="sugestao"
+                  onClick={() => pick(card)}
+                  aria-label={`Sugestão: ${regionalLabel(card.label, settings.region)}`}
                 >
                   <Pictogram card={card} eager />
                   <span>{regionalLabel(card.label, settings.region)}</span>

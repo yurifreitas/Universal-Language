@@ -190,3 +190,61 @@ Nada abaixo se resolve programando melhor:
 
 O item 5 do eixo 5 — sentar com quem usa — deveria acontecer **entre o 1 e o
 2**, não no fim. Toda a ordem acima é hipótese até lá.
+
+---
+
+## Adendo — o que a revisão por agentes mudou (2026)
+
+Cinco levantamentos em paralelo (léxico, frases, vocabulário das pranchas,
+regras do motor, literatura recente) mais dois de aprofundamento (abordagens
+atípicas, organização de vocabulário). O que saiu deles:
+
+### Feito
+
+| O quê | Origem |
+|---|---|
+| Prancha **Comentar** | Spencer, Tönsing & Dada (2025): 14 estudos sobre comentar contra centenas sobre pedir |
+| **Faixa de núcleo** em todas as pranchas | consenso unânime de Proloquo2Go, LAMP WFL e Grid 3 |
+| **Faixa de sugestão** da própria pessoa | Predictive Anchoring; ressalva de Valencia et al. (CHI 2023) sobre perda de agência |
+| **Subordinação** e **futuro do subjuntivo** | revisão do motor: "porque", "quando", "se" produziam frase quebrada |
+| **Registro coloquial** nas frases prontas | incoerência: o app abre em coloquial e falava em normativo |
+| Seis grupos de frases de casa | as sete existentes eram todas de vida pública |
+| **ABNT NBR 17225:2025** declarada | norma brasileira de acessibilidade web, publicada em março de 2025 |
+
+### Não feito — e por quê
+
+**Agrupar símbolos por cor dentro de cada prancha.** É a evidência experimental
+mais forte de todo o levantamento (Wilkinson et al., replicado em TEA e Down:
+busca significativamente mais rápida quando símbolos de cor semelhante ficam
+contíguos, com rastreio ocular mostrando fixação em distratores na condição
+espalhada). **Tem prazo:** é reordenação dentro da prancha, e depois que alguém
+aprende as posições vira violação do LAMP. Fazer agora ou nunca — e a decisão é
+de produto, não técnica.
+
+**Reorganizar as pranchas por rotina em vez de por categoria.** A evidência diz
+que crianças pequenas organizam por evento, não por categoria (Fallon, Light &
+Achenbach, 2003) — mas três estudos compararam grade esquemática com
+taxonômica e **empataram**. A única vantagem significativa é de **cena visual
+integrada**, que é outra arquitetura. Reorganizar não compra nada.
+
+**Cenas visuais com fotos do ambiente da criança.** É onde está a única
+vantagem estatisticamente significativa sobre grades (Drager et al.,
+2003/2004). Continua fora de escopo, mas deixou de ser "talvez um dia": é a
+melhoria com maior evidência ainda não implementada.
+
+### Abordagens atípicas que valem a pena, em ordem de retorno
+
+1. **Modo auditivo de varredura** com earcons por categoria — reaproveita
+   `useScanning.ts`, `speech.ts` e `audio.ts` quase inteiros. É o único caminho
+   para quem não enxerga a grade.
+2. **Filtro de toque involuntário** (dwell mínimo + janela de bloqueio após
+   seleção) — poucas linhas, e é o problema que o Livox resolveu para o público
+   de paralisia cerebral.
+3. **Texto dinâmico (T2L)** — a palavra escrita aparece grande e some junto com
+   a fala ao tocar o card. Evidência publicada (Penn State), mudança trivial.
+4. **Modo interlocutor** — a frase em tela cheia para virar o aparelho ao
+   parceiro. Resgata o que o Talking Brooch (1973) fazia e a grade moderna
+   perdeu: o interlocutor olha o rosto, não o tablet.
+5. **Import/export OpenBoard (.obf/.obz)** — pranchas montadas por
+   fonoaudiólogos em outros apps entrariam neste. Interoperabilidade em vez de
+   mais um silo.
