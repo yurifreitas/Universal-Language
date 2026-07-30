@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Board } from '../types'
 import { useRovingFocus } from '../lib/useRovingFocus'
+import { Faixa } from './Faixa'
 
 interface Props {
   boards: Board[]
@@ -47,11 +48,14 @@ export function BoardTabs({ boards, active, onChange }: Props) {
 
   return (
     <nav className="tabs">
-      <div
-        ref={strip}
+      <Faixa
         className="shell tabs__inner"
+        nome="pranchas"
         role="tablist"
-        aria-label="Pranchas de vocabulário"
+        ariaLabel="Pranchas de vocabulário"
+        trilhoRef={(el) => {
+          strip.current = el
+        }}
       >
         {boards.map((b, i) => (
           <button
@@ -79,7 +83,7 @@ export function BoardTabs({ boards, active, onChange }: Props) {
             <span className="sr-only">{`, ${b.cards.length} cards`}</span>
           </button>
         ))}
-      </div>
+      </Faixa>
     </nav>
   )
 }

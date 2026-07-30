@@ -37,6 +37,8 @@ interface Props {
   /** Earcons ligados nos ajustes: o ensaio marca o avanço com um som curto. */
   sounds: boolean
   onStats: (stats: ScriptStats) => void
+  /** Um ensaio inteiro terminou — vale ponto no diário de prática. */
+  onPratica: () => void
   /** `onEnd` roda ao fim da locucao — e o que encadeia "falar tudo". */
   onSpeak: (step: Card, onEnd?: () => void) => void
   onChange: (scripts: Script[]) => void
@@ -68,6 +70,7 @@ export function ScriptsPanel({
   stats,
   sounds,
   onStats,
+  onPratica,
   onSpeak,
   onChange,
   onClose,
@@ -219,6 +222,7 @@ export function ScriptsPanel({
     setDone((d) => (d.includes(i) ? d : [...d, i]))
     if (i + 1 >= script.steps.length) {
       onStats(registrarEnsaio(stats, script.id))
+      onPratica()
       setEnsaio('fim')
       if (sounds) earcon.board()
       return

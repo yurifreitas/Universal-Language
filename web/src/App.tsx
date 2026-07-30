@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Board, Card, Settings } from './types'
 import {
   HISTORY_LIMIT,
@@ -41,7 +41,19 @@ import {
   type Modo,
 } from './lib/game'
 import { registrarEnsaio, seloDe, vezes } from './lib/ensaio'
-import { loadGameStats, loadPhraseUses, savePhraseUses, saveGameStats } from './lib/storage'
+import {
+  loadDiario,
+  loadGameStats,
+  loadObjetivos,
+  loadPerfilPadroes,
+  loadPhraseUses,
+  saveDiario,
+  saveGameStats,
+  saveObjetivos,
+  savePerfilPadroes,
+  savePhraseUses,
+} from './lib/storage'
+import { registrar as registrarPratica, type Motivo } from './lib/diario'
 import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
@@ -56,6 +68,13 @@ import { PhrasesPanel } from './components/PhrasesPanel'
 import { ScriptsPanel } from './components/ScriptsPanel'
 import { BoardEditor } from './components/BoardEditor'
 import { HelpOverlay } from './components/HelpOverlay'
+import { Faixa } from './components/Faixa'
+import { ProgressPanel } from './components/ProgressPanel'
+import { ObjectivesPanel } from './components/ObjectivesPanel'
+import { MathPanel } from './components/MathPanel'
+import { PatternsPanel } from './components/PatternsPanel'
+import { PoetryPanel } from './components/PoetryPanel'
+import type { Objetivo } from './lib/objetivos'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -73,7 +92,19 @@ function padArticles(a: ArticleMode[], ...idx: number[]): ArticleMode[] {
   return [...a, ...Array<ArticleMode>(need - a.length).fill('auto')]
 }
 
-type Panel = 'none' | 'search' | 'settings' | 'help' | 'phrases' | 'scripts' | 'editor'
+type Panel =
+  | 'none'
+  | 'search'
+  | 'settings'
+  | 'help'
+  | 'phrases'
+  | 'scripts'
+  | 'editor'
+  | 'progresso'
+  | 'objetivos'
+  | 'numeros'
+  | 'padroes'
+  | 'poesia'
 
 /**
  * A barra superior tem dois grupos com donos diferentes, e misturar os dois
@@ -90,12 +121,20 @@ const TOOLS = [
   { key: 'phrases', icon: '💬', label: 'Frases', aria: 'Frases prontas', group: 'falar' },
   { key: 'scripts', icon: '📋', label: 'Roteiros', aria: 'Roteiros de situações', group: 'falar' },
   { key: 'jogo', icon: '🎯', label: 'Achar', aria: 'Jogo de achar a palavra', group: 'falar' },
+  { key: 'numeros', icon: '🔢', label: 'Números', aria: 'Números, contas e símbolos', group: 'falar' },
+  { key: 'progresso', icon: '🏆', label: 'Progresso', aria: 'Meu progresso', group: 'falar' },
   { key: 'search', icon: '🔍', label: 'Buscar', aria: 'Buscar pictograma', group: 'ajustar' },
   { key: 'editor', icon: '✎', label: 'Editar', aria: 'Editar pranchas e cards', group: 'ajustar' },
   { key: 'help', icon: '?', label: 'Ajuda', aria: 'Atalhos e acesso', group: 'ajustar' },
+  { key: 'objetivos', icon: '🎯', label: 'Objetivos', aria: 'Objetivos individuais', group: 'ajustar' },
   { key: 'settings', icon: '⚙', label: 'Ajustes', aria: 'Configurações', group: 'ajustar' },
   { key: 'lock', icon: '🔓', label: 'Travar', aria: 'Travar na prancha', group: 'ajustar' },
 ] as const
+
+/** Os botões que ficam na barra — de quem usa a prancha. */
+const FALAR = TOOLS.filter((t) => t.group === 'falar')
+/** Os que foram para o menu "Mais" — de quem acompanha. */
+const AJUSTAR = TOOLS.filter((t) => t.group === 'ajustar')
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
@@ -120,6 +159,14 @@ export default function App() {
   const [jogoEmbalo, setJogoEmbalo] = useState<string | null>(null)
   /** Quantas vezes cada frase foi dita — sustenta o grupo "As mais faladas". */
   const [phraseUses, setPhraseUses] = useState(loadPhraseUses)
+  /** Diário de prática: pontos por dia. NUNCA conta fala. Ver `lib/diario.ts`. */
+  const [diario, setDiario] = useState(loadDiario)
+  /** Objetivos individuais — o plano de quem acompanha. Ver `lib/objetivos.ts`. */
+  const [objetivos, setObjetivos] = useState<Objetivo[]>(loadObjetivos)
+  /** Menu "Mais": os controles de cuidador saíram da barra. */
+  const [menu, setMenu] = useState(false)
+  /** Perfil dos padrões visuais — caminho, nunca nota. Ver `lib/padroes.ts`. */
+  const [perfilPadroes, setPerfilPadroes] = useState(loadPerfilPadroes)
   const [boards, setBoards] = useState<Board[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeBoard, setActiveBoard] = useState(0)
@@ -160,6 +207,9 @@ export default function App() {
   useEffect(() => saveScriptStats(scriptStats), [scriptStats])
   useEffect(() => saveGameStats(jogoStats), [jogoStats])
   useEffect(() => savePhraseUses(phraseUses), [phraseUses])
+  useEffect(() => saveDiario(diario), [diario])
+  useEffect(() => saveObjetivos(objetivos), [objetivos])
+  useEffect(() => savePerfilPadroes(perfilPadroes), [perfilPadroes])
   useEffect(() => saveModel(predict), [predict])
 
   useEffect(() => {
@@ -207,7 +257,7 @@ export default function App() {
    */
   const closePanel = useCallback(() => setPanel('none'), [])
   usePanelHistory(panel !== 'none', closePanel)
-  const tools = useRovingFocus(TOOLS.length)
+  const tools = useRovingFocus(FALAR.length + 1)
 
   /**
    * Ordem das pranchas: fabrica (com as edicoes do usuario aplicadas), depois
@@ -331,6 +381,14 @@ export default function App() {
   }, [])
 
   /**
+   * Ponto de prática. Um lugar só, para ficar óbvio no código o que pontua —
+   * jogo e ensaio — e o que nunca pontua: falar.
+   */
+  const pontuar = useCallback((motivo: Motivo) => {
+    setDiario((d) => registrarPratica(d, motivo))
+  }, [])
+
+  /**
    * Toda fala de frase — montada ou pronta — passa por aqui e entra no
    * historico. Repetir e uma das operacoes mais frequentes numa conversa real:
    * o parceiro nao ouviu, chegou alguem novo, o ambiente estava barulhento.
@@ -390,11 +448,13 @@ export default function App() {
         }
 
         if (settings.sounds) earcon.select()
+        pontuar('acerto')
         if (r.terminou) {
           setJogo(null)
           setJogoFim(true)
           setJogoEmbalo(null)
           if (board) setJogoStats((s) => registrarEnsaio(s, board.id))
+          pontuar('rodada')
           dizer('Você achou todas! Muito bem.')
         } else if (r.proximo) {
           setJogo(r.proximo)
@@ -417,7 +477,7 @@ export default function App() {
       if (settings.speakOnTap) speak(regionalLabel(card.label, settings.region), settings)
       setPanel('none')
     },
-    [settings, jogo, cards, board],
+    [settings, jogo, cards, board, pontuar],
   )
 
   /**
@@ -701,36 +761,121 @@ export default function App() {
                     ⟳ Varredura
                   </span>
                 )}
-                {TOOLS.map((t, i) => (
-                  <Fragment key={t.key}>
-                    {/* Separador entre o grupo de fala e o de ajustes. Como e
-                        puramente visual, sai da arvore de acessibilidade: o
-                        leitor de tela ja tem o rotulo de cada botao. */}
-                    {t.group === 'ajustar' && TOOLS[i - 1]?.group === 'falar' && (
-                      <span className="topbar__split" aria-hidden="true" />
-                    )}
+                {/* Módulos avançados entram no FIM da fila, nunca no meio:
+                    ligar um recurso não pode mover um botão que a mão já
+                    aprendeu. Ver `Settings.padroes`. */}
+                {/* Só o grupo de FALA fica na barra.
+                 *
+                 * Eram onze botões em fila, todos com o mesmo peso, e a barra
+                 * quebrava em duas linhas — cada uma custando um card inteiro de
+                 * altura no celular. Os seis controles de cuidador (buscar,
+                 * editar, objetivos, ajuda, ajustes, travar) foram para um menu:
+                 * quem usa a prancha ganha espaço e alvos maiores, e quem
+                 * acompanha continua a um toque de distância. */}
+                {FALAR.map((t, i) => (
                   <button
+                    key={t.key}
                     ref={tools.setRef(i)}
                     type="button"
-                    className="btn btn--ghost"
+                    className="btn btn--ghost btn--barra"
                     tabIndex={i === tools.focused ? 0 : -1}
                     onFocus={() => tools.setFocused(i)}
                     onKeyDown={(e) => tools.onKeyDown(e, i)}
                     onClick={() => {
-                      if (t.key === 'lock') return patch({ locked: true })
                       if (t.key === 'jogo') {
                         comecarJogo(jogoModo)
                         return
                       }
-                      setPanel(t.key)
+                      setPanel(t.key as Panel)
                     }}
                     aria-label={t.aria}
                   >
                     <span aria-hidden="true">{t.icon}</span>
                     <span className="btn__text">{t.label}</span>
                   </button>
-                  </Fragment>
                 ))}
+
+                {settings.padroes && (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--barra"
+                    tabIndex={-1}
+                    onClick={() => setPanel('padroes')}
+                    aria-label="Padrões visuais"
+                  >
+                    <span aria-hidden="true">◇</span>
+                    <span className="btn__text">Padrões</span>
+                  </button>
+                )}
+                {settings.poesia && (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--barra"
+                    tabIndex={-1}
+                    onClick={() => setPanel('poesia')}
+                    aria-label="Oficina de poesia"
+                  >
+                    <span aria-hidden="true">✒</span>
+                    <span className="btn__text">Poesia</span>
+                  </button>
+                )}
+
+                <span className="topbar__split" aria-hidden="true" />
+
+                <div className="mais">
+                  <button
+                    ref={tools.setRef(FALAR.length)}
+                    type="button"
+                    className={`btn btn--ghost btn--barra ${menu ? 'btn--saved' : ''}`}
+                    tabIndex={FALAR.length === tools.focused ? 0 : -1}
+                    onFocus={() => tools.setFocused(FALAR.length)}
+                    onKeyDown={(e) => tools.onKeyDown(e, FALAR.length)}
+                    aria-expanded={menu}
+                    aria-haspopup="menu"
+                    onClick={() => setMenu((m) => !m)}
+                    aria-label="Mais controles"
+                  >
+                    <span aria-hidden="true">⋯</span>
+                    <span className="btn__text">Mais</span>
+                  </button>
+
+                  {menu && (
+                    <>
+                      {/* Cortina invisível: tocar em qualquer lugar fecha o menu.
+                          Sem ela, em celular o menu só fecharia pelo próprio
+                          botão — e ninguém procura o botão para fechar. */}
+                      <button
+                        type="button"
+                        className="mais__cortina"
+                        aria-label="Fechar o menu"
+                        onClick={() => setMenu(false)}
+                      />
+                      <div className="mais__menu" role="menu" aria-label="Mais controles">
+                        {AJUSTAR.map((t) => (
+                          <button
+                            key={t.key}
+                            type="button"
+                            role="menuitem"
+                            className="mais__item"
+                            onClick={() => {
+                              setMenu(false)
+                              if (t.key === 'lock') return patch({ locked: true })
+                              setPanel(t.key as Panel)
+                            }}
+                          >
+                            <span className="mais__item-icone" aria-hidden="true">
+                              {t.icon}
+                            </span>
+                            <span className="mais__item-texto">
+                              <strong>{t.label}</strong>
+                              <small>{t.aria}</small>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -1000,7 +1145,12 @@ export default function App() {
 
         {sugestoes.length > 0 && (
           <div className="shell">
-            <div className="sugestoes" role="group" aria-label="Sugestões de próxima palavra">
+            <Faixa
+              className="sugestoes"
+              nome="sugestões"
+              role="group"
+              ariaLabel="Sugestões de próxima palavra"
+            >
               <span className="sugestoes__rotulo" aria-hidden="true">
                 talvez
               </span>
@@ -1016,7 +1166,7 @@ export default function App() {
                   <span>{regionalLabel(card.label, settings.region)}</span>
                 </button>
               ))}
-            </div>
+            </Faixa>
           </div>
         )}
 
@@ -1071,6 +1221,7 @@ export default function App() {
           stats={scriptStats}
           sounds={settings.sounds}
           onStats={setScriptStats}
+          onPratica={() => pontuar('ensaio')}
           onSpeak={say}
           onChange={setScripts}
           onClose={() => setPanel('none')}
@@ -1098,6 +1249,8 @@ export default function App() {
           customBoards={customBoards}
           scripts={scripts}
           scriptStats={scriptStats}
+          gameStats={jogoStats}
+          diario={diario}
           onChange={patch}
           onImport={(p) => {
             setSettings((s) => ({ ...s, ...p.settings }))
@@ -1107,7 +1260,49 @@ export default function App() {
             setCustomBoards(p.customBoards ?? [])
             setScripts(p.scripts ?? [])
             setScriptStats(p.scriptStats ?? {})
+            setJogoStats(p.gameStats ?? {})
+            if (p.diario) setDiario(p.diario)
+            setObjetivos(p.objetivos ?? [])
           }}
+          onClose={() => setPanel('none')}
+        />
+      )}
+      {panel === 'progresso' && (
+        <ProgressPanel
+          diario={diario}
+          jogoStats={jogoStats}
+          scriptStats={scriptStats}
+          boards={allBoards}
+          scripts={scripts}
+          onClose={() => setPanel('none')}
+        />
+      )}
+      {panel === 'objetivos' && (
+        <ObjectivesPanel
+          objetivos={objetivos}
+          onChange={setObjetivos}
+          onClose={() => setPanel('none')}
+        />
+      )}
+      {panel === 'numeros' && (
+        <MathPanel settings={settings} onPick={pick} onClose={() => setPanel('none')} />
+      )}
+      {panel === 'padroes' && (
+        <PatternsPanel
+          settings={settings}
+          perfil={perfilPadroes}
+          onPerfil={setPerfilPadroes}
+          onPratica={() => pontuar('acerto')}
+          onClose={() => setPanel('none')}
+        />
+      )}
+      {panel === 'poesia' && (
+        <PoetryPanel
+          settings={settings}
+          vocabulario={[...vocabulario.keys()]}
+          onSalvar={(c) =>
+            setMyPhrases((list) => (list.some((x) => x.label === c.label) ? list : [...list, c]))
+          }
           onClose={() => setPanel('none')}
         />
       )}

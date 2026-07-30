@@ -2,6 +2,9 @@ import { DEFAULT_SETTINGS, type Settings } from '../types'
 import type { BoardEdits, CustomBoard } from './boardEdits'
 import type { Script } from './scripts'
 import type { ScriptStats } from './ensaio'
+import { DIARIO_VAZIO, type Diario } from './diario'
+import type { Objetivo } from './objetivos'
+import { PERFIL_VAZIO, type Perfil } from './padroes'
 
 const KEY = 'autista-caa:settings:v1'
 
@@ -248,6 +251,88 @@ export function saveGameStats(stats: ScriptStats): void {
   }
 }
 
+/* -------------------------------------------------------- diário de prática */
+
+const DIARIO_KEY = 'autista-caa:diario:v1'
+
+/**
+ * Pontos de prática por dia. **Não** guarda nada sobre falar — ver a linha que
+ * `lib/diario.ts` não cruza.
+ */
+export function loadDiario(): Diario {
+  try {
+    const raw = localStorage.getItem(DIARIO_KEY)
+    if (!raw) return DIARIO_VAZIO
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return DIARIO_VAZIO
+    const dias = (parsed as Diario).dias
+    if (!dias || typeof dias !== 'object' || Array.isArray(dias)) return DIARIO_VAZIO
+    return { dias }
+  } catch {
+    return DIARIO_VAZIO
+  }
+}
+
+export function saveDiario(diario: Diario): void {
+  try {
+    localStorage.setItem(DIARIO_KEY, JSON.stringify(diario))
+  } catch {
+    /* idem */
+  }
+}
+
+const OBJ_KEY = 'autista-caa:objetivos:v1'
+
+/** Objetivos individuais e seus registros. Ver `lib/objetivos.ts`. */
+export function loadObjetivos(): Objetivo[] {
+  try {
+    const raw = localStorage.getItem(OBJ_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (o): o is Objetivo =>
+        typeof o === 'object' && o !== null && 'id' in o && 'titulo' in o && 'registros' in o,
+    )
+  } catch {
+    return []
+  }
+}
+
+export function saveObjetivos(objetivos: Objetivo[]): void {
+  try {
+    localStorage.setItem(OBJ_KEY, JSON.stringify(objetivos))
+  } catch {
+    /* idem */
+  }
+}
+
+const PADROES_KEY = 'autista-caa:padroes:v1'
+
+/**
+ * Perfil de padroes visuais. Nao e nota nem QI — ver `lib/padroes.ts`, que
+ * explica por que essa distincao e a decisao mais importante do modulo.
+ */
+export function loadPerfilPadroes(): Perfil {
+  try {
+    const raw = localStorage.getItem(PADROES_KEY)
+    if (!raw) return PERFIL_VAZIO
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return PERFIL_VAZIO
+    return { ...PERFIL_VAZIO, ...(parsed as Perfil) }
+  } catch {
+    return PERFIL_VAZIO
+  }
+}
+
+export function savePerfilPadroes(perfil: Perfil): void {
+  try {
+    localStorage.setItem(PADROES_KEY, JSON.stringify(perfil))
+  } catch {
+    /* idem */
+  }
+}
+
 /* --------------------------------------------------------- uso de frases */
 
 const USES_KEY = 'autista-caa:phrase-uses:v1'
@@ -293,6 +378,11 @@ export interface Profile {
   scripts?: Script[]
   /** Ensaios de roteiro. Ausente em perfis exportados antes do modo ensaio. */
   scriptStats?: ScriptStats
+  /** Rodadas do jogo por prancha e diário de prática. */
+  gameStats?: ScriptStats
+  diario?: Diario
+  /** Objetivos individuais — parte do plano, vai junto no perfil. */
+  objetivos?: Objetivo[]
 }
 
 /**
@@ -324,6 +414,15 @@ export function parseProfile(raw: string): Profile | null {
         typeof p.scriptStats === 'object' && p.scriptStats && !Array.isArray(p.scriptStats)
           ? p.scriptStats
           : {},
+      gameStats:
+        typeof p.gameStats === 'object' && p.gameStats && !Array.isArray(p.gameStats)
+          ? p.gameStats
+          : {},
+      diario:
+        typeof p.diario === 'object' && p.diario && typeof p.diario.dias === 'object'
+          ? p.diario
+          : DIARIO_VAZIO,
+      objetivos: Array.isArray(p.objetivos) ? p.objetivos : [],
     }
   } catch {
     return null

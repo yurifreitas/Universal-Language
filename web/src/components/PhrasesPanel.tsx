@@ -7,6 +7,7 @@ import { loadIndex, search } from '../lib/search'
 import { useRovingFocus } from '../lib/useRovingFocus'
 import { CardGrid } from './CardGrid'
 import { Pictogram } from './Pictogram'
+import { Faixa } from './Faixa'
 import { Dialog } from './Dialog'
 
 interface Props {
@@ -377,7 +378,12 @@ export function PhrasesPanel({
           </div>
         ) : (
           <>
-            <div className="phrases__tabs" role="tablist" aria-label="Grupos de frases">
+            <Faixa
+              className="phrases__tabs"
+              nome="grupos"
+              role="tablist"
+              ariaLabel="Grupos de frases"
+            >
               {groups.map((g, i) => (
                 <button
                   key={g.id}
@@ -397,7 +403,7 @@ export function PhrasesPanel({
                   <span className="sr-only">{`, ${g.phrases.length} frases`}</span>
                 </button>
               ))}
-            </div>
+            </Faixa>
 
             {group && (
               <div role="tabpanel" aria-label={group.name}>

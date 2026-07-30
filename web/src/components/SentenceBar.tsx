@@ -3,6 +3,7 @@ import type { Card } from '../types'
 import type { ArticleMode, Composed, GrammarMarks } from '../lib/grammar'
 import { regionalLabel, type Region } from '../lib/regional'
 import { Pictogram } from './Pictogram'
+import { Faixa } from './Faixa'
 
 interface Props {
   sentence: Card[]
@@ -222,7 +223,7 @@ export function SentenceBar({
       )}
 
       {composed && !empty && (
-        <div className="marks" role="toolbar" aria-label="Marcadores gramaticais">
+        <Faixa className="marks" nome="marcadores" role="toolbar" ariaLabel="Marcadores gramaticais">
           <div className="marks__set" role="group" aria-label="Tempo verbal">
             {TENSES.map((t) => (
               <button
@@ -292,7 +293,7 @@ export function SentenceBar({
             <span aria-hidden="true">+1</span>
             <span className="sr-only">Plural</span>
           </button>
-        </div>
+        </Faixa>
       )}
 
       <div className="sentence__actions">

@@ -2680,6 +2680,898 @@ textarea {
   }
 }
 
+/* =========================================================================
+   FAIXA — o fim do arrasto lateral às cegas
+
+   Arrastar de lado era o gesto mais mal resolvido da interface: não se
+   anuncia (nada dizia que havia mais prancha à direita), exige preensão e
+   deslize contínuo — justamente o que falta a quem tem comprometimento motor
+   —, não existe para teclado nem switch, e briga com a rolagem vertical da
+   prancha.
+
+   No lugar dele, um par de botõezinhos redondos que **só aparecem quando há
+   para onde ir** — e que, por isso, respondem a pergunta que a faixa nunca
+   respondia: tem mais? para que lado?
+
+   O arrasto continua funcionando para quem gosta dele. Isto é caminho a mais,
+   não caminho no lugar de.
+   ========================================================================= */
+
+.faixa {
+  position: relative;
+  min-width: 0;
+}
+
+/* A barra da frase é uma grade: o invólucro da faixa precisa herdar a coluna
+   que o `.marks` ocupava, senão os marcadores caem na coluna dos botões de
+   ação e a barra inteira se desmonta. */
+.sentence > .faixa {
+  grid-column: 1;
+  min-width: 0;
+}
+
+/* Quando o trilho é um `.shell`, quem centraliza passa a ser a faixa: senão os
+   botões ficam colados na borda da JANELA, e não na do conteúdo — num monitor
+   largo eles apareciam a 200px de distância da última aba. */
+.faixa:has(> .shell) {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+}
+
+/* O trilho: mesma faixa de antes, agora sem barra de rolagem visível nenhuma —
+   quem informa que há mais conteúdo são os botões e o esmaecido da ponta. */
+.faixa__trilho {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.faixa__trilho::-webkit-scrollbar {
+  display: none;
+}
+
+/* O botão fica POR CIMA da ponta, e não ao lado: reservar coluna custaria uns
+   88px permanentes numa tela de 320px, e a faixa existe exatamente onde falta
+   largura. */
+.faixa__seta {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0 0 3px;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  /* Falha para invisível E inerte: `opacity` sozinha deixaria um botão
+     fantasma clicável na ponta da faixa. */
+  opacity: 0;
+  transform: translateY(-50%) scale(0.7);
+  pointer-events: none;
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s cubic-bezier(0.2, 0, 0.2, 1);
+}
+.faixa__seta--esq {
+  left: 2px;
+}
+.faixa__seta--dir {
+  right: 2px;
+}
+.faixa--tem-esq .faixa__seta--esq,
+.faixa--tem-dir .faixa__seta--dir {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  pointer-events: auto;
+}
+/* O pop do toque: pequeno, curto, e some. É o único movimento "de jogo" que a
+   faixa tem — e some junto com `prefers-reduced-motion`. */
+.faixa__seta:active {
+  transform: translateY(-50%) scale(0.88);
+}
+.faixa__seta:hover {
+  background: color-mix(in oklab, var(--accent) 88%, white);
+}
+@media (prefers-reduced-motion: reduce) {
+  .faixa__seta {
+    transition: none;
+  }
+}
+/* Em alto contraste o botão vira preto e branco com borda grossa: o acento
+   amarelo sobre fundo claro não sustenta o contraste de um alvo pequeno. */
+:root[data-contrast='high'] .faixa__seta {
+  color: var(--bg);
+  background: var(--text);
+  border-color: var(--bg);
+  border-width: 3px;
+}
+
+/* Esmaecido na ponta: diz "continua" mesmo antes de o olho achar o botão.
+   `mask` e não gradiente sobreposto, porque o fundo por trás das faixas muda
+   (barra de abas, corpo do diálogo, prancha) e uma tarja de cor fixa
+   apareceria como um retângulo sujo em pelo menos um deles. */
+.faixa--tem-esq .faixa__trilho {
+  mask-image: linear-gradient(90deg, transparent 0, #000 46px);
+}
+.faixa--tem-dir .faixa__trilho {
+  mask-image: linear-gradient(270deg, transparent 0, #000 46px);
+}
+.faixa--tem-esq.faixa--tem-dir .faixa__trilho {
+  mask-image: linear-gradient(90deg, transparent 0, #000 46px, #000 calc(100% - 46px), transparent 100%);
+}
+
+/* =========================================================================
+   MEU PROGRESSO
+
+   Pontos do dia, sequência, semana, nível e selos. Tudo é de PRÁTICA — jogo e
+   ensaio. Falar não pontua, e a última nota do painel diz isso em voz alta,
+   porque é a decisão mais importante desta tela.
+   ========================================================================= */
+
+.progresso-painel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  max-width: 660px;
+  margin-inline: auto;
+  padding-block: var(--space-3) var(--space-4);
+}
+
+.prog-hoje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-4);
+  background: color-mix(in oklab, var(--accent) 10%, var(--surface));
+  border: 2px solid var(--accent);
+  border-radius: var(--r-lg);
+}
+
+/* Anel de meta em `conic-gradient`: sem SVG, sem biblioteca, e sem nenhuma
+   animação de rotação — o único movimento da tela é a barra da semana. */
+.prog-anel {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  background: conic-gradient(
+    var(--accent) 0 var(--pct, 0%),
+    color-mix(in oklab, var(--text) 14%, transparent) var(--pct, 0%) 100%
+  );
+  border-radius: 50%;
+}
+.prog-anel__miolo {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  background: var(--surface);
+  border-radius: 50%;
+  line-height: 1.1;
+}
+.prog-anel__miolo strong {
+  font-size: 1.6rem;
+}
+.prog-anel__miolo small {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+
+.prog-hoje__texto {
+  flex: 1 1 220px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.prog-titulo {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.prog-recado {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.prog-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.prog-chip {
+  padding: 3px 10px;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.prog-chip--nivel {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+/* --------------------------------------------------------------- semana */
+
+.prog-semana {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  align-items: end;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prog-dia {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+.prog-dia__barra {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 78px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-sm);
+}
+.prog-dia__barra > span {
+  width: 100%;
+  background: color-mix(in oklab, var(--accent) 55%, transparent);
+  border-radius: 5px;
+  transition: height 0.25s ease;
+}
+/* Bateu a meta: cor cheia. A distinção não é só a altura — dois dias podem ter
+   alturas parecidas e só um ter batido. */
+.prog-dia__barra > span.prog-dia__meta {
+  background: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .prog-dia__barra > span {
+    transition: none;
+  }
+}
+.prog-dia--hoje .prog-dia__barra {
+  border-color: var(--accent);
+  border-width: 2px;
+  padding: 2px;
+}
+.prog-dia__letra {
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.prog-dia--hoje .prog-dia__letra {
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- selos */
+
+.prog-lista {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prog-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 52px;
+  padding: 4px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-sm);
+}
+.prog-item .picto,
+.prog-item .picto--fallback {
+  width: 40px;
+  height: 40px;
+  max-height: 40px;
+  background: var(--card-bg);
+  border-radius: 8px;
+}
+.prog-item__icone {
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+}
+.prog-item__nome {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.prog-item__selo {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* =========================================================================
+   RESPIRO NA BARRA SUPERIOR — e o menu "Mais"
+
+   Eram onze botões em fila, todos com o mesmo peso visual, espremidos a 6px
+   um do outro. Em qualquer tela menor que um monitor a barra quebrava em duas
+   linhas, e cada linha de cabeçalho custa um card inteiro de altura no
+   celular.
+
+   O conserto não foi apertar mais: foi TIRAR. Os seis controles de quem
+   acompanha — buscar, editar, objetivos, ajuda, ajustes, travar — foram para
+   um menu. Na barra ficaram os cinco de quem usa a prancha, e eles ganharam o
+   espaço que sobrou.
+   ========================================================================= */
+
+.btn--barra {
+  min-height: 52px;
+  padding: 0 18px;
+  gap: 10px;
+}
+.topbar__actions {
+  gap: 10px;
+}
+.topbar__inner {
+  min-height: 68px;
+  padding-block: 10px;
+}
+.topbar__split {
+  height: 32px;
+  margin-inline: 6px;
+}
+
+.mais {
+  position: relative;
+}
+
+/* Cortina invisível cobrindo a tela inteira: tocar em qualquer lugar fecha.
+   Sem ela, em celular o menu só fecharia pelo próprio botão — e ninguém
+   procura o botão para fechar um menu aberto por engano. */
+.mais__cortina {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: default;
+}
+
+.mais__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 15;
+  display: grid;
+  gap: 4px;
+  width: min(320px, calc(100vw - 24px));
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  /* Entra deslizando 6px, e falha para o lugar certo: se a animação não rodar,
+     o menu simplesmente já está aberto — a mesma regra dos diálogos. */
+  animation: mais-in 0.14s ease-out;
+}
+@keyframes mais-in {
+  from {
+    transform: translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mais__menu {
+    animation: none;
+  }
+}
+
+/* Linha de menu com alvo generoso e descrição: o menu é usado com o aparelho
+   numa mão só, em pé, no meio do atendimento. */
+.mais__item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 56px;
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.mais__item:hover {
+  background: var(--surface-2);
+  border-color: var(--line-soft);
+}
+.mais__item-icone {
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+}
+.mais__item-texto {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.mais__item-texto small {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+/* =========================================================================
+   NÚMEROS E CONTAS
+   ========================================================================= */
+
+.mat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  max-width: 720px;
+  margin-inline: auto;
+  padding-block: var(--space-3) var(--space-4);
+}
+
+.mat__secoes {
+  display: grid;
+  gap: var(--space-3);
+}
+.mat__secao {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+}
+.mat__secao h3 {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mat__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  gap: var(--space-2);
+}
+/* Os dez algarismos cabem numa grade mais larga: são o alvo mais tocado
+   daqui, e a célula maior é a que a mão trêmula acerta. */
+.mat__grade--digitos {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+.mat__grade--palavras {
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+}
+
+.mat__tecla {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  padding: 8px;
+  font: inherit;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--card-ink);
+  background: var(--card-bg);
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    border-color 0.14s ease,
+    transform 0.1s ease;
+}
+.mat__tecla:hover {
+  border-color: var(--accent);
+}
+.mat__tecla:active {
+  transform: scale(0.95);
+}
+.mat__tecla--media {
+  min-height: 64px;
+  font-size: 1.35rem;
+}
+.mat__tecla--palavra {
+  min-height: 60px;
+  padding: 8px 10px;
+  font-size: 1rem;
+  /* Palavra é mais larga que algarismo: sem isto, "nenhum" e "metade" saíam
+     cortados da célula de 74px calibrada para um dígito. */
+  overflow-wrap: anywhere;
+  hyphens: none;
+}
+.mat__tecla--on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ------------------------------------------------------------ calculadora */
+
+.mat__calc {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+}
+
+.mat__visor {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.mat__visor-conta {
+  min-height: 20px;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+.mat__visor strong {
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.mat__teclado {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+/* O zero ocupa duas colunas, como num teclado numérico de verdade — é o hábito
+   que a mão já tem. */
+.mat__tecla--zero {
+  grid-column: span 2;
+}
+.mat__tecla--op {
+  color: var(--text);
+  background: var(--surface-3);
+  box-shadow: none;
+}
+.mat__tecla--op-on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.mat__tecla--acao {
+  color: var(--danger);
+  background: var(--surface-3);
+  box-shadow: none;
+}
+.mat__tecla--igual {
+  grid-column: 1 / -1;
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.mat__calc-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* --------------------------------------------------------------- dinheiro */
+
+/* Nota e moeda com formas diferentes: a distinção existe no bolso, e reproduzi-la
+   aqui é o que faz o exercício valer para o balcão de verdade. */
+.mat__cedula {
+  display: grid;
+  place-items: center;
+  min-height: 60px;
+  padding: 8px;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #12341f;
+  background: linear-gradient(160deg, #cfe9d4, #a9d6b6);
+  border: 2px solid #7fb894;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.mat__cedula--moeda {
+  color: #3a2f10;
+  background: linear-gradient(160deg, #e8dcae, #cbb877);
+  border-color: #b09b57;
+  border-radius: 50%;
+}
+.mat__cedula:active {
+  transform: scale(0.95);
+}
+
+.mat__total {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-3);
+  background: var(--accent-soft);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-md);
+}
+.mat__total-rotulo {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mat__total strong {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.mat__total-itens {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------ horas */
+
+.mat__hora-visor {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.mat__hora-visor strong {
+  font-size: clamp(2.2rem, 9vw, 3rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.mat__hora-visor span {
+  color: var(--accent);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* Célula de texto: o rótulo É a figura. Sem requisição de imagem e sem espera —
+   número não tem desenho que ajude. */
+.picto--texto {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  justify-self: center;
+  max-height: min(24vh, 190px);
+  background: color-mix(in oklab, var(--card-ink) 6%, transparent);
+  border-radius: var(--r-sm);
+  font-size: clamp(1.2rem, 4vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.chip .picto--texto {
+  max-height: 50px;
+  font-size: 1.1rem;
+}
+
+/* =========================================================================
+   OBJETIVOS INDIVIDUAIS
+   ========================================================================= */
+
+.objetivos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  max-width: 720px;
+  margin-inline: auto;
+  padding-block: var(--space-3) var(--space-4);
+}
+
+.objetivos__topo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+.objetivos__topo .btn {
+  min-height: 52px;
+}
+
+.objetivos__par {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.objetivos__modelos {
+  display: grid;
+  gap: var(--space-2);
+}
+.objetivos__modelo {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 60px;
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.objetivos__modelo:hover {
+  border-style: solid;
+  border-color: var(--accent);
+}
+.objetivos__modelo span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.objetivos__modelo small {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+.objetivos__modelo-area {
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+}
+
+.objetivos__lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.objetivo {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+}
+.objetivo__linha {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.objetivo__area {
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+}
+.objetivo__abrir {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 4px 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.objetivo__abrir:hover {
+  border-color: var(--line);
+}
+.objetivo__abrir strong {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.objetivo__abrir small {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+/* "+1" é o único botão grande da linha: é a ação que acontece no meio do
+   atendimento, com uma mão só, sem olhar direito para a tela. */
+.objetivo__mais {
+  min-width: 64px;
+  min-height: 56px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.objetivo__mais:active {
+  transform: scale(0.94);
+}
+
+.objetivo__barra {
+  height: 8px;
+}
+
+.objetivo__detalhe {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line-soft);
+}
+.objetivo__criterio {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.objetivo__semana .prog-dia {
+  gap: 2px;
+}
+.objetivo__conta {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 38px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-sm);
+  font-weight: 700;
+}
+.objetivo__semana .prog-dia--hoje .objetivo__conta {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+.objetivo__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@media (max-width: 560px) {
+  .objetivos__topo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .objetivos__topo .btn {
+    width: 100%;
+  }
+  .mat__grade,
+  .mat__grade--digitos {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  }
+}
+
 /* Ação destrutiva não pode ter a mesma aparência de "fazer uma cópia". Antes,
    "Apagar este roteiro" e "Restaurar de fábrica" eram visualmente idênticos —
    e o apagar acontecia num toque só. Agora exige dois. */
@@ -3281,4 +4173,406 @@ textarea {
   .ensaio__proximo {
     flex: 1 1 100%;
   }
+}
+
+/* =========================================================================
+   MÓDULOS AVANÇADOS
+
+   Todos desligados por padrão. O CSS abaixo só entra em cena para quem ligou —
+   e nada aqui altera uma medida do app simples.
+   ========================================================================= */
+
+/* ---------------------------------------------------------- padrões visuais
+
+   Formas desenhadas, e não pictogramas. Um pictograma carrega significado
+   ("cachorro"), e significado atravessa o exercício: a pessoa acertaria pelo
+   que a figura QUER DIZER, não pelo padrão. Aqui o desenho não pode significar
+   nada — só forma, cor e tamanho. */
+
+.padroes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  max-width: 720px;
+  margin-inline: auto;
+  padding-block: var(--space-3) var(--space-4);
+}
+
+.fig {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+.fig--grande {
+  width: 56px;
+  height: 56px;
+}
+.fig--t1 {
+  transform: scale(0.62);
+}
+.fig--t2 {
+  transform: scale(0.85);
+}
+.fig--t3 {
+  transform: scale(1.08);
+}
+
+/* Três cores separadas por MATIZ e por LUMINÂNCIA, não só por matiz: cerca de
+   8% dos homens não distingue vermelho de verde, e um exercício de padrão que
+   dependesse disso mediria a visão da pessoa em vez do raciocínio dela. */
+.fig--cor-a {
+  background: #3b82c4;
+}
+.fig--cor-b {
+  background: #e0a53b;
+}
+.fig--cor-c {
+  background: #7d6ba8;
+}
+
+.fig--circulo {
+  border-radius: 50%;
+}
+.fig--quadrado {
+  border-radius: 4px;
+}
+.fig--triangulo {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.fig--losango {
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.padrao {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+}
+.padrao__topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+.padrao__enunciado {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.padrao__mostra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+}
+.padrao__slot {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  background: var(--card-bg);
+  border-radius: var(--r-sm);
+}
+/* A lacuna é explícita: sem ela a última figura mostrada parece ser a
+   resposta, e a pergunta muda de sentido. */
+.padrao__slot--vago {
+  color: var(--text-faint);
+  background: transparent;
+  border: 2px dashed var(--line);
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.padrao__opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: var(--space-2);
+}
+.padrao__opcao {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  padding: 8px;
+  background: var(--card-bg);
+  border: 3px solid transparent;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.padrao__opcao:hover {
+  border-color: var(--accent);
+}
+.padrao__opcao--certa {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 6px var(--accent-soft);
+}
+/* Errar marca em cinza, e não em vermelho: aqui não há punição, e vermelho é a
+   cor que a criança já associa a "você errou" na escola. */
+.padrao__opcao--errada {
+  border-color: var(--line);
+  opacity: 0.55;
+}
+
+.padrao__porque {
+  padding: 12px 14px;
+  color: var(--text);
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.padrao__porque--dica {
+  background: var(--surface-2);
+  border-left-color: var(--line);
+  color: var(--text-dim);
+}
+
+.padrao__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.padroes__sobre {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* --------------------------------------------------- matemática avançada */
+
+.mat__fracao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+/* A fração como pedaço de roda: "1/4" é notação, o pedaço é a ideia — e quem
+   entende o pedaço entende a notação depois. O caminho contrário quase nunca
+   funciona. */
+.mat__roda {
+  width: 116px;
+  height: 116px;
+  background: conic-gradient(
+    var(--accent) 0 var(--parte, 0%),
+    color-mix(in oklab, var(--text) 12%, transparent) var(--parte, 0%) 100%
+  );
+  border: 2px solid var(--line);
+  border-radius: 50%;
+}
+.mat__fracao-texto {
+  display: grid;
+  gap: 2px;
+}
+.mat__fracao-texto strong {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+.mat__fracao-texto span {
+  color: var(--accent);
+  font-weight: 700;
+}
+.mat__fracao-texto small {
+  color: var(--text-dim);
+}
+
+.mat__tabuada {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mat__linha-tab {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.mat__linha-tab:hover {
+  border-color: var(--accent);
+}
+.mat__linha-tab strong {
+  color: var(--accent);
+  font-size: 1.3rem;
+}
+
+.mat__formas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--space-2);
+}
+.mat__forma {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 12px 8px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.mat__forma:hover {
+  border-color: var(--accent);
+}
+.mat__forma-desenho {
+  width: 58px;
+  height: 58px;
+  background: var(--accent);
+}
+.mat__forma-nome {
+  font-weight: 700;
+}
+.mat__forma small {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.mat__sequencia {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mat__sequencia li {
+  display: grid;
+  place-items: center;
+  min-width: 64px;
+  min-height: 64px;
+  padding: 8px;
+  color: var(--card-ink);
+  background: var(--card-bg);
+  border-radius: var(--r-sm);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.mat__sequencia-vago {
+  color: var(--text-faint) !important;
+  background: transparent !important;
+  border: 2px dashed var(--line);
+}
+
+/* ---------------------------------------------------------------- poesia */
+
+.poesia {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  max-width: 700px;
+  margin-inline: auto;
+  padding-block: var(--space-3) var(--space-4);
+}
+.poesia__sobre {
+  margin: 0;
+}
+
+.poesia__versos {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.poesia__verso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.poesia__fixo {
+  color: var(--text-dim);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.poesia__campo {
+  flex: 1 1 200px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: max(16px, 1.05rem);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.poesia__campo:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+/* A contagem é sugestão e nunca trava — contar sílaba de verdade depende da
+   pronúncia, que muda de região, e o app já sabe disso. */
+.poesia__silabas {
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.poesia__silabas--certo {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.poesia__rimas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.poesia__rima {
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.poesia__rima:hover {
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+.poesia__pronto {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: color-mix(in oklab, var(--accent) 10%, var(--surface));
+  border: 2px solid var(--accent);
+  border-radius: var(--r-lg);
+}
+.poesia__texto {
+  display: grid;
+  gap: 4px;
+}
+.poesia__texto p {
+  margin: 0;
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  font-weight: 600;
+  line-height: 1.45;
 }

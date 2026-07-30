@@ -5,6 +5,7 @@ import { exportProfile, parseProfile, type Profile } from '../lib/storage'
 import type { BoardEdits, CustomBoard } from '../lib/boardEdits'
 import type { Script } from '../lib/scripts'
 import type { ScriptStats } from '../lib/ensaio'
+import type { Diario } from '../lib/diario'
 import { REGIONS } from '../lib/regional'
 import { useMediaQuery } from '../lib/useMediaQuery'
 import { Dialog } from './Dialog'
@@ -18,6 +19,7 @@ const SECTIONS = [
   { id: 'frases', title: 'Frases', icon: '✍️', hint: 'Motor de frases, região e cor por classe' },
   { id: 'leitura', title: 'Leitura e cor', icon: '👁', hint: 'Dislexia, fonte, espaçamento, conforto' },
   { id: 'tela', title: 'Tela', icon: '◐', hint: 'Tema, contraste e modo bloqueado' },
+  { id: 'modulos', title: 'Módulos', icon: '🧩', hint: 'Padrões, matemática avançada, poesia' },
   { id: 'perfil', title: 'Perfil', icon: '⭳', hint: 'Exportar e importar tudo' },
   { id: 'creditos', title: 'Créditos', icon: '©', hint: 'ARASAAC e licença' },
 ] as const
@@ -30,6 +32,8 @@ interface Props {
   customBoards: CustomBoard[]
   scripts: Script[]
   scriptStats: ScriptStats
+  gameStats: ScriptStats
+  diario: Diario
   onChange: (patch: Partial<Settings>) => void
   onImport: (profile: Profile) => void
   onClose: () => void
@@ -43,6 +47,8 @@ export function SettingsPanel({
   customBoards,
   scripts,
   scriptStats,
+  gameStats,
+  diario,
   onChange,
   onImport,
   onClose,
@@ -79,7 +85,17 @@ export function SettingsPanel({
   const [transfer, setTransfer] = useState<string | null>(null)
 
   const download = () => {
-    const blob = new Blob([exportProfile({ settings, favorites, phrases, edits, customBoards, scripts, scriptStats })], {
+    const blob = new Blob([exportProfile({
+      settings,
+      favorites,
+      phrases,
+      edits,
+      customBoards,
+      scripts,
+      scriptStats,
+      gameStats,
+      diario,
+    })], {
       type: 'application/json',
     })
     const url = URL.createObjectURL(blob)
@@ -600,6 +616,65 @@ export function SettingsPanel({
             prontas continuam acessíveis: elas são fala, não controle de cuidador, e incluem
             "preciso de ajuda" e "estou com dor". Para sair, mantenha pressionado o cadeado por 2
             segundos.
+          </p>
+        </section>
+        )}
+
+        {show('modulos') && (
+        <section className="settings__group">
+          <h3>Módulos avançados</h3>
+          <p className="settings__note">
+            Tudo aqui vem <strong>desligado</strong>, e essa é a decisão — não a lista. Uma
+            prancha de comunicação precisa abrir e funcionar para quem só quer pedir água, e cada
+            botão a mais no caminho é um custo cobrado dessa pessoa todo dia. Quem precisa de
+            mais, liga item a item. Os módulos entram <em>depois</em> do que já existe, nunca
+            deslocando um botão que a mão já aprendeu.
+          </p>
+
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={settings.padroes}
+              onChange={(e) => onChange({ padroes: e.target.checked })}
+            />
+            <span>Padrões visuais</span>
+          </label>
+          <p className="settings__note">
+            Sequência, intruso, analogia e agrupamento — atividades que se resolvem apontando,
+            sem falar e sem ler. <strong>Não é teste de inteligência</strong>: não dá nota, não
+            compara com norma e não classifica ninguém. Existe pelo motivo oposto — a história de
+            quem não fala está cheia de laudo que confundiu falta de fala com falta de
+            pensamento, e aqui pensar aparece sem depender da voz. O que o app devolve é por onde
+            a pessoa entra mais rápido, que serve a quem ensina escolher um caminho.
+          </p>
+
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={settings.matAvancada}
+              onChange={(e) => onChange({ matAvancada: e.target.checked })}
+            />
+            <span>Matemática avançada</span>
+          </label>
+          <p className="settings__note">
+            Acrescenta frações, porcentagem, tabuada, formas geométricas e sequências numéricas
+            ao painel de Números. A parte simples — algarismos, dinheiro, horas — continua
+            exatamente onde estava.
+          </p>
+
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={settings.poesia}
+              onChange={(e) => onChange({ poesia: e.target.checked })}
+            />
+            <span>Oficina de poesia</span>
+          </label>
+          <p className="settings__note">
+            Modelos de poema, contagem aproximada de sílabas e busca de rima no vocabulário do
+            app. Todo o resto serve para <strong>resolver</strong> — pedir, avisar, combinar; esta
+            é a outra metade da linguagem, a de brincar com ela, que costuma não chegar para quem
+            usa CAA. Nada aqui é corrigido: um poema de uma linha é um poema.
           </p>
         </section>
         )}

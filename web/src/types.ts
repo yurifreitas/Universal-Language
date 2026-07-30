@@ -8,6 +8,14 @@ export interface Card {
   plural?: string | null
   skin?: boolean
   hair?: boolean
+  /**
+   * Celula de TEXTO: nao ha pictograma, o proprio rotulo e a figura.
+   *
+   * Numero, sinal de conta e pontuacao nao tem desenho que ajude — "7"
+   * desenhado de sete maneiras diferentes atrapalha mais do que o algarismo,
+   * que e o simbolo que a pessoa vai encontrar no mundo. Ver `lib/matematica.ts`.
+   */
+  texto?: boolean
 }
 
 export interface Board {
@@ -125,6 +133,25 @@ export interface Settings {
   letterSpacing: number
   /** Entrelinhas absoluta. 0 = automatica. */
   lineHeight: number
+
+  /* ------------------------------------------------------ modulos avancados
+
+     Tudo aqui vem DESLIGADO, e essa e a decisao — nao a lista.
+
+     Uma prancha de comunicacao tem de abrir e funcionar para quem so precisa
+     pedir agua. Cada botao a mais no caminho e um custo cobrado dessa pessoa,
+     todo dia, para servir a outra. Entao o app simples continua sendo o
+     padrao, e quem quiser mais liga item a item — nunca o contrario.
+
+     A ordem tambem importa: os modulos entram no menu depois do que ja
+     existia, jamais deslocando um botao que a mao ja aprendeu. */
+
+  /** Padroes visuais: sequencia, intruso, analogia. Ver `lib/padroes.ts`. */
+  padroes: boolean
+  /** Matematica alem de contar: fracao, tabuada, porcentagem, formas. */
+  matAvancada: boolean
+  /** Oficina de poesia: rima, silaba, modelos de poema. Ver `lib/poesia.ts`. */
+  poesia: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -153,4 +180,7 @@ export const DEFAULT_SETTINGS: Settings = {
   textScale: 1,
   letterSpacing: 0,
   lineHeight: 0,
+  padroes: false,
+  matAvancada: false,
+  poesia: false,
 }
