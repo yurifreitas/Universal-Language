@@ -20,6 +20,8 @@ import type { Region, Register } from '../src/lib/regional'
 interface Case {
   cards: string[]
   expect: string
+  /** Artigo escolhido no bloco da frase, por posição. */
+  articles?: ('auto' | 'def' | 'indef' | 'none')[]
   marks?: Partial<GrammarMarks>
   region?: Region
   register?: Register
@@ -247,6 +249,11 @@ const CASES: Record<string, Case[]> = {
       expect: 'Eu quero as bolachas.',
     },
     { cards: ['criança'], marks: { plural: true }, expect: 'As crianças.' },
+
+    // O artigo escolhido no bloco não põe determinante onde a estrutura já não
+    // comporta um: "um" já ocupa o lugar, e saía "Umas umas titias".
+    { cards: ['um', 'titia'], articles: ['auto', 'indef'], expect: 'Uma titia.' },
+    { cards: ['um', 'titia'], articles: ['auto', 'def'], expect: 'Uma titia.' },
   ],
 
   'listas de pessoas': [
@@ -458,6 +465,7 @@ for (const [group, cases] of Object.entries(CASES)) {
       c.cards.map((label) => ({ id: 0, label })),
       {
         marks: { ...NO_MARKS, ...c.marks },
+        ...(c.articles ? { articles: c.articles } : {}),
         ...(c.region ? { region: c.region } : {}),
         ...(c.register ? { register: c.register } : {}),
         ...(c.speakerGender ? { speakerGender: c.speakerGender } : {}),

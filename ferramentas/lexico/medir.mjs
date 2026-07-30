@@ -22,7 +22,7 @@ const revisado = gabarito(readFileSync(join(raiz, 'web', 'src', 'lib', 'lexicon.
  * advérbio não mediria a inferência, mediria o recorte do gabarito. */
 const COMPARAVEIS = new Set(['noun', 'verb', 'adjective'])
 
-const erros = { classe: [], genero: [], plural: [] }
+const erros = { classe: [], genero: [], plural: [], adjetivo: [] }
 let noGabarito = 0
 let coberto = 0
 const conta = {
@@ -30,6 +30,7 @@ const conta = {
   generoTotal: 0, generoOk: 0,
   generoAltoTotal: 0, generoAltoOk: 0,
   pluralTotal: 0, pluralOk: 0,
+  adjTotal: 0, adjOk: 0,
   alta: 0,
 }
 
@@ -46,6 +47,21 @@ for (const [palavra, esperado] of revisado) {
   conta.classeTotal += 1
   if (r.entrada.class === esperado.class) conta.classeOk += 1
   else erros.classe.push(`${palavra}: inferi ${r.entrada.class}, é ${esperado.class}`)
+
+  // Adjetivo é medido à parte porque `gender` quer dizer outra coisa nele:
+  // não é o gênero da palavra, é a marca de "tem duas formas". A ausência é
+  // uma resposta ("invariável"), então ela também é conferida — misturar isso
+  // com a medida de substantivo daria uma média que não descreve nem um nem
+  // outro.
+  if (r.entrada.class === 'adjective' && esperado.class === 'adjective') {
+    conta.adjTotal += 1
+    if ((r.entrada.gender ?? null) === (esperado.gender ?? null)) conta.adjOk += 1
+    else {
+      erros.adjetivo.push(
+        `${palavra}: inferi ${r.entrada.gender ?? 'invariável'}, é ${esperado.gender ?? 'invariável'}`,
+      )
+    }
+  }
 
   if (esperado.gender && r.entrada.class === 'noun') {
     conta.generoTotal += 1
@@ -88,6 +104,7 @@ console.log(linha('classe', conta.classeOk, conta.classeTotal))
 console.log(linha('gênero (tudo que inferi)', conta.generoOk, conta.generoTotal))
 console.log(linha('gênero (só confiança alta)', conta.generoAltoOk, conta.generoAltoTotal))
 console.log(linha('plural irregular', conta.pluralOk, conta.pluralTotal))
+console.log(linha('adjetivo: m vs invariável', conta.adjOk, conta.adjTotal))
 
 for (const [nome, lista] of Object.entries(erros)) {
   if (!lista.length) continue
@@ -126,10 +143,39 @@ console.log(
     : `    OK — ${DOIS_GENEROS.length} conferidos, nenhum com gênero`,
 )
 
+/* ------------------------------------ adjetivo invariável: nenhum gênero */
+
+/**
+ * A armadilha simétrica à do `-ista`. Em adjetivo, `gender: 'm'` é a chave que
+ * liga a flexão em `agree()`; pô-la num invariável faria o motor tentar
+ * flexionar o que não flexiona. Trava, não medida.
+ */
+const INVARIAVEIS = [
+  'feliz', 'triste', 'grande', 'simples', 'ruim', 'azul', 'legal', 'igual',
+  'doente', 'quente', 'fácil', 'difícil', 'forte', 'verde', 'jovem',
+]
+
+const flexionaram = []
+for (const palavra of INVARIAVEIS) {
+  const linhas = acervo.get(palavra)
+  if (!linhas) continue
+  const r = inferir(palavra, linhas)
+  if (r?.entrada.class === 'adjective' && r.entrada.gender) {
+    flexionaram.push(`${palavra} saiu como ${r.entrada.gender}`)
+  }
+}
+
+console.log('\n  ADJETIVOS INVARIÁVEIS — nenhum pode sair com gênero')
+console.log(
+  flexionaram.length
+    ? `    FALHOU: ${flexionaram.join('; ')}`
+    : `    OK — ${INVARIAVEIS.length} conferidos, nenhum com gênero`,
+)
+
 const meta = conta.generoAltoTotal ? conta.generoAltoOk / conta.generoAltoTotal : 1
 console.log(
   `\n  META: gênero em confiança alta ≥ 96% → ${pc(conta.generoAltoOk, conta.generoAltoTotal)}` +
     ` ${meta >= 0.96 ? 'OK' : 'ABAIXO DA META'}\n`,
 )
 
-if (vazaram.length || meta < 0.96) process.exit(1)
+if (vazaram.length || flexionaram.length || meta < 0.96) process.exit(1)

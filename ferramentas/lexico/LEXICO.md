@@ -50,8 +50,9 @@ lado perdedor derruba para baixa, mesmo quando a terminação venceria: sinal
 discordante quer dizer que a palavra é daquelas que enganam, e é exatamente aí
 que não se deve arriscar. Empate não produz gênero nenhum.
 
-Verbo e adjetivo entram direto — não carregam gênero no léxico, então o único
-dado em jogo é a classe.
+Isto vale para **substantivo**. Verbo entra direto, sem gênero nenhum. Adjetivo
+tem regra própria e não usa votação — ver a seção dele abaixo, porque ali
+`gender` significa outra coisa.
 
 ### Comum de dois gêneros — a palavra que não tem gênero para inferir
 
@@ -112,6 +113,61 @@ Exceções tabeladas, cada uma vinda de um erro visto na medição:
 - o sufixo `-ção/-são` é feminino, mas a regra é cega e casa com palavras em que
   aquelas letras não são sufixo nenhum: **arte-são**, **cora-ção**.
 
+### Adjetivo — `gender` ali não quer dizer gênero
+
+Em substantivo, `gender` é o gênero da palavra. **Em adjetivo é outra coisa**, e
+confundir as duas leva a decisões erradas. Leia `agree()` em `grammar.ts`:
+
+```ts
+if (gender === 'f' && lex?.gender === 'm' && out.endsWith('o'))
+  out = out.slice(0, -1) + 'a'
+```
+
+`gender: 'm'` num adjetivo é a **chave que liga a flexão**. Ausência quer dizer
+*invariável* — é o que o comentário do `Lexeme` em `lexicon.ts` já dizia
+("Adjetivo sem genero e invariavel (feliz)"). Sem essa chave, todo adjetivo fora
+das 250 revisadas ficava congelado na forma do cartão: "A casa está bonito".
+
+A regra sai inteira da leitura de `agree()`: **só o `-o` final é acionável, então
+só ele é marcado.** `-ês`, `-or`, `-eu` e `-ão` também são biformes
+(português/portuguesa, trabalhador/trabalhadora), mas `agree()` não os toca —
+marcá-los não mudaria uma frase hoje e traria junto os invariáveis que se parecem
+com eles (*melhor*, *pior*, *anterior*, *cortês*). Ganho zero, risco real.
+
+Os 27 adjetivos do gabarito confirmam o corte sem uma exceção: os 20 com
+`gender: 'm'` terminam em `-o`; os 7 sem gênero são todos invariáveis (feliz,
+triste, doente, grande, quente, legal, igual). **O `n` é pequeno** — 23 dos 27
+estão no acervo — e o 100% medido ali vale como confirmação da regra, não como
+estatística firme.
+
+A armadilha simétrica à do `-ista` é dar gênero a invariável: `feliz`, `grande`,
+`azul`, `fácil` e `verde` saem sem o campo, e `medir.mjs` trava isso.
+
+#### O que esta ferramenta NÃO consegue consertar
+
+Dos 617 adjetivos publicados, **181 vêm do acervo já na forma feminina**
+(`preguiçosa`, `amarela`, `cansada`) — 129 deles com o par masculino publicado
+ao lado.
+
+Para esses, **nenhum valor de `gender` ajuda**, e vale dizer por quê em vez de
+publicar algo que pareça um conserto:
+
+- `agree()` só sabe ir de masculino para feminino. Não existe caminho f→m;
+- o texto impresso é `it.card.label` — o rótulo do pictograma. Nenhum campo do
+  léxico reescreve o rótulo, então não há como fazer o cartão `preguiçosa`
+  imprimir "preguiçoso";
+- marcá-lo `gender: 'f'` seria mentir sob a convenção do projeto, onde o campo
+  significa "biforme, base masculina" — e não mudaria uma frase.
+
+Então eles saem **só com a classe**, que é dado bom e verdadeiro: o motor sabe
+que é adjetivo, usa "estar", separa lista. E acerta metade das vezes por sorte —
+com substantivo feminino, `preguiçosa` já é a forma certa.
+
+O conserto de verdade é em `grammar.ts` e não aqui: `agree()` precisaria de um
+caminho f→m (`-a` → `-o` quando `gender === 'm'`), e o léxico de uma marca que
+diga "esta é a forma feminina de um biforme". Enquanto isso não existe, publicar
+gênero nesses 181 seria trocar um erro conhecido por um erro novo.
+
 ### Plural — só o que o motor ainda não sabe
 
 O campo `plural` da ARASAAC foi conferido nos 15 plurais irregulares do gabarito
@@ -145,9 +201,13 @@ revisadas à mão:
   gênero (tudo que inferi)        104/106     98,1%
   gênero (só confiança alta)       82/82     100,0%
   plural irregular                 15/15     100,0%
+  adjetivo: m vs invariável        23/23     100,0%   (n pequeno)
 
   COMUNS DE DOIS GÊNEROS — nenhum pode sair com gênero
     OK — 12 conferidos, nenhum com gênero
+
+  ADJETIVOS INVARIÁVEIS — nenhum pode sair com gênero
+    OK — 15 conferidos, nenhum com gênero
 ```
 
 `medir.mjs` sai com código 1 se a trava falhar ou se a meta de 96% cair — dá
@@ -166,7 +226,8 @@ evidência de que o corte está apertado o bastante.
 
 - **`web/public/data/lexico.json`** — 4.906 entradas, só confiança alta.
   3.299 substantivos (dos quais **132 comuns de dois gêneros, sem gênero de
-  propósito**), 990 verbos, 617 adjetivos.
+  propósito**), 990 verbos, 617 adjetivos (**269 com `gender: 'm'`, que é o que
+  liga a flexão**; 348 invariáveis ou já em forma feminina).
 - **`ferramentas/lexico/revisar.jsonl`** — 1.249 termos, uma linha por termo,
   com os sinais que cada um produziu. Fila de revisão humana.
 

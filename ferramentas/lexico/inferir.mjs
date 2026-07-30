@@ -218,6 +218,49 @@ export function generoPorArtigo(palavra, definicao) {
   return m ? 'm' : 'f'
 }
 
+/* ------------------------------------------------------- gênero de adjetivo */
+
+/**
+ * Adjetivo terminado em `-o` que na verdade não flexiona — quase sempre nome de
+ * cor tirado de um substantivo. "Um carro vinho", nunca "uma blusa vinha".
+ */
+const ADJETIVOS_INVARIAVEIS_EM_O = new Set([
+  'vinho', 'gelo', 'ouro', 'chocolate', 'salmão', 'creme', 'marfim', 'bordô',
+])
+
+/**
+ * O gênero de um ADJETIVO não quer dizer o que o de um substantivo quer dizer.
+ *
+ * Em substantivo, `gender` é o gênero da palavra. Em adjetivo, ele é uma marca
+ * de "esta palavra tem duas formas, e a que está aqui é a masculina" — leia
+ * `agree()` em `grammar.ts`:
+ *
+ *     if (gender === 'f' && lex?.gender === 'm' && out.endsWith('o'))
+ *       out = out.slice(0, -1) + 'a'
+ *
+ * Ou seja, `gender: 'm'` é a CHAVE que liga a flexão; ausência de gênero quer
+ * dizer invariável, e é por isso que "feliz" e "grande" não têm o campo. É o
+ * que o comentário do `Lexeme` em `lexicon.ts` já dizia.
+ *
+ * A regra sai inteira daí: só o `-o` final é acionável, então só ele é marcado.
+ * `-ês`, `-or`, `-eu` e `-ão` também são biformes (português/portuguesa,
+ * trabalhador/trabalhadora), mas `agree()` não os toca — marcá-los não mudaria
+ * uma frase hoje e traria junto os invariáveis que se parecem com eles
+ * (melhor, pior, anterior, cortês). Ganho zero, risco real: ficam de fora.
+ *
+ * Os 27 adjetivos do gabarito confirmam o corte sem uma exceção: os 20 com
+ * `gender: 'm'` terminam em `-o`, e os 7 sem gênero são todos invariáveis
+ * (feliz, triste, doente, grande, quente, legal, igual).
+ */
+export function generoDeAdjetivo(palavra) {
+  const p = palavra.toLowerCase()
+  if (ADJETIVOS_INVARIAVEIS_EM_O.has(p)) return null
+  // Invariáveis: -e, -l, -z, -m, -s, -ar, -il. Não recebem gênero nenhum, que
+  // é a armadilha simétrica à do "-ista": marcar "feliz" como masculino faria
+  // `agree()` tentar flexionar o que não flexiona.
+  return /o$/.test(p) ? 'm' : null
+}
+
 /* ---------------------------------------------------------------- plural */
 
 /**
@@ -312,6 +355,13 @@ export function inferir(termo, linhas) {
 
   const entrada = { class: classe }
   if (plural && classe === 'noun') entrada.pluralForm = plural
+
+  if (classe === 'adjective') {
+    // Sem gênero aqui significa INVARIÁVEL, e é uma afirmação, não uma dúvida.
+    const g = generoDeAdjetivo(termo)
+    if (g) entrada.gender = g
+    return { entrada, confianca: 'alta', sinais: {}, pontos: 0 }
+  }
 
   if (classe !== 'noun') {
     return { entrada, confianca: 'alta', sinais: {}, pontos: 0 }

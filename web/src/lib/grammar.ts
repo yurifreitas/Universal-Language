@@ -949,7 +949,16 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
      * Quem quer negar os dois toca "não" duas vezes; quem quer contrastar toca
      * uma vez só.
      */
-    const negacaoAqui = negationCards.find((n) => !negacoesUsadas.has(n.index) && n.index < i)
+    /**
+     * "Nem" só existe em série JÁ negativa — ele é literalmente "e não".
+     *
+     * "Eu quero água, nem quero o pão" não é português: sem um predicado
+     * negado antes, o segundo "não" precisa sair como "e não". Por isso a
+     * conversão exige `negationDone` — alguma negação já ter sido dita.
+     */
+    const negacaoAqui = negationDone
+      ? negationCards.find((n) => !negacoesUsadas.has(n.index) && n.index < i)
+      : undefined
     if (predicado && negacaoAqui) {
       negacoesUsadas.add(negacaoAqui.index)
       // A vírgula vem SEMPRE antes de "nem", inclusive antes do último — ao
@@ -1161,8 +1170,6 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       }
 
       case 'verb': {
-        emitNegation()
-
         const emCadeia = verbDone
 
         // A separacao vem ANTES de decidir a forma do verbo, e nao dentro de um
@@ -1200,6 +1207,17 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
             pendingVerbPrep = null
           }
         }
+
+        /**
+         * A negação vem DEPOIS do separador de lista, não antes.
+         *
+         * Foi o erro da primeira tentativa deste conserto: com `emitNegation`
+         * no topo do ramo, `EU·QUERER·ÁGUA·NÃO·QUERER·PÃO` saía "Eu quero água
+         * **não e** quero o pão" — o "não" atravessava na frente do "e". A
+         * ordem certa é a da fala: primeiro liga as duas orações, depois nega a
+         * segunda.
+         */
+        emitNegation(it.index)
 
         const coordenado =
           emCadeia &&
