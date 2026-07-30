@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import type { Card } from '../types'
-import type { Composed, GrammarMarks } from '../lib/grammar'
+import type { ArticleMode, Composed, GrammarMarks } from '../lib/grammar'
 import { regionalLabel, type Region } from '../lib/regional'
 import { Pictogram } from './Pictogram'
 
@@ -21,6 +21,17 @@ interface Props {
   onMoveAt: (from: number, to: number) => void
   /** Fala uma palavra sozinha — a forma flexionada quando houver. */
   onSpeakWord: (card: Card, inflected?: string) => void
+  /** Artigo escolhido por posicao da frase. */
+  articles: ArticleMode[]
+  onCycleArticle: (index: number) => void
+}
+
+/** O que o botao de artigo mostra e anuncia em cada estado. */
+const ARTICLE_UI: Record<ArticleMode, { icon: string; label: string }> = {
+  auto: { icon: 'o/–', label: 'Artigo automático' },
+  def: { icon: 'o', label: 'Com artigo: o, a' },
+  indef: { icon: 'um', label: 'Com artigo: um, uma' },
+  none: { icon: '–', label: 'Sem artigo' },
 }
 
 const TENSES = [
@@ -61,6 +72,8 @@ export function SentenceBar({
   onRemoveAt,
   onMoveAt,
   onSpeakWord,
+  articles,
+  onCycleArticle,
 }: Props) {
   const empty = sentence.length === 0
   const spoken = composed
@@ -112,6 +125,23 @@ export function SentenceBar({
                       repetir "água/água" seria ruido. */}
                   {inflected && <span className="chip__form">{inflected}</span>}
                 </button>
+
+                {/* Trocar o artigo no proprio bloco.
+                    O motor acerta quase sempre, mas "quase sempre" nao serve
+                    quando a frase e sua: pedir O bolo (aquele ali) e pedir UM
+                    bolo (qualquer um) sao coisas diferentes, e as vezes nao se
+                    quer artigo nenhum. */}
+                {composed && (
+                  <button
+                    type="button"
+                    className={`chip__art ${(articles[i] ?? 'auto') !== 'auto' ? 'chip__art--set' : ''}`}
+                    onClick={() => onCycleArticle(i)}
+                    aria-label={`${label}: ${ARTICLE_UI[articles[i] ?? 'auto'].label}. Tocar para trocar`}
+                    title={ARTICLE_UI[articles[i] ?? 'auto'].label}
+                  >
+                    {ARTICLE_UI[articles[i] ?? 'auto'].icon}
+                  </button>
+                )}
 
                 <div className="chip__bar">
                   <button

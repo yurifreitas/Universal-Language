@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { Board } from '../types'
 import { useRovingFocus } from '../lib/useRovingFocus'
 
@@ -26,6 +26,20 @@ export const panelId = (id: string) => `panel-${id}`
  */
 export function BoardTabs({ boards, active, onChange }: Props) {
   const { setFocused, setRef, onKeyDown } = useRovingFocus(boards.length, onChange)
+  const strip = useRef<HTMLDivElement>(null)
+
+  /**
+   * A aba ativa entra em cena sozinha.
+   *
+   * Em celular a faixa de abas rola na horizontal, e trocar de prancha por
+   * atalho de teclado (1–9) ou pelo aparecimento da prancha de Favoritos podia
+   * deixar a aba selecionada fora da area visivel: a grade mudava e nada na
+   * tela dizia por que.
+   */
+  useEffect(() => {
+    const el = strip.current?.children[active]
+    el?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [active])
 
   // Mantem o indice do roving em sincronia quando a prancha muda por outro
   // caminho (atalho de teclado 1-9, ou remocao da prancha de favoritos).
@@ -33,7 +47,12 @@ export function BoardTabs({ boards, active, onChange }: Props) {
 
   return (
     <nav className="tabs">
-      <div className="shell tabs__inner" role="tablist" aria-label="Pranchas de vocabulário">
+      <div
+        ref={strip}
+        className="shell tabs__inner"
+        role="tablist"
+        aria-label="Pranchas de vocabulário"
+      >
         {boards.map((b, i) => (
           <button
             key={b.id}

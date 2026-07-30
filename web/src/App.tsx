@@ -20,11 +20,12 @@ import {
 import { applyEdits, type BoardEdits, type CustomBoard } from './lib/boardEdits'
 import type { Script } from './lib/scripts'
 import { speak, speakCue, speechSupported } from './lib/speech'
-import { compose, NO_MARKS, type GrammarMarks } from './lib/grammar'
+import { compose, NO_MARKS, type ArticleMode, type GrammarMarks } from './lib/grammar'
 import { regionalLabel } from './lib/regional'
 import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
+import { usePanelHistory } from './lib/usePanelHistory'
 import { SentenceBar } from './components/SentenceBar'
 import { BoardTabs, panelId, tabId } from './components/BoardTabs'
 import { CardGrid } from './components/CardGrid'
@@ -39,6 +40,17 @@ const BASE = import.meta.env.BASE_URL
 
 /** Tempo de pressao para destravar. Longo o bastante para nao ser acidental. */
 const UNLOCK_MS = 2000
+
+/**
+ * O array de artigos pode ser mais curto que a frase (posicoes nunca tocadas
+ * ficam ausentes). Antes de mover, ele precisa alcancar as duas posicoes
+ * envolvidas, senao o `splice` mexe no lugar errado.
+ */
+function padArticles(a: ArticleMode[], ...idx: number[]): ArticleMode[] {
+  const need = Math.max(...idx) + 1
+  if (a.length >= need) return a
+  return [...a, ...Array<ArticleMode>(need - a.length).fill('auto')]
+}
 
 type Panel = 'none' | 'search' | 'settings' | 'help' | 'phrases' | 'scripts' | 'editor'
 
@@ -78,6 +90,15 @@ export default function App() {
   // Marcadores gramaticais valem para a frase corrente, nao sao preferencia:
   // zeram junto com ela.
   const [marks, setMarks] = useState<GrammarMarks>(NO_MARKS)
+  /**
+   * Artigo escolhido para cada posicao da frase, em passo com `sentence`.
+   *
+   * Array paralelo e nao mapa por id: a mesma palavra pode repetir na frase, e
+   * o que identifica o bloco e a POSICAO. Toda operacao que mexe na frase mexe
+   * aqui junto — senao o artigo de "bolo" passa a valer para "sorvete" depois
+   * de uma remocao, que e o pior tipo de bug: silencioso e so aparece falando.
+   */
+  const [articles, setArticles] = useState<ArticleMode[]>([])
   const [panel, setPanel] = useState<Panel>('none')
   const unlockTimer = useRef<number | null>(null)
   const [unlocking, setUnlocking] = useState(false)
@@ -137,6 +158,14 @@ export default function App() {
   ])
 
   const patch = useCallback((p: Partial<Settings>) => setSettings((s) => ({ ...s, ...p })), [])
+
+  /**
+   * O botao "voltar" do Android fecha o painel aberto, e nao o app.
+   * Sem isto, voltar mata a sessao com a frase montada dentro — fazendo
+   * exatamente o gesto que o sistema inteiro ensinou a fazer.
+   */
+  const closePanel = useCallback(() => setPanel('none'), [])
+  usePanelHistory(panel !== 'none', closePanel)
   const tools = useRovingFocus(TOOLS.length)
 
   /**
@@ -167,12 +196,21 @@ export default function App() {
       settings.grammar
         ? compose(sentence, {
             marks,
+            articles,
             speakerGender: settings.speakerGender,
             region: settings.region,
             register: settings.register,
           })
         : null,
-    [settings.grammar, settings.speakerGender, settings.region, settings.register, sentence, marks],
+    [
+      settings.grammar,
+      settings.speakerGender,
+      settings.region,
+      settings.register,
+      sentence,
+      marks,
+      articles,
+    ],
   )
   const sentenceText = useMemo(
     () => composed?.text ?? sentence.map((c) => regionalLabel(c.label, settings.region)).join(' '),
@@ -194,19 +232,37 @@ export default function App() {
    * preferir dizer a frase errada.
    */
   const moveInSentence = useCallback((from: number, to: number) => {
-    setSentence((s) => {
-      if (to < 0 || to >= s.length || from === to) return s
-      const next = [...s]
+    const mover = <T,>(arr: T[]): T[] => {
+      const next = [...arr]
       const [moved] = next.splice(from, 1)
-      if (!moved) return s
+      if (moved === undefined) return arr
       next.splice(to, 0, moved)
       return next
-    })
+    }
+    setSentence((s) => (to < 0 || to >= s.length || from === to ? s : mover(s)))
+    setArticles((a) => (to < 0 || from === to ? a : mover(padArticles(a, from, to))))
+  }, [])
+
+  const removeAt = useCallback((i: number) => {
+    setSentence((s) => s.filter((_, j) => j !== i))
+    setArticles((a) => a.filter((_, j) => j !== i))
   }, [])
 
   const clearSentence = useCallback(() => {
     setSentence([])
+    setArticles([])
     setMarks(NO_MARKS)
+  }, [])
+
+  /** Percorre auto → o/a → um/uma → nenhum, e volta. */
+  const cycleArticle = useCallback((index: number) => {
+    setArticles((a) => {
+      const next = [...a]
+      const atual = next[index] ?? 'auto'
+      const ordem: ArticleMode[] = ['auto', 'def', 'indef', 'none']
+      next[index] = ordem[(ordem.indexOf(atual) + 1) % ordem.length]!
+      return next
+    })
   }, [])
 
   /**
@@ -237,6 +293,7 @@ export default function App() {
   const pick = useCallback(
     (card: Card) => {
       setSentence((s) => [...s, card])
+      setArticles((a) => [...a, 'auto'])
       if (settings.sounds) earcon.select()
       if (settings.speakOnTap) speak(regionalLabel(card.label, settings.region), settings)
       setPanel('none')
@@ -510,10 +567,15 @@ export default function App() {
           onMark={(p) => setMarks((m) => ({ ...m, ...p }))}
           onEnableGrammar={() => patch({ grammar: true })}
           onSpeak={() => currentPhrase && say(currentPhrase)}
-          onBackspace={() => setSentence((s) => s.slice(0, -1))}
+          onBackspace={() => {
+            setSentence((s) => s.slice(0, -1))
+            setArticles((a) => a.slice(0, -1))
+          }}
           onClear={clearSentence}
-          onRemoveAt={(i) => setSentence((s) => s.filter((_, j) => j !== i))}
+          onRemoveAt={removeAt}
           onMoveAt={moveInSentence}
+          articles={articles}
+          onCycleArticle={cycleArticle}
           onSpeakWord={(card, inflected) => speak(inflected ?? word(card), settings)}
         />
       </div>

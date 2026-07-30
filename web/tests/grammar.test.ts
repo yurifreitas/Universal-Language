@@ -146,7 +146,9 @@ const CASES: Record<string, Case[]> = {
     // Verbo coordenado compartilha o sujeito, entao compartilha a flexao.
     { cards: ['eu', 'correr', 'pular', 'dançar'], expect: 'Eu corro, pulo e danço.' },
     { cards: ['mãe', 'pular', 'querer'], expect: 'A mãe pula e quer.' },
-    { cards: ['eu', 'ver', 'televisão'], expect: 'Eu vejo na televisão.' },
+        // "ver" pede objeto direto: "vejo na televisão" so existe com objeto
+    // ("vi o desenho na televisão"). A expectativa antiga fixava o defeito.
+    { cards: ['eu', 'ver', 'televisão'], expect: 'Eu vejo a televisão.' },
     { cards: ['eu', 'querer', 'celular'], expect: 'Eu quero o celular.' },
     // Negacao com verbo modal e coordenacao: o "nao" cola no verbo conjugado e
     // vale para a lista inteira.
@@ -186,10 +188,50 @@ const CASES: Record<string, Case[]> = {
     { cards: ['eu', 'ir', 'em', 'o', 'parque'], expect: 'Eu vou no parque.' },
     // Conectivo posto pela pessoa: o motor nao poe outro por cima.
     { cards: ['feijão', 'e', 'arroz'], expect: 'Feijão e arroz.' },
-    { cards: ['eu', 'querer', 'bolo', 'e', 'sorvete'], expect: 'Eu quero bolo e sorvete.' },
+    { cards: ['eu', 'querer', 'bolo', 'e', 'sorvete'], expect: 'Eu quero o bolo e o sorvete.' },
     // Interjeicao chama alguem: vocativo, sem artigo.
     { cards: ['ah', 'mãe'], expect: 'Ah, mãe.' },
     { cards: ['ei', 'você'], expect: 'Ei, você.' },
+  ],
+  'achados da revisão linguística': [
+    // "or" nao e mais sufixo de verbo: AMOR deixou de virar "eu amo".
+    { cards: ['eu', 'querer', 'amor'], expect: 'Eu quero amor.' },
+    // "nunca" e a palavra da pessoa; era trocada por "não".
+    { cards: ['eu', 'nunca', 'comer', 'feijão'], expect: 'Eu nunca como feijão.' },
+    // Irregulares que a regra produzia inexistentes ("eu pedo", "eu sao").
+    { cards: ['eu', 'pedir', 'ajuda'], expect: 'Eu peço ajuda.' },
+    { cards: ['eu', 'querer', 'sair'], expect: 'Eu quero sair.' },
+    { cards: ['eu', 'cair'], marks: { tense: 'past' }, expect: 'Eu caí.' },
+    // Regencia antes de infinitivo, diferente da de substantivo.
+    { cards: ['eu', 'terminar', 'comer'], expect: 'Eu termino de comer.' },
+    { cards: ['eu', 'falar', 'mãe'], expect: 'Eu falo com a mãe.' },
+    { cards: ['eu', 'sentar', 'cadeira'], expect: 'Eu sento na cadeira.' },
+    { cards: ['eu', 'querer', 'colo'], expect: 'Eu quero colo.' },
+    { cards: ['eu', 'querer', 'cachorro'], expect: 'Eu quero o cachorro.' },
+  ],
+  'defeitos achados pela revisão do motor': [
+    // O clitico atravessava conector e capturava o sujeito da segunda oracao.
+    {
+      cards: ['eu', 'comer', 'mas', 'eu', 'querer', 'bolo'],
+      expect: 'Eu como mas eu quero o bolo.',
+    },
+    // Clitico colava no modal: saia "Eu te quero ajudar".
+    { cards: ['eu', 'querer', 'ajudar', 'você'], expect: 'Eu quero te ajudar.' },
+    // Todo animado da frase entrava no sujeito composto.
+    { cards: ['eu', 'feliz', 'mamãe'], expect: 'Eu estou feliz a mamãe.' },
+    // Quantificador nao concordava: "muito água".
+    { cards: ['eu', 'querer', 'muito', 'água'], expect: 'Eu quero muita água.' },
+    // Plural de palavra em -z voltava inalterado.
+    { cards: ['nós', 'feliz'], expect: 'Nós estamos felizes.' },
+    // Verbo defectivo conjugado em 1a pessoa: "Eu doo a barriga".
+    { cards: ['eu', 'doer', 'barriga'], expect: 'Eu dói a barriga.' },
+    // Estado passado pede imperfeito, nao perfeito.
+    { cards: ['eu', 'triste'], marks: { tense: 'past' }, expect: 'Eu estava triste.' },
+    { cards: ['eu', 'medo'], marks: { tense: 'past' }, expect: 'Eu tinha medo.' },
+    // Contracao com demonstrativo era obrigatoria e nao existia.
+    { cards: ['eu', 'ir', 'em', 'esse', 'parque'], expect: 'Eu vou nesse parque.' },
+    // Marcador de plural pluralizava incontavel.
+    { cards: ['eu', 'querer', 'água'], marks: { plural: true }, expect: 'Eu quero água.' },
   ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos

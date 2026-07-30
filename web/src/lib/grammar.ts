@@ -1,6 +1,7 @@
 import type { Card } from '../types'
 import {
   ESTAR_IMPERFECT,
+  TER_IMPERFECT,
   GERUND,
   IRREGULAR_VERBS,
   LEXICON,
@@ -173,11 +174,16 @@ export function imperative(infinitive: string, register: Register): string {
  * ("comerei"): e a forma corrente do portugues brasileiro falado e, de quebra,
  * dispensa toda a irregularidade do futuro — basta `ir` no presente.
  */
+/** Defectivos: so existem na 3a pessoa. "Eu doo a barriga" nao existe. */
+const SO_TERCEIRA = new Set(['doer'])
+
 export function conjugate(infinitive: string, person: Person, tense: Tense): string {
   const parts = infinitive.split(' ')
   const head = parts[0] ?? infinitive
   const tail = parts.slice(1).join(' ')
   const join = (v: string) => (tail ? `${v} ${tail}` : v)
+
+  if (SO_TERCEIRA.has(head) && person !== '3s' && person !== '3p') person = '3s'
 
   if (tense === 'future') {
     // "vou ir" nao existe na fala: o futuro de IR e o proprio presente de IR.
@@ -205,7 +211,10 @@ export function pluralize(word: string, lex?: Lexeme): string {
   const tail = parts.slice(1).join(' ')
   const join = (v: string) => (tail ? `${v} ${tail}` : v)
 
-  if (/[sz]$/.test(head)) return join(/[aeiou]s$/.test(head) ? `${head}es` : head)
+  // "feliz" -> "felizes", "rapaz" -> "rapazes". Antes qualquer final em z
+  // voltava inalterado, e "nós estamos feliz" saia assim mesmo.
+  if (head.endsWith('z')) return join(`${head}es`)
+  if (head.endsWith('s')) return join(/[aeiou]s$/.test(head) ? `${head}es` : head)
   if (head.endsWith('m')) return join(`${head.slice(0, -1)}ns`)
   if (/[rl]$/.test(head)) return join(head.endsWith('l') ? `${head.slice(0, -1)}is` : `${head}es`)
   if (head.endsWith('ão')) return join(`${head.slice(0, -2)}ões`)
@@ -253,6 +262,11 @@ const ARTICLES: Record<string, Record<'m' | 'f', [string, string]>> = {
   aquela: { m: ['aquele', 'aqueles'], f: ['aquela', 'aquelas'] },
 }
 
+const INDEFINITE: Record<'m' | 'f', [string, string]> = {
+  m: ['um', 'uns'],
+  f: ['uma', 'umas'],
+}
+
 function article(gender: 'm' | 'f', plural: boolean): string {
   if (gender === 'f') return plural ? 'as' : 'a'
   return plural ? 'os' : 'o'
@@ -267,9 +281,34 @@ const CONTRACTIONS: Record<string, Record<string, string>> = {
   pra: { o: 'pro', a: 'pra', os: 'pros', as: 'pras' },
 }
 
+/**
+ * Contracao com demonstrativo e indefinido — que a tabela acima nao cobre,
+ * porque nao sao artigos definidos. "Eu vou em esse parque" nao existe: e
+ * "nesse". Obrigatoria, nao opcional.
+ */
+const CONTRACTIONS_EXTRA: Record<string, Record<string, string>> = {
+  em: {
+    esse: 'nesse',
+    essa: 'nessa',
+    esses: 'nesses',
+    essas: 'nessas',
+    aquele: 'naquele',
+    aquela: 'naquela',
+    um: 'num',
+    uma: 'numa',
+  },
+  de: {
+    esse: 'desse',
+    essa: 'dessa',
+    aquele: 'daquele',
+    aquela: 'daquela',
+  },
+  a: { aquele: 'àquele', aquela: 'àquela' },
+}
+
 /** "em" + "a" = "na". Preposicoes sem contracao ("para", "com") ficam soltas. */
 function contract(prep: string, art: string): string[] {
-  const merged = CONTRACTIONS[prep]?.[art]
+  const merged = CONTRACTIONS[prep]?.[art] ?? CONTRACTIONS_EXTRA[prep]?.[art]
   return merged ? [merged] : [prep, art]
 }
 
@@ -289,8 +328,24 @@ interface Item {
  */
 export type SpeakerGender = 'n' | 'm' | 'f'
 
+/**
+ * Artigo de um card especifico, decidido pela pessoa.
+ *
+ * O motor acerta na maioria das vezes, mas "na maioria das vezes" nao serve
+ * quando a frase e sua: as vezes se quer "quero bolo" e nao "quero O bolo", ou
+ * "quero UM bolo" e nao "quero o bolo". A diferenca entre pedir o bolo que esta
+ * ali e pedir um bolo qualquer nao e detalhe de estilo.
+ *
+ * `auto` deixa o motor decidir, que continua sendo o padrao.
+ */
+export type ArticleMode = 'auto' | 'def' | 'indef' | 'none'
+
+export const ARTICLE_MODES: ArticleMode[] = ['auto', 'def', 'indef', 'none']
+
 export interface ComposeOptions {
   marks?: GrammarMarks
+  /** Um modo por posicao da frase; posicoes ausentes seguem `auto`. */
+  articles?: ArticleMode[]
   speakerGender?: SpeakerGender
   region?: Region
   register?: Register
@@ -300,6 +355,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const marks = options.marks ?? NO_MARKS
   const speakerGender = options.speakerGender ?? 'n'
   const region = options.region ?? 'padrao'
+  const articles = options.articles ?? []
   const register = options.register ?? 'coloquial'
   const raw = sentence.map((c) => regionalLabel(c.label, region)).join(' ')
 
@@ -359,11 +415,28 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
    *   - senao, mais de um elemento               → 3a do plural
    *   - senao                                    → o que o unico elemento for
    */
-  const subjectGroup = items.filter(
-    (it) =>
-      (firstVerbIndex < 0 || it.index < firstVerbIndex) &&
-      (it.lex.class === 'pronoun' || (it.lex.class === 'noun' && it.lex.animate)),
-  )
+  // Sujeito composto e a sequencia de ABERTURA da frase, e nao todo animado que
+  // aparecer nela: "eu feliz mamãe" nao tem sujeito plural — "mamãe" vem depois
+  // do predicado. Antes saia "Eu estamos feliz a mamãe".
+  const ehSujeito = (it: Item) =>
+    it.lex.class === 'pronoun' || (it.lex.class === 'noun' && Boolean(it.lex.animate))
+
+  const subjectGroup: Item[] = []
+  if (firstVerbIndex >= 0) {
+    // Com verbo na frase, tudo que vem ANTES dele e zona de sujeito — inclusive
+    // depois de um adverbio de abertura: "amanhã a mamãe, eu e você vamos".
+    for (const it of items) {
+      if (it.index >= firstVerbIndex) break
+      if (ehSujeito(it)) subjectGroup.push(it)
+    }
+  } else {
+    // Sem verbo nenhum, so a sequencia de ABERTURA conta. Antes, todo animado
+    // da frase entrava, e "eu feliz mamãe" virava "Eu estamos feliz a mamãe".
+    for (const it of items) {
+      if (ehSujeito(it)) subjectGroup.push(it)
+      else if (it.lex.class !== 'determiner' && it.lex.class !== 'article') break
+    }
+  }
 
   let person: Person = pronoun?.lex.person ?? '1s'
   // Sem pronome, a frase e assumida em 1a pessoa: numa prancha de CAA o
@@ -389,8 +462,9 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const negated = marks.negated || Boolean(negationCard)
   const question = marks.question || items.some((it) => it.lex.class === 'question')
 
+  // Incontavel nao pluraliza: o marcador em "água" produzia "águas".
   const lastNounIndex = marks.plural
-    ? items.reduce((acc, it) => (it.lex.class === 'noun' ? it.index : acc), -1)
+    ? items.reduce((acc, it) => (it.lex.class === 'noun' && !it.lex.mass ? it.index : acc), -1)
     : -1
 
   /* --- varredura --------------------------------------------------------- */
@@ -452,10 +526,26 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       it.lex.class === 'pronoun' &&
       firstVerbIndex >= 0 &&
       it.index > firstVerbIndex &&
-      (it.lex.person === '1s' || it.lex.person === '2s'),
+      (it.lex.person === '1s' || it.lex.person === '2s') &&
+      // Conector no meio significa ORACAO NOVA, e o pronome depois dele e
+      // sujeito dela, nao objeto da primeira: "eu como mas EU quero bolo"
+      // virava "eu me como mas quero o bolo".
+      !items.slice(firstVerbIndex + 1, it.index).some((x) => x.lex.class === 'connector'),
   )
+
+  /**
+   * Qual verbo o clitico acompanha.
+   *
+   * E o ULTIMO verbo antes do pronome, nao o primeiro: em "quero ajudar você"
+   * quem rege o objeto e "ajudar", e colar no modal dava "eu TE quero ajudar".
+   */
+  const cliticVerbIndex = objectPronoun
+    ? ([...items.slice(0, objectPronoun.index)].reverse().find((x) => x.lex.class === 'verb')
+        ?.index ?? -1)
+    : -1
+  const cliticVerb = cliticVerbIndex >= 0 ? items[cliticVerbIndex] : undefined
   const clitic =
-    objectPronoun && !items[firstVerbIndex]?.lex.prep
+    objectPronoun && cliticVerb && !cliticVerb.lex.prep
       ? objectPronoun.lex.person === '1s'
         ? 'me'
         : 'te'
@@ -551,19 +641,10 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
    * Verbos de atividade pedem locativo antes de aparelho — "jogar NO celular",
    * "ver NA televisao". Verbo de posse nao: "quero O celular".
    */
-  const ACTIVITY_VERBS = new Set([
-    'jogar',
-    'brincar',
-    'ver',
-    'assistir',
-    'falar',
-    'ouvir',
-    'escrever',
-    'desenhar',
-    'estudar',
-    'trabalhar',
-    'mexer',
-  ])
+  // `ver` e `assistir` sairam da lista: pedem objeto direto ("eu vejo
+  // televisão"), e o locativo produzia "eu assisto NA televisão". Ficaram os
+  // que de fato locativizam: joga-se NO celular, fala-se NO telefone.
+  const ACTIVITY_VERBS = new Set(['jogar', 'brincar', 'falar', 'mexer', 'estudar'])
 
   const emitNegation = () => {
     if (!negated || negationDone) return
@@ -586,7 +667,16 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   /** Insere a copula quando a frase e "eu triste" — sem verbo nenhum. */
   const emitCopula = (verb: 'estar' | 'ter' = 'estar') => {
     emitNegation()
-    push(conjugate(verb, subjectPerson(), tense), 'inserted')
+    const p = subjectPerson()
+    // "eu estive triste" e perfeito, e soa como evento pontual; a lingua usa o
+    // IMPERFEITO para estado passado — "eu estava triste", "eu tinha medo".
+    const forma =
+      tense === 'past'
+        ? verb === 'estar'
+          ? ESTAR_IMPERFECT[p]
+          : TER_IMPERFECT[p]
+        : conjugate(verb, p, tense)
+    push(forma, 'inserted')
     verbDone = true
   }
 
@@ -595,6 +685,30 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     const { lex, label } = it
     const next = items[i + 1]
     const isPlural = it.index === lastNounIndex
+
+    // Preposicao escolhida pela pessoa sai ANTES de qualquer coisa que nao
+    // saiba emiti-la sozinha. Substantivo, artigo e pronome tratam a pendencia
+    // por conta propria — porque precisam contrair e concordar; o resto so
+    // precisa nao perde-la.
+    // So a preposicao ESCOLHIDA pela pessoa (`pendingPrepCard`) sobrevive a um
+    // item que nao a consome. A que veio da regencia do verbo e descartada:
+    // "brincar" pede "com", mas "brincar o dia todo" nao leva preposicao
+    // alguma — e emiti-la produzia "brincar com o dia todo".
+    if (
+      pendingPrep &&
+      pendingPrepCard !== null &&
+      lex.class !== 'noun' &&
+      lex.class !== 'article' &&
+      lex.class !== 'pronoun' &&
+      lex.class !== 'preposition'
+    ) {
+      const card = pendingPrepCard
+      push(pendingPrep, card === null ? 'inserted' : 'card', {
+        ...(card === null ? {} : { cardIndex: card }),
+      })
+      pendingPrep = null
+      pendingPrepCard = null
+    }
 
     switch (lex.class) {
       case 'negation':
@@ -663,6 +777,11 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
             const maisVerbos = items.slice(i + 1).some((x) => x.lex.class === 'verb')
             emitListSeparator(!maisVerbos)
           }
+          // Regencia do verbo anterior antes de infinitivo: "terminei DE
+          // comer", "comecei A pintar". Diferente da regencia antes de
+          // substantivo — "terminei a tarefa" nao leva "de".
+          const anterior = [...items.slice(0, i)].reverse().find((x) => x.lex.class === 'verb')
+          if (anterior?.lex.prepInf && !pendingVerbPrep) pendingVerbPrep = anterior.lex.prepInf
           // "estou feliz DE ir comer", "medo DE cair".
           if (pendingVerbPrep) {
             push(pendingVerbPrep, 'inserted')
@@ -677,6 +796,13 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
               ![...items.slice(0, i)].reverse().find((x) => x.lex.class === 'verb')!.lex.modal,
           )
 
+        if (clitic && objectPronoun && it.index === cliticVerbIndex) {
+          push(clitic, 'inflected', {
+            cardIndex: objectPronoun.index,
+            original: objectPronoun.card.label,
+          })
+        }
+
         if (lex.fixed || (lex as { guessed?: boolean }).guessed) {
           // Palavra fora do lexico so foi ADIVINHADA como verbo pela
           // terminacao. Conjugar um chute produz forma inexistente ("ver" ->
@@ -684,12 +810,6 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // menos polida. Na duvida, a saida menos errada.
           push(it.card.label, 'card', { cardIndex: it.index })
         } else if (!emCadeia) {
-          if (clitic && objectPronoun) {
-            push(clitic, 'inflected', {
-              cardIndex: objectPronoun.index,
-              original: objectPronoun.card.label,
-            })
-          }
           const text = useImperative
             ? imperative(label, register)
             : marks.progressive
@@ -820,8 +940,18 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         const prep = pendingPrep
         pendingPrep = null
 
-        const wantsArticle = decideArticle({ lex, prep, suppressArticle })
-        const art = wantsArticle ? article(gender, isPlural || Boolean(lex.plural)) : null
+        const modo = articles[it.index] ?? 'auto'
+        const plural = isPlural || Boolean(lex.plural)
+        const art =
+          modo === 'none'
+            ? null
+            : modo === 'def'
+              ? article(gender, plural)
+              : modo === 'indef'
+                ? INDEFINITE[gender][plural ? 1 : 0]
+                : decideArticle({ lex, prep, suppressArticle })
+                  ? article(gender, plural)
+                  : null
 
         const prepCard = pendingPrepCard
         pendingPrepCard = null
@@ -873,12 +1003,23 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         break
       }
 
-      case 'quantifier':
-        push(it.card.label, 'card', { cardIndex: it.index })
+      case 'quantifier': {
+        // "muito água" nao existe: o quantificador concorda com o substantivo
+        // que ele quantifica.
+        const alvoQ = next?.lex.class === 'noun' ? next.lex : undefined
+        const q =
+          alvoQ?.gender === 'f' && /o$/.test(label)
+            ? `${it.card.label.slice(0, -1)}a`
+            : it.card.label
+        push(q, q === it.card.label ? 'card' : 'inflected', {
+          cardIndex: it.index,
+          ...(q === it.card.label ? {} : { original: it.card.label }),
+        })
         // "mais agua", "muito bolo": quantificador ja determina, artigo sobra.
         suppressArticle = true
         previousWasNoun = false
         break
+      }
 
       /**
        * PALAVRA FUNCIONAL ESCOLHIDA PELA PESSOA.

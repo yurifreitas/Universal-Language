@@ -7,224 +7,192 @@
    {
     "id": 6632,
     "label": "eu",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6625,
     "label": "você",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 5441,
     "label": "querer",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 5526,
     "label": "não",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 5584,
     "label": "sim",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 3220,
     "label": "mais",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 28429,
     "label": "acabou",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 32648,
     "label": "ajudar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 7124,
     "label": "gostar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 8142,
     "label": "ir",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 32669,
     "label": "vir",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 7196,
     "label": "parar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 28431,
     "label": "dar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6888,
     "label": "pegar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6564,
     "label": "olhar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 11749,
     "label": "fazer",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6456,
     "label": "comer",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6061,
     "label": "beber",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6537,
     "label": "brincar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6479,
     "label": "dormir",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 5921,
     "label": "banheiro",
-    "plural": "casas de banho",
     "skin": false,
     "hair": false
    },
    {
     "id": 2367,
     "label": "dor",
-    "plural": "dores",
     "skin": true,
     "hair": false
    },
    {
     "id": 12264,
     "label": "meu",
-    "plural": "meus",
     "skin": true,
     "hair": false
    },
    {
     "id": 5382,
     "label": "aqui",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 32747,
     "label": "agora",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 32749,
     "label": "depois",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 7764,
     "label": "onde",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 9853,
     "label": "quem",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 24825,
     "label": "abrir",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 24976,
     "label": "fechar",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 16697,
     "label": "esperar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 5358,
     "label": "terminar",
-    "plural": null,
     "skin": false,
     "hair": false
    }
@@ -238,119 +206,102 @@
    {
     "id": 9907,
     "label": "feliz",
-    "plural": "felizes",
     "skin": true,
     "hair": false
    },
    {
     "id": 35545,
     "label": "triste",
-    "plural": "tristes",
     "skin": true,
     "hair": false
    },
    {
     "id": 35539,
     "label": "bravo",
-    "plural": "zangados",
     "skin": true,
     "hair": false
    },
    {
     "id": 10261,
     "label": "medo",
-    "plural": "medos",
     "skin": true,
     "hair": false
    },
    {
     "id": 35537,
     "label": "cansado",
-    "plural": "cansados",
     "skin": true,
     "hair": false
    },
    {
     "id": 35547,
     "label": "animado",
-    "plural": "contentes",
     "skin": true,
     "hair": false
    },
    {
     "id": 38932,
     "label": "calmo",
-    "plural": "calmos",
     "skin": true,
     "hair": true
    },
    {
     "id": 30391,
     "label": "nervoso",
-    "plural": "nervosos",
     "skin": true,
     "hair": false
    },
    {
     "id": 35531,
     "label": "entediado",
-    "plural": "aborrecidos",
     "skin": true,
     "hair": false
    },
    {
     "id": 6922,
     "label": "envergonhado",
-    "plural": "envergonhados",
     "skin": true,
     "hair": false
    },
    {
     "id": 39247,
     "label": "sozinho",
-    "plural": "sozinhos",
     "skin": true,
     "hair": false
    },
    {
     "id": 3308,
     "label": "doente",
-    "plural": "doentes",
     "skin": true,
     "hair": true
    },
    {
     "id": 35559,
     "label": "fome",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 7273,
     "label": "sede",
-    "plural": "sedes",
     "skin": true,
     "hair": false
    },
    {
     "id": 2352,
     "label": "confuso",
-    "plural": "confusos",
     "skin": true,
     "hair": false
    },
    {
     "id": 31408,
     "label": "orgulhoso",
-    "plural": "orgulhosos",
     "skin": true,
     "hair": false
    },
    {
     "id": 6600,
     "label": "amar",
-    "plural": null,
     "skin": true,
     "hair": false
    }
@@ -364,126 +315,108 @@
    {
     "id": 32464,
     "label": "água",
-    "plural": "águas",
     "skin": false,
     "hair": false
    },
    {
     "id": 11461,
     "label": "suco",
-    "plural": "sumos",
     "skin": false,
     "hair": false
    },
    {
     "id": 2445,
     "label": "leite",
-    "plural": "leites",
     "skin": false,
     "hair": false
    },
    {
     "id": 2494,
     "label": "pão",
-    "plural": "pães",
     "skin": false,
     "hair": false
    },
    {
     "id": 6911,
     "label": "arroz",
-    "plural": "arrozes",
     "skin": false,
     "hair": false
    },
    {
     "id": 3294,
     "label": "feijão",
-    "plural": "feijões",
     "skin": false,
     "hair": false
    },
    {
     "id": 28339,
     "label": "fruta",
-    "plural": "frutas",
     "skin": false,
     "hair": false
    },
    {
     "id": 2530,
     "label": "banana",
-    "plural": "bananas",
     "skin": false,
     "hair": false
    },
    {
     "id": 2462,
     "label": "maçã",
-    "plural": "maçãs",
     "skin": false,
     "hair": false
    },
    {
     "id": 2502,
     "label": "bolo",
-    "plural": "bolos",
     "skin": false,
     "hair": false
    },
    {
     "id": 8295,
     "label": "biscoito",
-    "plural": "biscoitos",
     "skin": false,
     "hair": false
    },
    {
     "id": 2455,
     "label": "macarrão",
-    "plural": "macarrões",
     "skin": false,
     "hair": false
    },
    {
     "id": 2316,
     "label": "carne",
-    "plural": "carnes",
     "skin": false,
     "hair": false
    },
    {
     "id": 2427,
     "label": "ovo",
-    "plural": "ovos",
     "skin": false,
     "hair": false
    },
    {
     "id": 2541,
     "label": "queijo",
-    "plural": "queijos",
     "skin": false,
     "hair": false
    },
    {
     "id": 39484,
     "label": "sorvete",
-    "plural": "sorvetes",
     "skin": false,
     "hair": false
    },
    {
     "id": 2618,
     "label": "iogurte",
-    "plural": "iogurtes",
     "skin": false,
     "hair": false
    },
    {
     "id": 25940,
     "label": "chocolate",
-    "plural": "chocolates",
     "skin": false,
     "hair": false
    }
@@ -497,91 +430,78 @@
    {
     "id": 2458,
     "label": "mãe",
-    "plural": "mães",
     "skin": true,
     "hair": true
    },
    {
     "id": 2497,
     "label": "pai",
-    "plural": "pais",
     "skin": true,
     "hair": true
    },
    {
     "id": 2423,
     "label": "irmão",
-    "plural": "irmãos",
     "skin": true,
     "hair": true
    },
    {
     "id": 2422,
     "label": "irmã",
-    "plural": "irmãs",
     "skin": true,
     "hair": true
    },
    {
-    "id": 23710,
+    "id": 2243,
     "label": "avó",
-    "plural": "avós",
     "skin": true,
     "hair": true
    },
    {
-    "id": 23710,
+    "id": 2244,
     "label": "avô",
-    "plural": "avós",
     "skin": true,
     "hair": true
    },
    {
     "id": 25790,
     "label": "amigo",
-    "plural": "amigos",
     "skin": true,
     "hair": false
    },
    {
     "id": 6556,
     "label": "professor",
-    "plural": "professores",
     "skin": true,
     "hair": false
    },
    {
     "id": 6561,
     "label": "médico",
-    "plural": "médicos",
     "skin": true,
     "hair": false
    },
    {
     "id": 2392,
     "label": "família",
-    "plural": "famílias",
     "skin": true,
     "hair": true
    },
    {
     "id": 6060,
     "label": "bebê",
-    "plural": "bebés",
     "skin": true,
     "hair": false
    },
    {
     "id": 7176,
     "label": "menino",
-    "plural": "meninos",
     "skin": true,
     "hair": true
    },
    {
     "id": 27509,
     "label": "menina",
-    "plural": "meninas",
     "skin": true,
     "hair": true
    }
@@ -595,98 +515,84 @@
    {
     "id": 2673,
     "label": "cabeça",
-    "plural": "cabeças",
     "skin": true,
     "hair": false
    },
    {
     "id": 2786,
     "label": "barriga",
-    "plural": "barrigas",
     "skin": true,
     "hair": false
    },
    {
     "id": 2928,
     "label": "mão",
-    "plural": "mãos",
     "skin": true,
     "hair": false
    },
    {
     "id": 25327,
     "label": "pé",
-    "plural": "pés",
     "skin": true,
     "hair": false
    },
    {
     "id": 6573,
     "label": "olho",
-    "plural": "olhos",
     "skin": true,
     "hair": false
    },
    {
     "id": 39498,
     "label": "ouvido",
-    "plural": "ouvidos",
     "skin": false,
     "hair": false
    },
    {
     "id": 2663,
     "label": "boca",
-    "plural": "bocas",
     "skin": false,
     "hair": false
    },
    {
     "id": 2887,
     "label": "nariz",
-    "plural": "narizes",
     "skin": true,
     "hair": false
    },
    {
     "id": 10267,
     "label": "dente",
-    "plural": "dentes",
     "skin": false,
     "hair": false
    },
    {
     "id": 2669,
     "label": "braço",
-    "plural": "braços",
     "skin": true,
     "hair": false
    },
    {
     "id": 8666,
     "label": "perna",
-    "plural": "pernas",
     "skin": true,
     "hair": false
    },
    {
     "id": 2748,
     "label": "costas",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 3332,
     "label": "garganta",
-    "plural": "gargantas",
     "skin": false,
     "hair": false
    },
    {
     "id": 2851,
     "label": "cabelo",
-    "plural": "cabelos",
     "skin": false,
     "hair": true
    }
@@ -700,98 +606,84 @@
    {
     "id": 6964,
     "label": "casa",
-    "plural": "casas",
     "skin": false,
     "hair": false
    },
    {
     "id": 32446,
     "label": "escola",
-    "plural": "escolas",
     "skin": false,
     "hair": false
    },
    {
     "id": 5988,
     "label": "quarto",
-    "plural": "quartos",
     "skin": false,
     "hair": false
    },
    {
     "id": 10752,
     "label": "cozinha",
-    "plural": "cozinhas",
     "skin": false,
     "hair": false
    },
    {
     "id": 2859,
     "label": "parque",
-    "plural": "parques infantis",
     "skin": false,
     "hair": false
    },
    {
     "id": 2299,
     "label": "rua",
-    "plural": "ruas",
     "skin": false,
     "hair": false
    },
    {
     "id": 35695,
     "label": "loja",
-    "plural": "lojas",
     "skin": false,
     "hair": false
    },
    {
     "id": 6523,
     "label": "hospital",
-    "plural": "hospitais",
     "skin": false,
     "hair": false
    },
    {
     "id": 2339,
     "label": "carro",
-    "plural": "carros",
     "skin": false,
     "hair": false
    },
    {
     "id": 2262,
     "label": "ônibus",
-    "plural": "autocarros",
     "skin": false,
     "hair": false
    },
    {
     "id": 30518,
     "label": "praia",
-    "plural": "praias",
     "skin": false,
     "hair": false
    },
    {
     "id": 25900,
     "label": "cama",
-    "plural": "camas",
     "skin": false,
     "hair": false
    },
    {
     "id": 3129,
     "label": "mesa",
-    "plural": "mesas",
     "skin": false,
     "hair": false
    },
    {
     "id": 3244,
     "label": "porta",
-    "plural": "portas",
     "skin": false,
     "hair": false
    }
@@ -805,112 +697,96 @@
    {
     "id": 6465,
     "label": "correr",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 5929,
     "label": "pular",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6611,
     "label": "sentar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6548,
     "label": "levantar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6044,
     "label": "andar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 2380,
     "label": "escrever",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 7141,
     "label": "ler",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 8088,
     "label": "desenhar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6960,
     "label": "cantar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6052,
     "label": "dançar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 8977,
     "label": "lavar",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6627,
     "label": "vestir",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 2326,
     "label": "escovar os dentes",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6058,
     "label": "tomar banho",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6572,
     "label": "ouvir",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
     "id": 6517,
     "label": "falar",
-    "plural": null,
     "skin": true,
     "hair": false
    }
@@ -924,91 +800,78 @@
    {
     "id": 4658,
     "label": "grande",
-    "plural": "grandes",
     "skin": false,
     "hair": false
    },
    {
     "id": 4716,
     "label": "pequeno",
-    "plural": "pequenos",
     "skin": false,
     "hair": false
    },
    {
     "id": 4583,
     "label": "quente",
-    "plural": "quentes",
     "skin": false,
     "hair": false
    },
    {
     "id": 4652,
     "label": "frio",
-    "plural": "frios",
     "skin": false,
     "hair": false
    },
    {
     "id": 4750,
     "label": "sujo",
-    "plural": "sujos",
     "skin": false,
     "hair": false
    },
    {
     "id": 26172,
     "label": "limpo",
-    "plural": "limpos",
     "skin": false,
     "hair": false
    },
    {
     "id": 5306,
     "label": "rápido",
-    "plural": "rápidos",
     "skin": false,
     "hair": false
    },
    {
     "id": 4676,
     "label": "devagar",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 11194,
     "label": "bonito",
-    "plural": "bonitos",
     "skin": false,
     "hair": false
    },
    {
     "id": 7168,
     "label": "muito",
-    "plural": "muitos",
     "skin": false,
     "hair": false
    },
    {
     "id": 7209,
     "label": "pouco",
-    "plural": "poucos",
     "skin": false,
     "hair": false
    },
    {
     "id": 11316,
     "label": "novo",
-    "plural": "novos",
     "skin": false,
     "hair": false
    },
    {
     "id": 11394,
     "label": "velho",
-    "plural": "velhos",
     "skin": false,
     "hair": false
    }
@@ -1022,84 +885,72 @@
    {
     "id": 7131,
     "label": "hoje",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 7152,
     "label": "amanhã",
-    "plural": "amanhãs",
     "skin": false,
     "hair": false
    },
    {
     "id": 6926,
     "label": "ontem",
-    "plural": null,
     "skin": false,
     "hair": false
    },
    {
     "id": 25704,
     "label": "manhã",
-    "plural": "manhãs",
     "skin": false,
     "hair": false
    },
    {
     "id": 7268,
     "label": "tarde",
-    "plural": "tardes",
     "skin": false,
     "hair": false
    },
    {
     "id": 7181,
     "label": "noite",
-    "plural": "noites",
     "skin": false,
     "hair": false
    },
    {
     "id": 26799,
     "label": "dia",
-    "plural": "dias",
     "skin": false,
     "hair": false
    },
    {
     "id": 37372,
     "label": "semana",
-    "plural": "semanas",
     "skin": false,
     "hair": false
    },
    {
     "id": 7161,
     "label": "mês",
-    "plural": "meses",
     "skin": false,
     "hair": false
    },
    {
     "id": 6903,
     "label": "ano",
-    "plural": "anos",
     "skin": false,
     "hair": false
    },
    {
     "id": 32745,
     "label": "antes",
-    "plural": null,
     "skin": true,
     "hair": false
    },
    {
-    "id": 32749,
-    "label": "depois",
-    "plural": null,
+    "id": 13080,
+    "label": "logo",
     "skin": true,
     "hair": false
    }

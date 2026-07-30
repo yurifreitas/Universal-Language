@@ -99,7 +99,7 @@ listas construídas só por frequência sub-representam conceitos relacionais.
 
 O acervo tem 13.801 pictogramas. Exibir todos na tela inicial produz uma pessoa
 navegando categorias em vez de comunicando. A prancha **Núcleo** tem 32 células
-curadas; as outras 8 pranchas somam 117. O resto do acervo é periferia,
+curadas; as outras 9 pranchas somam 141 — 173 no total. O resto do acervo é periferia,
 alcançável por busca.
 
 ---
@@ -320,7 +320,7 @@ Levantamento que originou o projeto.
 
 Registro honesto do que **não** está fundamentado:
 
-1. **A curadoria das 149 palavras é nossa**, informada pela literatura de núcleo,
+1. **A curadoria das 173 palavras é nossa**, informada pela literatura de núcleo,
    mas não validada com usuários. Precisa de teste com fonoaudiólogos.
 2. **A escolha de qual pictograma representa cada palavra** usa uma regra
    heurística (prefere `aac`, evita esquemático, menor id). Não há evidência de

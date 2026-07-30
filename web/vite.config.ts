@@ -54,6 +54,25 @@ export default defineConfig({
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'search-index' },
           },
+          {
+            /*
+             * boards.json NAO estava em cache nenhum — nem no precache (que so
+             * pega js/css/html/svg/woff2) nem em runtime. O app inteiro depende
+             * dele: sem boards.json a tela e "Não foi possível carregar as
+             * pranchas".
+             *
+             * Ou seja: o app que se anuncia offline nao abria offline. Passa a
+             * ser StaleWhileRevalidate — serve do cache na hora, e atualiza em
+             * segundo plano quando ha rede, para uma prancha nova aparecer sem
+             * precisar reinstalar.
+             */
+            urlPattern: ({ url }) => url.pathname.endsWith('/data/boards.json'),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'boards',
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
     }),

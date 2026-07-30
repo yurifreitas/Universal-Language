@@ -83,6 +83,12 @@ export interface Lexeme {
    */
   modal?: boolean
   /**
+   * Preposicao exigida antes de um INFINITIVO complemento, que nao e a mesma
+   * exigida antes de substantivo: "terminei DE comer" mas "terminei a tarefa".
+   * Usar `prep` para os dois casos produzia "terminei de tarefa".
+   */
+  prepInf?: string
+  /**
    * Aparelho: depois de verbo de atividade pede locativo — "jogar NO celular",
    * "ver NA televisao". Depois de verbo de posse continua objeto direto:
    * "quero o celular".
@@ -151,6 +157,36 @@ export const IRREGULAR_VERBS: Record<string, VerbForms> = {
     present: { '2t': 'sabes', '1s': 'sei', '2s': 'sabe', '3s': 'sabe', '1p': 'sabemos', '3p': 'sabem' },
     past: { '2t': 'soubeste', '1s': 'soube', '2s': 'soube', '3s': 'soube', '1p': 'soubemos', '3p': 'souberam' },
   },
+  pedir: {
+    present: { '1s': 'peço', '2s': 'pede', '2t': 'pedes', '3s': 'pede', '1p': 'pedimos', '3p': 'pedem' },
+  },
+  sair: {
+    present: { '1s': 'saio', '2s': 'sai', '2t': 'sais', '3s': 'sai', '1p': 'saímos', '3p': 'saem' },
+    past: { '1s': 'saí', '2s': 'saiu', '2t': 'saíste', '3s': 'saiu', '1p': 'saímos', '3p': 'saíram' },
+  },
+  cair: {
+    present: { '1s': 'caio', '2s': 'cai', '2t': 'cais', '3s': 'cai', '1p': 'caímos', '3p': 'caem' },
+    past: { '1s': 'caí', '2s': 'caiu', '2t': 'caíste', '3s': 'caiu', '1p': 'caímos', '3p': 'caíram' },
+  },
+  subir: {
+    present: { '1s': 'subo', '2s': 'sobe', '2t': 'sobes', '3s': 'sobe', '1p': 'subimos', '3p': 'sobem' },
+  },
+  dizer: {
+    present: { '1s': 'digo', '2s': 'diz', '2t': 'dizes', '3s': 'diz', '1p': 'dizemos', '3p': 'dizem' },
+    past: { '1s': 'disse', '2s': 'disse', '2t': 'disseste', '3s': 'disse', '1p': 'dissemos', '3p': 'disseram' },
+  },
+  trazer: {
+    present: { '1s': 'trago', '2s': 'traz', '2t': 'trazes', '3s': 'traz', '1p': 'trazemos', '3p': 'trazem' },
+    past: { '1s': 'trouxe', '2s': 'trouxe', '2t': 'trouxeste', '3s': 'trouxe', '1p': 'trouxemos', '3p': 'trouxeram' },
+  },
+  perder: {
+    present: { '1s': 'perco', '2s': 'perde', '2t': 'perdes', '3s': 'perde', '1p': 'perdemos', '3p': 'perdem' },
+  },
+  // Grafia da 1a do preterito, mesmo caso de `pegar`/`jogar`.
+  tocar: { past: { '1s': 'toquei' } },
+  abraçar: { past: { '1s': 'abracei' } },
+  almoçar: { past: { '1s': 'almocei' } },
+  explicar: { past: { '1s': 'expliquei' } },
   ler: {
     present: { '2t': 'lês', '1s': 'leio', '2s': 'lê', '3s': 'lê', '1p': 'lemos', '3p': 'leem' },
     past: { '2t': 'leste', '1s': 'li', '2s': 'leu', '3s': 'leu', '1p': 'lemos', '3p': 'leram' },
@@ -186,6 +222,16 @@ export const IRREGULAR_VERBS: Record<string, VerbForms> = {
  * imperfeito de todos os verbos exigiria outra tabela inteira; a perifrase
  * resolve com um verbo so.
  */
+/** Imperfeito de TER, para estado passado: "eu tinha medo", "eu tinha fome". */
+export const TER_IMPERFECT: Record<Person, string> = {
+  '1s': 'tinha',
+  '2s': 'tinha',
+  '2t': 'tinhas',
+  '3s': 'tinha',
+  '1p': 'tínhamos',
+  '3p': 'tinham',
+}
+
 export const ESTAR_IMPERFECT: Record<Person, string> = {
   '1s': 'estava',
   '2s': 'estava',
@@ -216,6 +262,17 @@ export const SUBJUNCTIVE: Record<string, string> = {
   ouvir: 'ouça',
   dormir: 'durma',
   vestir: 'vista',
+  pedir: 'peça',
+  sair: 'saia',
+  cair: 'caia',
+  subir: 'suba',
+  dizer: 'diga',
+  trazer: 'traga',
+  perder: 'perca',
+  tocar: 'toque',
+  abraçar: 'abrace',
+  almoçar: 'almoce',
+  explicar: 'explique',
   pegar: 'pegue',
   brincar: 'brinque',
   ficar: 'fique',
@@ -291,7 +348,7 @@ export const LEXICON: Record<string, Lexeme> = {
   abrir: V(),
   fechar: V(),
   esperar: V(),
-  terminar: V(),
+  terminar: V({ prepInf: 'de', modal: true }),
 
   /* -------------------------------------------------------- sentimentos */
   feliz: ADJ(),
@@ -383,7 +440,7 @@ export const LEXICON: Record<string, Lexeme> = {
   /* -------------------------------------------------------------- acoes */
   correr: V(),
   pular: V(),
-  sentar: V(),
+  sentar: V({ prep: 'em' }),
   levantar: V(),
   andar: V(),
   escrever: V(),
@@ -396,7 +453,7 @@ export const LEXICON: Record<string, Lexeme> = {
   montar: V(),
   construir: V(),
   cozinhar: V(),
-  passear: V(),
+  passear: V({ prep: 'em' }),
   nadar: V(),
   descansar: V(),
   conversar: V({ prep: 'com' }),
@@ -407,7 +464,7 @@ export const LEXICON: Record<string, Lexeme> = {
   'escovar os dentes': V(),
   'tomar banho': V(),
   ouvir: V(),
-  falar: V(),
+  falar: V({ prep: 'com' }),
 
   /* --------------------------------------------------------- qualidades */
   grande: ADJ(),
@@ -490,6 +547,86 @@ export const LEXICON: Record<string, Lexeme> = {
   tablet: N('m', { device: true }),
   videogame: N('m', { device: true }),
   desenho: N('m'),
+  açúcar: N('m', { mass: true }),
+
+  /* ------------------------------- alta frequencia na fala com os pais
+
+     Sem entrada aqui, estas palavras caem no `guess()`, que nao conjuga verbo
+     nem sabe genero de substantivo — e sao justamente as que mais aparecem
+     numa terca-feira comum em casa. */
+  elas: { class: 'pronoun', person: '3p' },
+  dele: { class: 'determiner', gender: 'm' },
+  dela: { class: 'determiner', gender: 'f' },
+
+  cachorro: N('m', { animate: true }),
+  cachorra: N('f', { animate: true }),
+  gato: N('m', { animate: true }),
+  gata: N('f', { animate: true }),
+  tia: N('f', { animate: true }),
+  tio: N('m', { animate: true }),
+  amiga: N('f', { animate: true }),
+  professora: N('f', { animate: true }),
+  filho: N('m', { animate: true }),
+  filha: N('f', { animate: true }),
+  criança: N('f', { animate: true }),
+
+  colo: N('m', { mass: true }),
+  sono: N('m', { mass: true }),
+  xixi: N('m', { mass: true }),
+  cocô: N('m', { mass: true }),
+  ajuda: N('f', { mass: true }),
+  raiva: N('f', { mass: true }),
+  vontade: N('f', { mass: true }),
+  saudade: N('f', { mass: true }),
+  febre: N('f', { mass: true }),
+  barulho: N('m', { mass: true }),
+
+  abraço: N('m'),
+  beijo: N('m'),
+  copo: N('m'),
+  colher: N('f', { pluralForm: 'colheres' }),
+  chupeta: N('f'),
+  mamadeira: N('f'),
+  bicicleta: N('f'),
+  cadeira: N('f'),
+  banho: N('m'),
+  pipoca: N('f'),
+  batata: N('f'),
+
+  // Estes tem forma irregular em IRREGULAR_VERBS, mas sem entrada AQUI o
+  // `lookup` cai no `guess()`, que marca "adivinhado" — e o motor,
+  // corretamente, nao conjuga o que so foi adivinhado. A tabela de irregulares
+  // ficava inalcancavel.
+  pedir: V(),
+  sair: V(),
+  cair: V(),
+  subir: V(),
+  dizer: V(),
+  trazer: V(),
+  perder: V(),
+  tocar: V(),
+  abraçar: V(),
+  almoçar: V(),
+  explicar: V(),
+
+  acordar: V(),
+  entrar: V({ prep: 'em' }),
+  sentir: V(),
+  tirar: V(),
+  colocar: V({ prep: 'em' }),
+  trocar: V(),
+  levar: V(),
+  machucar: V(),
+  ganhar: V(),
+  emprestar: V(),
+  deixar: V({ modal: true }),
+  tentar: V({ modal: true }),
+  começar: V({ prepInf: 'a', modal: true }),
+  acabar: V({ prepInf: 'de', modal: true }),
+  sal: N('m', { mass: true }),
+  lugar: N('m', { place: true, pluralForm: 'lugares' }),
+  mar: N('m', { place: true }),
+  ar: N('m', { mass: true }),
   parquinho: N('m', { place: true }),
 
   /* Locucoes adverbiais de duracao e de parte do dia. Entram inteiras porque
@@ -560,7 +697,14 @@ export const LEXICON: Record<string, Lexeme> = {
   ainda: { class: 'adverb' },
   também: { class: 'adverb' },
   sempre: { class: 'adverb' },
-  nunca: { class: 'negation' },
+  /*
+   * `nunca` era `negation`, e o motor trata negacao como PARTICULA: ele nao
+   * emite o card e insere "não" antes do verbo. Resultado: quem tocava NUNCA
+   * ouvia "não" — a palavra escolhida sumia e outra entrava no lugar. "Nunca"
+   * ja e negativo por si, e vai na posicao em que foi tocado.
+   */
+  nunca: { class: 'adverb' },
+  jamais: { class: 'adverb' },
   tudo: { class: 'quantifier' },
   nada: { class: 'quantifier' },
 
@@ -588,7 +732,21 @@ export const TIME_ADVERBS: Record<string, Tense> = {
 
 /* ---------------------------------------------------------------- fallback */
 
-const VERB_SUFFIX = /(ar|er|ir|ôr|or)$/
+/*
+ * `or` NAO entra aqui. Entrava, e o efeito era: "amor", "flor", "cor", "calor",
+ * "sabor", "valor", "motor", "doutor" — todos adivinhados como VERBO pela
+ * terminacao. O card AMOR virava "eu amo". So `ôr` e necessario, para `pôr`.
+ */
+const VERB_SUFFIX = /(ar|er|ir|ôr)$/
+/**
+ * Acento agudo ou circunflexo no corpo da palavra denuncia paroxitona — e
+ * infinitivo em portugues e SEMPRE oxitono, sem acento no radical.
+ *
+ * Sem esta checagem "açúcar", "câncer", "éter" e "mártir" eram adivinhados como
+ * verbos por terminarem em -ar/-er/-ir, e o motor os tratava como acao. O caso
+ * apareceu num pedido banal: "suco sem açúcar".
+ */
+const PAROXITONA_ACENTUADA = /[áéíóúâêôàãõ]/
 const FEM_SUFFIX = /(a|ã|ade|agem|ção|são)$/
 
 /**
@@ -601,7 +759,7 @@ export function guess(label: string): Lexeme & { guessed: true } {
   const word = label.trim().toLowerCase()
   const head = word.split(' ')[0] ?? word
 
-  if (VERB_SUFFIX.test(head) && head.length >= 3) {
+  if (VERB_SUFFIX.test(head) && head.length >= 3 && !PAROXITONA_ACENTUADA.test(head.slice(0, -2))) {
     return { class: 'verb', guessed: true }
   }
   return {
