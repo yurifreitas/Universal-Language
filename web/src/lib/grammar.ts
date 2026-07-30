@@ -396,72 +396,174 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
   /* --- traços globais da frase ------------------------------------------ */
 
-  const firstVerbIndex = items.findIndex((it) => it.lex.class === 'verb')
+  /* ----------------------------------------------------------- oracoes
 
-  // Pronome SUJEITO: so conta o que vem antes do primeiro verbo. Depois do
-  // verbo, um pronome e objeto ("eu vejo você"), e vira clitico mais abaixo.
-  const pronoun = items.find(
-    (it) => it.lex.class === 'pronoun' && (firstVerbIndex < 0 || it.index < firstVerbIndex),
-  )
+     ATE AQUI o motor tratava a frase como UMA oracao so. Tudo depois do
+     primeiro verbo virava complemento ou coordenacao, e o resultado era:
 
-  // Sujeito tambem pode ser substantivo plural antes do verbo — "os meninos
-  // querem", nao "os meninos quer".
-  const subjectNoun = items.find(
-    (it) => it.lex.class === 'noun' && firstVerbIndex >= 0 && it.index < firstVerbIndex,
-  )
+       "eu querer porque eu fome"  ->  "Eu me quero porque fome."
 
-  /**
-   * SUJEITO COMPOSTO.
-   *
-   * "MAMÃE · EU · VOCÊ · BRINCAR" nao e tres sujeitos concorrendo: e um so,
-   * coordenado, e o portugues manda o verbo para a 1a do plural — "a mamãe, eu
-   * e você VAMOS brincar". Antes o motor olhava so o primeiro pronome e
-   * produzia "a mamãe, eu e você brinca", que e o tipo de erro que faz a frase
-   * inteira soar como de maquina.
-   *
-   * A regra de concordancia e simples e nao tem excecao util aqui:
-   *   - qualquer elemento de 1a pessoa na lista  → 1a do plural
-   *   - senao, mais de um elemento               → 3a do plural
-   *   - senao                                    → o que o unico elemento for
-   */
-  // Sujeito composto e a sequencia de ABERTURA da frase, e nao todo animado que
-  // aparecer nela: "eu feliz mamãe" nao tem sujeito plural — "mamãe" vem depois
-  // do predicado. Antes saia "Eu estamos feliz a mamãe".
+     O segundo "eu" era lido como objeto do primeiro verbo, e o segundo verbo
+     nunca era conjugado. Subordinacao e o que permite JUSTIFICAR e NARRAR —
+     "porque eu quero", "quando o papai chegar", "a mamãe falou que" — e sem ela
+     a pessoa so consegue enunciar fatos soltos.
+
+     A segmentacao e deliberadamente simples: um conectivo de oracao seguido de
+     verbo abre oracao nova. "E" e "ou" NAO abrem — eles coordenam dentro da
+     mesma oracao ("quero comer e beber"), e trata-los como fronteira quebraria
+     a coordenacao de verbos que ja funcionava. */
+  const CLAUSE_STARTERS = new Set([
+    'porque',
+    'que',
+    'quando',
+    'se',
+    'mas',
+    'então',
+    'aí',
+    'e aí',
+    'senão',
+    'por isso',
+  ])
+
+  /** A que oracao pertence cada posicao da frase. */
+  const clauseOf: number[] = []
+  {
+    let c = 0
+    for (const it of items) {
+      clauseOf[it.index] = c
+      // Abre oracao se houver verbo OU pronome depois. O pronome importa
+      // porque a oracao pode ter o verbo INSERIDO pelo motor, e nao tocado:
+      // em "porque · eu · fome" o verbo ("tenho") nao existe como card, e
+      // exigir verbo explicito deixava a segunda oracao invisivel.
+      const depois = items.slice(it.index + 1)
+      const abreOracao =
+        CLAUSE_STARTERS.has(it.label) &&
+        depois.some((x) => x.lex.class === 'verb' || x.lex.class === 'pronoun')
+      if (abreOracao) c++
+    }
+  }
+
+  interface Oracao {
+    firstVerbIndex: number
+    pronoun: Item | undefined
+    subjectGroup: Item[]
+    person: Person
+    objectPronoun: Item | undefined
+    cliticVerbIndex: number
+    clitic: string | null
+    useImperative: boolean
+  }
+
   const ehSujeito = (it: Item) =>
     it.lex.class === 'pronoun' || (it.lex.class === 'noun' && Boolean(it.lex.animate))
 
-  const subjectGroup: Item[] = []
-  if (firstVerbIndex >= 0) {
-    // Com verbo na frase, tudo que vem ANTES dele e zona de sujeito — inclusive
-    // depois de um adverbio de abertura: "amanhã a mamãe, eu e você vamos".
-    for (const it of items) {
-      if (it.index >= firstVerbIndex) break
-      if (ehSujeito(it)) subjectGroup.push(it)
+  /**
+   * Tudo que e decidido POR ORACAO: quem e o sujeito, em que pessoa o verbo vai,
+   * e qual pronome e objeto. Antes isto era calculado uma vez para a frase
+   * inteira, o que so estava certo enquanto a frase tinha uma oracao.
+   */
+  const analisar = (dentro: Item[]): Oracao => {
+    const fv = dentro.find((it) => it.lex.class === 'verb')?.index ?? -1
+
+    // Pronome SUJEITO: so conta o que vem antes do verbo da PROPRIA oracao.
+    // Depois do verbo, um pronome e objeto ("eu vejo você") e vira clitico.
+    const pron = dentro.find(
+      (it) => it.lex.class === 'pronoun' && (fv < 0 || it.index < fv),
+    )
+    const subjNoun = dentro.find(
+      (it) => it.lex.class === 'noun' && fv >= 0 && it.index < fv,
+    )
+
+    const grupo: Item[] = []
+    if (fv >= 0) {
+      // Com verbo, tudo antes dele e zona de sujeito — inclusive depois de um
+      // adverbio de abertura: "amanhã a mamãe, eu e você vamos".
+      for (const it of dentro) {
+        if (it.index >= fv) break
+        if (ehSujeito(it)) grupo.push(it)
+      }
+    } else {
+      // Sem verbo, so a sequencia de ABERTURA conta. Antes, todo animado da
+      // frase entrava, e "eu feliz mamãe" virava "Eu estamos feliz a mamãe".
+      for (const it of dentro) {
+        if (ehSujeito(it)) grupo.push(it)
+        else if (it.lex.class !== 'determiner' && it.lex.class !== 'article') break
+      }
     }
-  } else {
-    // Sem verbo nenhum, so a sequencia de ABERTURA conta. Antes, todo animado
-    // da frase entrava, e "eu feliz mamãe" virava "Eu estamos feliz a mamãe".
-    for (const it of items) {
-      if (ehSujeito(it)) subjectGroup.push(it)
-      else if (it.lex.class !== 'determiner' && it.lex.class !== 'article') break
+
+    let p: Person = pron?.lex.person ?? '1s'
+    // Sem pronome, assume-se 1a pessoa: numa prancha de CAA o enunciado padrao
+    // e sobre o proprio falante ("quero agua"). O pronome implicito NAO e
+    // escrito — so a flexao do verbo o indica.
+    if (!pron && subjNoun) p = subjNoun.lex.plural ? '3p' : '3s'
+
+    // SUJEITO COMPOSTO: "MAMÃE · EU · VOCÊ" e um sujeito so, e o portugues manda
+    // o verbo para a 1a do plural. Qualquer elemento de 1a na lista -> 1p;
+    // senao, mais de um elemento -> 3p.
+    if (grupo.length > 1) {
+      const tem1 = grupo.some((it) => it.lex.person === '1s' || it.lex.person === '1p')
+      p = tem1 ? '1p' : '3p'
+    }
+    // "tu" no registro normativo pede a 2a de verdade: "tu queres". No coloquial
+    // brasileiro leva a forma de 3a, que ja e o valor de 2s.
+    const dizTu = pron && (pron.label === 'tu' || secondPerson(region) === 'tu')
+    if (dizTu && pron.lex.person === '2s' && !tuUsesThirdPerson(register)) p = '2t'
+
+    // Clitico: pronome de 1a/2a DEPOIS do verbo e objeto. A busca fica dentro da
+    // oracao, e era isso que faltava — atravessando o conectivo, o motor pegava
+    // o sujeito da oracao seguinte.
+    const obj = dentro.find(
+      (it) =>
+        it.lex.class === 'pronoun' &&
+        fv >= 0 &&
+        it.index > fv &&
+        (it.lex.person === '1s' || it.lex.person === '2s'),
+    )
+    // O clitico acompanha o ULTIMO verbo antes do pronome, nao o primeiro: em
+    // "quero ajudar você" quem rege o objeto e "ajudar".
+    const cvi = obj
+      ? (dentro
+          .filter((x) => x.index < obj.index && x.lex.class === 'verb')
+          .at(-1)?.index ?? -1)
+      : -1
+    const cv = cvi >= 0 ? items[cvi] : undefined
+    const cl = obj && cv && !cv.lex.prep ? (obj.lex.person === '1s' ? 'me' : 'te') : null
+
+    // "AJUDAR · EU" nao e "eu ajudo": e pedido a quem ouve. Objeto de 1a sem
+    // sujeito escrito implica interlocutor como sujeito.
+    if (!pron && cl === 'me') p = '2s'
+
+    // Pedido com sujeito de 2a explicito nao vira imperativo: "você abra a
+    // porta" nao existe, e "você abre a porta" ja e pedido em portugues falado.
+    const imp =
+      marks.request && !(pron && (pron.lex.person === '2s' || pron.lex.person === '2t'))
+
+    return {
+      firstVerbIndex: fv,
+      pronoun: pron,
+      subjectGroup: grupo,
+      person: p,
+      objectPronoun: obj,
+      cliticVerbIndex: cvi,
+      clitic: cl,
+      useImperative: imp,
     }
   }
 
-  let person: Person = pronoun?.lex.person ?? '1s'
-  // Sem pronome, a frase e assumida em 1a pessoa: numa prancha de CAA o
-  // enunciado padrao e sobre o proprio falante ("quero agua"). O pronome
-  // implicito NAO e escrito na frase — so a flexao do verbo o indica.
-  if (!pronoun && subjectNoun) person = subjectNoun.lex.plural ? '3p' : '3s'
-
-  if (subjectGroup.length > 1) {
-    const has1 = subjectGroup.some((it) => it.lex.person === '1s' || it.lex.person === '1p')
-    person = has1 ? '1p' : '3p'
+  const oracoes: Oracao[] = []
+  {
+    const total = (clauseOf[items.length - 1] ?? 0) + 1
+    for (let c = 0; c < total; c++) {
+      oracoes.push(analisar(items.filter((it) => clauseOf[it.index] === c)))
+    }
   }
-  // "tu" com registro normativo pede a 2a pessoa de verdade: "tu queres".
-  // No coloquial brasileiro, "tu" leva a forma de 3a — que ja e o valor de 2s.
-  // O card continua sendo o VOCÊ canonico; quem vira "tu" e a variedade.
-  const saysTu = pronoun && (pronoun.label === 'tu' || secondPerson(region) === 'tu')
-  if (saysTu && pronoun.lex.person === '2s' && !tuUsesThirdPerson(register)) person = '2t'
+
+  let oracao = oracoes[0]!
+  let { pronoun, subjectGroup, person, objectPronoun, clitic, cliticVerbIndex } = oracao
+  // Usado na troca de oracao abaixo; a primeira ja vem analisada.
+  let firstVerbIndex = oracao.firstVerbIndex
+  void firstVerbIndex
+  let useImperative = oracao.useImperative
 
   const timeAdverb = items.find((it) => TIME_ADVERBS[it.label])
   const tense: Tense =
@@ -523,59 +625,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
    */
   let coordForm: 'finite' | 'infinitive' = 'finite'
 
-  /**
-   * Clitico. Um pronome DEPOIS do verbo e objeto, e o portugues brasileiro o
-   * quer colado antes do verbo: "me ajuda", "te amo" — nao "ajuda eu".
-   *
-   * Esta e a segunda e ultima excecao a regra de nao reordenar (a primeira e a
-   * negacao). Nos dois casos a posicao nao e escolha de estilo: e exigida pela
-   * lingua, e manter a ordem tocada produziria frase agramatical.
-   *
-   * Nao se aplica quando o verbo rege preposicao — ai o pronome e complemento
-   * preposicionado e fica onde esta: "gosto de você", nunca "te gosto".
+  /*
+   * O calculo de clitico, sujeito implicito e imperativo mudou de lugar: agora
+   * e feito POR ORACAO, em `analisar()`, la em cima. Antes ficava aqui e valia
+   * para a frase inteira — o que so estava certo enquanto a frase tinha uma
+   * oracao so.
    */
-  const objectPronoun = items.find(
-    (it) =>
-      it.lex.class === 'pronoun' &&
-      firstVerbIndex >= 0 &&
-      it.index > firstVerbIndex &&
-      (it.lex.person === '1s' || it.lex.person === '2s') &&
-      // Conector no meio significa ORACAO NOVA, e o pronome depois dele e
-      // sujeito dela, nao objeto da primeira: "eu como mas EU quero bolo"
-      // virava "eu me como mas quero o bolo".
-      !items.slice(firstVerbIndex + 1, it.index).some((x) => x.lex.class === 'connector'),
-  )
-
-  /**
-   * Qual verbo o clitico acompanha.
-   *
-   * E o ULTIMO verbo antes do pronome, nao o primeiro: em "quero ajudar você"
-   * quem rege o objeto e "ajudar", e colar no modal dava "eu TE quero ajudar".
-   */
-  const cliticVerbIndex = objectPronoun
-    ? ([...items.slice(0, objectPronoun.index)].reverse().find((x) => x.lex.class === 'verb')
-        ?.index ?? -1)
-    : -1
-  const cliticVerb = cliticVerbIndex >= 0 ? items[cliticVerbIndex] : undefined
-  const clitic =
-    objectPronoun && cliticVerb && !cliticVerb.lex.prep
-      ? objectPronoun.lex.person === '1s'
-        ? 'me'
-        : 'te'
-      : null
-
-  // "AJUDAR · EU" nao e "eu ajudo": e um pedido a quem esta ouvindo. Quando o
-  // objeto e a propria pessoa e nao ha sujeito escrito, o sujeito implicito e o
-  // interlocutor, e o verbo vai para a 2a pessoa — "me ajuda", nao "me ajudo".
-  if (!pronoun && clitic === 'me') person = '2s'
-
-  /**
-   * Pedido com sujeito de 2a pessoa explicito nao vira imperativo: "você abra a
-   * porta" nao existe, e "você abre a porta" ja e um pedido em portugues
-   * falado. O marcador so age quando o sujeito esta implicito.
-   */
-  const useImperative =
-    marks.request && !(pronoun && (pronoun.lex.person === '2s' || pronoun.lex.person === '2t'))
 
   /**
    * Elemento que entra em lista coordenada: pronome ou substantivo animado.
@@ -693,11 +748,36 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     verbDone = true
   }
 
+  let oracaoAtual = 0
+
   for (let i = 0; i < items.length; i++) {
     const it = items[i]!
     const { lex, label } = it
     const next = items[i + 1]
     const isPlural = it.index === lastNounIndex
+
+    // Fronteira de oracao: troca o sujeito, a pessoa e o clitico, e zera o
+    // estado que so valia para a oracao anterior. Sem isto o segundo verbo
+    // nunca era conjugado — "eu quero porque eu fome" parava em "porque fome".
+    const c = clauseOf[it.index] ?? 0
+    if (c !== oracaoAtual) {
+      oracaoAtual = c
+      oracao = oracoes[c]!
+      ;({ firstVerbIndex, pronoun, subjectGroup, person, objectPronoun, clitic, cliticVerbIndex } =
+        oracao)
+      useImperative = oracao.useImperative
+      verbDone = false
+      lastNoun = null
+      previousWasNoun = false
+      previousWasSubject = false
+      coordForm = 'finite'
+      regencyPrep = null
+      pendingPrep = null
+      pendingPrepCard = null
+      pendingVerbPrep = null
+      suppressArticle = false
+      lastVerbLabel = null
+    }
 
     // Preposicao escolhida pela pessoa sai ANTES de qualquer coisa que nao
     // saiba emiti-la sozinha. Substantivo, artigo e pronome tratam a pendencia

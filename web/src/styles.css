@@ -2051,3 +2051,95 @@ kbd {
   border-left: 3px solid var(--danger);
   border-radius: 8px;
 }
+
+/* =========================================================================
+   ARRASTAR E CAMPOS — as duas causas de "a tela sai da tela"
+   ========================================================================= */
+
+/* 1. O GESTO.
+ *
+ * `overscroll-behavior` resolve quique e encadeamento, mas nao impede o
+ * navegador de INTERPRETAR um arrasto horizontal como deslocamento da pagina.
+ * `touch-action` impede: aqui o documento so aceita gesto vertical.
+ *
+ * As faixas que de fato rolam na horizontal declaram `pan-x` e continuam
+ * funcionando — a permissao passa a ser explicita, item a item, em vez de
+ * global. */
+body {
+  touch-action: pan-y;
+}
+.tabs__inner,
+.phrases__tabs,
+.marks,
+.sentence__strip,
+.editor__results {
+  touch-action: pan-x;
+}
+.board,
+.overlay__body {
+  touch-action: pan-y;
+}
+
+/* 2. O CAMPO DE TEXTO.
+ *
+ * iOS dá **zoom automático** ao focar um campo com fonte menor que 16px. O
+ * zoom deixa a página maior que a tela, e a partir daí ela desliza para os
+ * lados — o sintoma parece de layout, mas a origem é o teclado abrindo.
+ *
+ * 16px é o piso; `font: inherit` não garante nada porque o corpo pode estar
+ * reduzido pelo ajuste de tamanho de texto. */
+input,
+select,
+textarea {
+  font-size: max(16px, 1rem);
+}
+
+/* --------------------------------------------------------- progresso do roteiro
+
+   Marcar o que já foi dito não é gamificação nem placar: é memória de onde se
+   está, para quem perdeu o fio no meio de uma interação — que é justamente o
+   motivo de o roteiro existir. Nada trava, nada pontua, e "começar de novo"
+   está sempre a um toque. */
+.progresso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.progresso__barra {
+  flex: 1 1 160px;
+  min-width: 0;
+  height: 10px;
+  background: var(--surface-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progresso__barra span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .progresso__barra span {
+    transition: none;
+  }
+}
+
+.progresso__texto {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* Passo já dito: opacidade menor E o número vira ✓ — a distinção não é só por
+   cor nem só por posição (WCAG 1.4.1). */
+.step--done .step__say {
+  opacity: 0.62;
+}
+.step--done .step__n {
+  color: var(--accent);
+}

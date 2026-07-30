@@ -254,6 +254,24 @@ const CASES: Record<string, Case[]> = {
     // Adjetivos em sequencia sao lista.
     { cards: ['eu', 'cansado', 'triste'], expect: 'Eu estou cansado e triste.' },
   ],
+  'subordinação — a frase com duas orações': [
+    // Justificar: a construcao que transforma pedido em explicacao.
+    { cards: ['eu', 'querer', 'bolo', 'porque', 'eu', 'fome'],
+      expect: 'Eu quero o bolo porque eu tenho fome.' },
+    { cards: ['eu', 'não', 'querer', 'porque', 'eu', 'cansado'],
+      expect: 'Eu não quero porque eu estou cansado.' },
+    // Relatar o que o outro disse.
+    { cards: ['mamãe', 'dizer', 'que', 'eu', 'ir', 'escola'],
+      expect: 'A mamãe diz que eu vou pra escola.' },
+    // Adversativa com sujeito proprio em cada oracao.
+    { cards: ['eu', 'comer', 'mas', 'eu', 'querer', 'bolo'],
+      expect: 'Eu como mas eu quero o bolo.' },
+    // Condicional.
+    { cards: ['eu', 'brincar', 'se', 'você', 'deixar'],
+      expect: 'Eu brinco se você deixa.' },
+    // "e" NAO abre oracao: continua sendo coordenacao de verbo.
+    { cards: ['eu', 'querer', 'comer', 'e', 'beber'], expect: 'Eu quero comer e beber.' },
+  ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos
     // errado que forma inexistente.

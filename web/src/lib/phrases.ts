@@ -151,7 +151,134 @@ export const REPAIR_GROUP: PhraseGroup = {
   ],
 }
 
-export const ALL_GROUPS: PhraseGroup[] = [...PHRASE_GROUPS, REPAIR_GROUP]
+
+/**
+ * O que faltava: a terca-feira comum.
+ *
+ * Os sete grupos acima sao todos de VIDA PUBLICA — medico, padaria, escola,
+ * estranho que nao olha a prancha. Uma crianca que so tivesse aquelas frases
+ * poderia pedir socorro e comprar pao, mas nao poderia brigar com o irmao nem
+ * dizer que ama a mae. E e isso que ela mais faria.
+ *
+ * Os grupos abaixo cobrem o que a revisao apontou como ausente por inteiro:
+ * afeto, rotina de casa, conflito com irmao, reclamacao e — o mais importante —
+ * PREVISIBILIDADE. Boa parte da crise de uma crianca autista e sobre nao saber
+ * o que vem depois, e nao havia uma unica frase para perguntar isso.
+ */
+export const HOME_GROUPS: PhraseGroup[] = [
+  {
+    id: 'carinho',
+    name: 'Carinho',
+    icon: '❤',
+    phrases: [
+      { id: 8020, label: 'Eu te amo.' },
+      { id: 7124, label: 'Eu gosto de você.' },
+      { id: 4550, label: 'Quero um abraço.' },
+      { id: 4576, label: 'Me dá um beijo.' },
+      { id: 6611, label: 'Senta comigo.' },
+      { id: 39247, label: 'Fica comigo.' },
+      { id: 6564, label: 'Olha o que eu fiz!' },
+      { id: 9907, label: 'Tô feliz.' },
+      { id: 4658, label: 'Você é legal.' },
+      { id: 8128, label: 'Gostei muito!' },
+      { id: 2606, label: 'Desculpa.' },
+      { id: 31310, label: 'Tudo bem, não foi nada.' },
+    ],
+  },
+  {
+    id: 'casa',
+    name: 'Em casa',
+    icon: '🏠',
+    phrases: [
+      { id: 2458, label: 'Cadê a mamãe?' },
+      { id: 2497, label: 'Cadê o papai?' },
+      { id: 6044, label: 'Vem aqui.' },
+      { id: 6537, label: 'Vem brincar comigo.' },
+      { id: 4570, label: 'Me ajuda aqui.' },
+      { id: 6548, label: 'Eu consigo sozinho.' },
+      { id: 6483, label: 'Deixa eu fazer.' },
+      { id: 32747, label: 'Agora não.' },
+      { id: 32749, label: 'Daqui a pouco.' },
+      { id: 24741, label: 'Não acho.' },
+      { id: 19533, label: 'Perdi uma coisa.' },
+      { id: 5358, label: 'Tá quebrado.' },
+    ],
+  },
+  {
+    id: 'rotina',
+    name: 'Banho e dormir',
+    icon: '🛏',
+    phrases: [
+      { id: 6058, label: 'Não quero tomar banho.' },
+      { id: 4583, label: 'A água tá quente.' },
+      { id: 4652, label: 'A água tá fria.' },
+      { id: 2326, label: 'Não quero escovar os dentes.' },
+      { id: 7233, label: 'Quero trocar de roupa.' },
+      { id: 9919, label: 'A etiqueta tá coçando.' },
+      { id: 3220, label: 'Quero mais um pouquinho.' },
+      { id: 6479, label: 'Não quero dormir ainda.' },
+      { id: 8619, label: 'Deixa a luz acesa.' },
+      { id: 2304, label: 'Fica comigo até eu dormir.' },
+      { id: 24272, label: 'Tive um sonho ruim.' },
+      { id: 25900, label: 'Quero dormir na sua cama.' },
+    ],
+  },
+  {
+    id: 'irmao',
+    name: 'Com meu irmão',
+    icon: '👦',
+    phrases: [
+      { id: 2423, label: 'Ele pegou o meu.' },
+      { id: 7158, label: 'É a minha vez.' },
+      { id: 6537, label: 'Quero brincar também.' },
+      { id: 5707, label: 'Empresta pra mim?' },
+      { id: 27630, label: 'Me deixa em paz.' },
+      { id: 5988, label: 'Sai do meu quarto.' },
+      { id: 12264, label: 'Não é meu.' },
+      { id: 7195, label: 'Não briga comigo.' },
+    ],
+  },
+  {
+    id: 'reclamar',
+    name: 'Não gostei',
+    icon: '✋',
+    phrases: [
+      { id: 5526, label: 'Não gostei disso.' },
+      { id: 6456, label: 'Não quero comer isso.' },
+      { id: 6483, label: 'Quero outra coisa.' },
+      { id: 2532, label: 'Tira isso do meu prato.' },
+      { id: 2470, label: 'Posso comer um doce?' },
+      { id: 30391, label: 'Tô com raiva.' },
+      { id: 2606, label: 'Tô triste.' },
+      { id: 10261, label: 'Tô com medo.' },
+      { id: 35537, label: 'Tô cansado.' },
+      { id: 35531, label: 'Não tenho nada pra fazer.' },
+      { id: 6922, label: 'Eu não fiz de propósito.' },
+      { id: 7195, label: 'Isso não é justo.' },
+    ],
+  },
+  {
+    id: 'previsibilidade',
+    name: 'O que vem agora',
+    icon: '🕐',
+    phrases: [
+      { id: 22620, label: 'O que vai acontecer agora?' },
+      { id: 32749, label: 'E depois?' },
+      { id: 5358, label: 'Quando é que acaba?' },
+      { id: 8053, label: 'Isso vai mudar?' },
+      { id: 32446, label: 'Hoje tem escola?' },
+      { id: 26622, label: 'Não me avisaram.' },
+      { id: 8109, label: 'Falta muito?' },
+      { id: 2339, label: 'Aonde a gente vai?' },
+      { id: 2299, label: 'Não quero ir.' },
+      { id: 6964, label: 'Quero ir pra casa.' },
+      { id: 7072, label: 'Quanto tempo falta?' },
+      { id: 8053, label: 'Eu não quero mudar de planos.' },
+    ],
+  },
+]
+
+export const ALL_GROUPS: PhraseGroup[] = [...PHRASE_GROUPS, REPAIR_GROUP, ...HOME_GROUPS]
 
 /**
  * Frases prontas nao passam pelo motor, entao nao herdam a concordancia de

@@ -28,10 +28,15 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
   const [active, setActive] = useState(0)
   const [step, setStep] = useState(0)
   const [newName, setNewName] = useState('')
+  /** Passos ja falados nesta passagem pelo roteiro. */
+  const [done, setDone] = useState<number[]>([])
   const tabs = useRovingFocus(all.length, setActive)
 
   useEffect(() => tabs.setFocused(active), [active, tabs])
-  useEffect(() => setStep(0), [active])
+  useEffect(() => {
+    setStep(0)
+    setDone([])
+  }, [active])
   useEffect(() => {
     if (active >= all.length) setActive(0)
   }, [active, all.length])
@@ -44,10 +49,18 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
     onChange(mine.map((s) => (s.id === script.id ? fn(s) : s)))
   }
 
+  const total = script?.steps.length ?? 0
+
   const speakStep = (card: Card, i: number) => {
     onSpeak(card)
-    setStep(Math.min(i + 1, (script?.steps.length ?? 1) - 1))
+    setStep(Math.min(i + 1, Math.max(0, total - 1)))
+    // Passo falado fica marcado como cumprido. Nao e pontuacao nem premio: e
+    // memoria de onde se esta, para quem perdeu o fio no meio de uma interacao
+    // — que e o motivo de existir um roteiro.
+    setDone((d) => (d.includes(i) ? d : [...d, i]))
   }
+
+  const concluido = total > 0 && done.length >= total
 
   /** Fontes de passo: sem repetir o que o roteiro ja tem. */
   const candidates = useMemo(() => {
@@ -88,18 +101,61 @@ export function ScriptsPanel({ mine, history, phrases, onSpeak, onChange, onClos
           ))}
         </div>
 
+        {script && total > 0 && (
+          <div className="progresso">
+            <div
+              className="progresso__barra"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={total}
+              aria-valuenow={done.length}
+              aria-label={`${done.length} de ${total} passos`}
+            >
+              <span style={{ width: `${(done.length / total) * 100}%` }} />
+            </div>
+            <p className="progresso__texto">
+              {concluido ? (
+                <strong>Roteiro inteiro dito. ✓</strong>
+              ) : (
+                <>
+                  Passo {Math.min(step + 1, total)} de {total}
+                </>
+              )}
+            </p>
+            {done.length > 0 && (
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  setDone([])
+                  setStep(0)
+                }}
+              >
+                ↺ Começar de novo
+              </button>
+            )}
+          </div>
+        )}
+
         {script && (
           <ol className="steps" aria-label={`Passos de ${script.name}`}>
             {script.steps.map((card, i) => (
-              <li key={`${card.id}-${i}`} className={`step ${i === step ? 'step--now' : ''}`}>
+              <li
+                key={`${card.id}-${i}`}
+                className={`step ${i === step ? 'step--now' : ''} ${
+                  done.includes(i) ? 'step--done' : ''
+                }`}
+              >
                 <span className="step__n" aria-hidden="true">
-                  {i + 1}
+                  {done.includes(i) ? '✓' : i + 1}
                 </span>
                 <button
                   type="button"
                   className="step__say"
                   onClick={() => speakStep(card, i)}
-                  aria-label={`Falar passo ${i + 1}: ${card.label}${i === step ? ' (passo atual)' : ''}`}
+                  aria-label={`Falar passo ${i + 1} de ${total}: ${card.label}${
+                    i === step ? ' — passo atual' : ''
+                  }${done.includes(i) ? ' — já dito' : ''}`}
                 >
                   <Pictogram card={card} />
                   <span>{card.label}</span>

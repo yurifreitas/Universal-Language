@@ -687,6 +687,10 @@ export const LEXICON: Record<string, Lexeme> = {
   então: { class: 'connector' },
   aí: { class: 'connector' },
   'e aí': { class: 'connector' },
+  que: { class: 'connector' },
+  se: { class: 'connector' },
+  senão: { class: 'connector' },
+  'por isso': { class: 'connector' },
 
   de: { class: 'preposition' },
   em: { class: 'preposition' },
