@@ -8,6 +8,7 @@ import {
   loadHistory,
   loadMyPhrases,
   loadScripts,
+  loadScriptStats,
   loadSettings,
   saveCustomBoards,
   saveEdits,
@@ -15,16 +16,32 @@ import {
   saveHistory,
   saveMyPhrases,
   saveScripts,
+  saveScriptStats,
   saveSettings,
 } from './lib/storage'
 import { applyEdits, type BoardEdits, type CustomBoard } from './lib/boardEdits'
 import type { Script } from './lib/scripts'
+import type { ScriptStats } from './lib/ensaio'
 import { speak, speakCue, speechSupported } from './lib/speech'
 import { compose, NO_MARKS, type ArticleMode, type GrammarMarks } from './lib/grammar'
 import { regionalLabel } from './lib/regional'
 import { CORE_STRIP } from './lib/coreStrip'
 import { learn, loadModel, saveModel, suggest, type PredictModel } from './lib/predict'
-import { comecar, elogio, pista, responder, type GameState } from './lib/game'
+import {
+  comecar,
+  elogio,
+  embalo,
+  fraseDaAjuda,
+  mostrarAjuda,
+  pista,
+  inicialDe,
+  responder,
+  TENTATIVAS_ATE_AJUDA,
+  type GameState,
+  type Modo,
+} from './lib/game'
+import { registrarEnsaio, seloDe, vezes } from './lib/ensaio'
+import { loadGameStats, loadPhraseUses, savePhraseUses, saveGameStats } from './lib/storage'
 import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
@@ -88,11 +105,21 @@ export default function App() {
   const [edits, setEdits] = useState<BoardEdits>(loadEdits)
   const [customBoards, setCustomBoards] = useState<CustomBoard[]>(loadCustomBoards)
   const [scripts, setScripts] = useState<Script[]>(loadScripts)
+  /** Quantas vezes cada roteiro foi ensaiado inteiro. Ver `lib/ensaio.ts`. */
+  const [scriptStats, setScriptStats] = useState<ScriptStats>(loadScriptStats)
   /** Modelo de sugestao: pares de palavras que a propria pessoa ja disse. */
   const [predict, setPredict] = useState<PredictModel>(loadModel)
   /** Jogo de achar a palavra. `null` quando nao esta jogando. */
   const [jogo, setJogo] = useState<GameState | null>(null)
   const [jogoFim, setJogoFim] = useState(false)
+  /** Modo escolhido; fica entre uma rodada e a proxima. */
+  const [jogoModo, setJogoModo] = useState<Modo>('nome')
+  /** Rodadas completas por prancha — o selo do jogo. */
+  const [jogoStats, setJogoStats] = useState(loadGameStats)
+  /** Elogio de sequência a mostrar na faixa; some na palavra seguinte. */
+  const [jogoEmbalo, setJogoEmbalo] = useState<string | null>(null)
+  /** Quantas vezes cada frase foi dita — sustenta o grupo "As mais faladas". */
+  const [phraseUses, setPhraseUses] = useState(loadPhraseUses)
   const [boards, setBoards] = useState<Board[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeBoard, setActiveBoard] = useState(0)
@@ -130,6 +157,9 @@ export default function App() {
   useEffect(() => saveEdits(edits), [edits])
   useEffect(() => saveCustomBoards(customBoards), [customBoards])
   useEffect(() => saveScripts(scripts), [scripts])
+  useEffect(() => saveScriptStats(scriptStats), [scriptStats])
+  useEffect(() => saveGameStats(jogoStats), [jogoStats])
+  useEffect(() => savePhraseUses(phraseUses), [phraseUses])
   useEffect(() => saveModel(predict), [predict])
 
   useEffect(() => {
@@ -313,6 +343,9 @@ export default function App() {
       // ser dita nao e fala, e aprender com ela ensinaria o modelo a sugerir os
       // enganos.
       if (sentence.length > 1) setPredict((m) => learn(m, sentence))
+      // Contagem de uso da frase. Alimenta so o grupo "As mais faladas" — nunca
+      // reordena celula nenhuma, que e a regra dura da prancha (LAMP).
+      setPhraseUses((u) => ({ ...u, [phrase.label]: (u[phrase.label] ?? 0) + 1 }))
       setHistory((h) => {
         // Repetir a mesma frase nao cria entrada nova: o historico e atalho,
         // e uma lista com a mesma frase seis vezes nao ajuda ninguem.
@@ -334,23 +367,46 @@ export default function App() {
       // Com o jogo ativo, tocar um card e uma RESPOSTA — nao entra na frase.
       // Errar nao penaliza: o app so repete a pista.
       if (jogo) {
+        // No modo silencioso a pista e escrita: nada aqui fala. E o modo de
+        // jogar na sala de espera, e o de quem treina LEITURA — ouvir a palavra
+        // resolveria o exercicio antes de ele comecar.
+        const dizer = (texto: string) => {
+          if (jogo.modo !== 'silencio') speak(texto, settings)
+        }
         const r = responder(jogo, card, cards)
+
         if (!r.acertou) {
-          speak(pista(regionalLabel(jogo.target.label, settings.region), jogo.acertos), settings)
+          const proximo = r.proximo
+          if (proximo) setJogo(proximo)
+          // Passou de duas tentativas: em vez de repetir a pista pela quinta
+          // vez, o app ACENDE a celula certa e diz onde esta. Insistir com a
+          // mesma frase não ensina localização — mostrar, sim.
+          if (proximo && mostrarAjuda(proximo)) {
+            dizer(fraseDaAjuda(regionalLabel(jogo.target.label, settings.region)))
+          } else {
+            dizer(pista(regionalLabel(jogo.target.label, settings.region), jogo.acertos, jogo.modo))
+          }
           return
         }
+
         if (settings.sounds) earcon.select()
         if (r.terminou) {
           setJogo(null)
           setJogoFim(true)
-          speak('Você achou todas! Muito bem.', settings)
+          setJogoEmbalo(null)
+          if (board) setJogoStats((s) => registrarEnsaio(s, board.id))
+          dizer('Você achou todas! Muito bem.')
         } else if (r.proximo) {
           setJogo(r.proximo)
-          const fala = `${elogio(jogo.acertos)} ${pista(
+          const emb = embalo(r.proximo.sequencia)
+          setJogoEmbalo(emb)
+          if (emb && settings.sounds) earcon.board()
+          const fala = `${elogio(jogo.acertos)}${emb ? ` ${emb}` : ''} ${pista(
             regionalLabel(r.proximo.target.label, settings.region),
             r.proximo.acertos,
+            r.proximo.modo,
           )}`
-          speak(fala, settings)
+          dizer(fala)
         }
         return
       }
@@ -361,7 +417,26 @@ export default function App() {
       if (settings.speakOnTap) speak(regionalLabel(card.label, settings.region), settings)
       setPanel('none')
     },
-    [settings, jogo, cards],
+    [settings, jogo, cards, board],
+  )
+
+  /**
+   * Comeca uma rodada no modo pedido. Fica aqui, e nao dentro do botao, porque
+   * quatro lugares diferentes iniciam jogo: a barra superior, o seletor de
+   * modo, "jogar de novo" e a tela de fim.
+   */
+  const comecarJogo = useCallback(
+    (modo: Modo) => {
+      const inicio = comecar(cards, undefined, undefined, modo)
+      setJogoModo(modo)
+      setJogoFim(false)
+      setJogoEmbalo(null)
+      setJogo(inicio)
+      if (inicio && modo !== 'silencio') {
+        speak(pista(regionalLabel(inicio.target.label, settings.region), 0, modo), settings)
+      }
+    },
+    [cards, settings],
   )
 
   const pickByIndex = useCallback(
@@ -644,12 +719,7 @@ export default function App() {
                     onClick={() => {
                       if (t.key === 'lock') return patch({ locked: true })
                       if (t.key === 'jogo') {
-                        const inicio = comecar(cards)
-                        setJogoFim(false)
-                        setJogo(inicio)
-                        if (inicio) {
-                          speak(pista(regionalLabel(inicio.target.label, settings.region), 0), settings)
-                        }
+                        comecarJogo(jogoModo)
                         return
                       }
                       setPanel(t.key)
@@ -672,48 +742,117 @@ export default function App() {
           <div className="jogo" role="status">
             {jogo ? (
               <>
-                <p className="jogo__pista">
-                  <span className="jogo__cade">Cadê</span>{' '}
-                  <strong>{regionalLabel(jogo.target.label, settings.region)}</strong>?
-                </p>
+                <div className="jogo__pergunta">
+                  <p className="jogo__pista">
+                    {jogo.modo === 'inicial' ? (
+                      <>
+                        <span className="jogo__cade">Qual começa com</span>{' '}
+                        <strong>{inicialDe(jogo.target.label)}</strong>?
+                      </>
+                    ) : (
+                      <>
+                        <span className="jogo__cade">Cadê</span>{' '}
+                        <strong>{regionalLabel(jogo.target.label, settings.region)}</strong>?
+                      </>
+                    )}
+                  </p>
+
+                  {/* Progresso em bolinhas e não só em número: a criança que
+                      ainda não lê precisa ver o quanto falta. */}
+                  <ol className="jogo__pontos" aria-hidden="true">
+                    {Array.from({ length: jogo.total }, (_, i) => (
+                      <li
+                        key={i}
+                        className={`jogo__ponto ${i < jogo.acertos ? 'jogo__ponto--feito' : ''} ${
+                          i === jogo.acertos ? 'jogo__ponto--agora' : ''
+                        }`}
+                      />
+                    ))}
+                  </ol>
+
+                  {/* A sequência aparece e some sozinha. É ritmo, não placar:
+                      quebrar não tira nada, e não há nada para "perder". */}
+                  {jogoEmbalo && <span className="jogo__embalo">🔥 {jogoEmbalo}</span>}
+                  {mostrarAjuda(jogo) && (
+                    <span className="jogo__ajuda">👉 Está aceso na prancha</span>
+                  )}
+                </div>
+
                 <div className="jogo__acoes">
                   <span className="jogo__placar" aria-live="polite">
                     {jogo.acertos} de {jogo.total}
                   </span>
+                  {jogo.modo !== 'silencio' && (
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      onClick={() =>
+                        speak(
+                          pista(
+                            regionalLabel(jogo.target.label, settings.region),
+                            jogo.acertos,
+                            jogo.modo,
+                          ),
+                          settings,
+                        )
+                      }
+                    >
+                      🔊 <span className="btn__text">Repetir</span>
+                    </button>
+                  )}
+                  {/* Pedir ajuda é um botão, e não só uma consequência de errar
+                      duas vezes: quem já sabe que não sabe não deveria precisar
+                      errar para ser ajudado. */}
                   <button
                     type="button"
                     className="btn btn--ghost"
-                    onClick={() =>
-                      speak(
-                        pista(regionalLabel(jogo.target.label, settings.region), jogo.acertos),
-                        settings,
-                      )
-                    }
+                    onClick={() => {
+                      setJogo({ ...jogo, tentativas: TENTATIVAS_ATE_AJUDA })
+                      if (jogo.modo !== 'silencio') {
+                        speak(
+                          fraseDaAjuda(regionalLabel(jogo.target.label, settings.region)),
+                          settings,
+                        )
+                      }
+                    }}
                   >
-                    🔊 Repetir
+                    💡 <span className="btn__text">Mostra</span>
                   </button>
-                  <button type="button" className="btn btn--ghost" onClick={() => setJogo(null)}>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => {
+                      setJogo(null)
+                      setJogoEmbalo(null)
+                    }}
+                  >
                     Parar
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <p className="jogo__pista">
-                  <strong>Você achou todas!</strong>
-                </p>
+                <div className="jogo__pergunta">
+                  <p className="jogo__pista">
+                    <span className="jogo__selo" aria-hidden="true">
+                      {seloDe(board ? vezes(jogoStats, board.id) : 0)?.icone ?? '🌱'}
+                    </span>{' '}
+                    <strong>Você achou todas!</strong>
+                  </p>
+                  {board && (
+                    <span className="jogo__embalo">
+                      {vezes(jogoStats, board.id)}
+                      {vezes(jogoStats, board.id) === 1 ? ' rodada' : ' rodadas'} nesta prancha
+                      {seloDe(vezes(jogoStats, board.id)) &&
+                        ` · ${seloDe(vezes(jogoStats, board.id))!.nome}`}
+                    </span>
+                  )}
+                </div>
                 <div className="jogo__acoes">
                   <button
                     type="button"
                     className="btn btn--speak"
-                    onClick={() => {
-                      const novo = comecar(cards)
-                      setJogoFim(false)
-                      setJogo(novo)
-                      if (novo) {
-                        speak(pista(regionalLabel(novo.target.label, settings.region), 0), settings)
-                      }
-                    }}
+                    onClick={() => comecarJogo(jogoModo)}
                   >
                     Jogar de novo
                   </button>
@@ -723,6 +862,28 @@ export default function App() {
                 </div>
               </>
             )}
+          </div>
+
+          {/* Escolher o modo DURANTE o jogo troca a rodada na hora: quem abriu
+              no modo errado não precisa parar, voltar e começar de novo. */}
+          <div className="jogo__modos" role="group" aria-label="Modo do jogo">
+            {(
+              [
+                { id: 'nome', icone: '🔊', nome: 'Ouvir a palavra' },
+                { id: 'inicial', icone: '🔤', nome: 'Começa com…' },
+                { id: 'silencio', icone: '🤫', nome: 'Sem som' },
+              ] as const
+            ).map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={`jogo__modo ${jogoModo === m.id ? 'jogo__modo--on' : ''}`}
+                aria-pressed={jogoModo === m.id}
+                onClick={() => comecarJogo(m.id)}
+              >
+                <span aria-hidden="true">{m.icone}</span> {m.nome}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -868,6 +1029,7 @@ export default function App() {
             {...(settings.locked ? {} : { onToggleFavorite: toggleFavorite })}
             isFavorite={isFavorite}
             scan={scan}
+            {...(jogo && mostrarAjuda(jogo) ? { highlightLabel: jogo.target.label } : {})}
           />
         </div>
       </main>
@@ -885,7 +1047,10 @@ export default function App() {
           settings={settings}
           mine={myPhrases}
           history={history}
+          uses={phraseUses}
+          baseUrl={BASE}
           current={currentPhrase}
+          onMine={setMyPhrases}
           onSpeak={say}
           onSave={(p) =>
             setMyPhrases((list) =>
@@ -902,6 +1067,10 @@ export default function App() {
           mine={scripts}
           history={history}
           phrases={myPhrases}
+          baseUrl={BASE}
+          stats={scriptStats}
+          sounds={settings.sounds}
+          onStats={setScriptStats}
           onSpeak={say}
           onChange={setScripts}
           onClose={() => setPanel('none')}
@@ -928,6 +1097,7 @@ export default function App() {
           edits={edits}
           customBoards={customBoards}
           scripts={scripts}
+          scriptStats={scriptStats}
           onChange={patch}
           onImport={(p) => {
             setSettings((s) => ({ ...s, ...p.settings }))
@@ -936,6 +1106,7 @@ export default function App() {
             setEdits(p.edits ?? {})
             setCustomBoards(p.customBoards ?? [])
             setScripts(p.scripts ?? [])
+            setScriptStats(p.scriptStats ?? {})
           }}
           onClose={() => setPanel('none')}
         />

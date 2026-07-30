@@ -149,6 +149,20 @@ export function handStep(text: string, icon = STEP_ICON): Card {
   return { id: icon, label: text.trim() }
 }
 
+/**
+ * A figura que representa o roteiro na lista de escolha.
+ *
+ * Roteiro criado pela pessoa nasce com o pictograma generico — e se a lista
+ * mostrasse esse generico, todos os roteiros proprios ficariam identicos ali,
+ * que e justamente onde a figura precisa distinguir um do outro. Entao, sem
+ * escolha explicita, vale a figura do primeiro passo: e o que a pessoa
+ * associa aquele roteiro.
+ */
+export function scriptIcon(script: Script): number {
+  if (script.icon !== STEP_ICON) return script.icon
+  return script.steps[0]?.id ?? STEP_ICON
+}
+
 /** Troca o texto de um passo, preservando o pictograma. */
 export function editStep(script: Script, index: number, label: string): Script {
   const text = label.trim()

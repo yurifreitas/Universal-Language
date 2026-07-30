@@ -15,6 +15,12 @@ interface Props {
   onToggleFavorite?: (card: Card) => void
   isFavorite?: (card: Card) => boolean
   scan?: ScanState
+  /**
+   * Celula acesa por AJUDA do jogo: depois de duas tentativas, o app mostra
+   * onde esta em vez de repetir a pista. Nao e selecao nem foco — e um dedo
+   * apontando. Ver `lib/game.ts`.
+   */
+  highlightLabel?: string
   emptyMessage?: string
   /**
    * Celulas menores e rotulo de varias linhas. Para frases prontas: o texto e
@@ -46,6 +52,7 @@ export function CardGrid({
   onToggleFavorite,
   isFavorite,
   scan,
+  highlightLabel,
   emptyMessage,
   dense,
   favoriteLabel,
@@ -67,6 +74,23 @@ export function CardGrid({
 
   // A prancha mudou: o foco volta ao inicio, senao apontaria para celula ausente.
   useEffect(() => setFocus(0), [cards])
+
+  /**
+   * A celula acesa pela ajuda do jogo precisa estar VISIVEL.
+   *
+   * Sem isto o app dizia "está aceso na prancha" apontando para um card tres
+   * linhas abaixo da dobra — a ajuda existia e a crianca continuava sem achar,
+   * que e pior do que nao ter ajudado. `block: 'nearest'` rola o minimo
+   * necessario: se ja esta na tela, nada se mexe, e a prancha nao pula.
+   */
+  useEffect(() => {
+    if (!highlightLabel) return
+    const i = cards.findIndex((c) => c.label === highlightLabel)
+    if (i < 0) return
+    // Quem pediu menos movimento não recebe rolagem animada (WCAG 2.3.3).
+    const suave = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    refs.current[i]?.scrollIntoView({ block: 'nearest', behavior: suave ? 'smooth' : 'auto' })
+  }, [highlightLabel, cards])
 
   const moveFocus = useCallback(
     (next: number) => {
@@ -137,6 +161,7 @@ export function CardGrid({
         const scanRow = scan?.phase === 'rows' && Math.floor(i / cols) === scan.row
         const scanCell = scan?.phase === 'cells' && scan.index === i
         const fav = isFavorite?.(card) ?? false
+        const aceso = highlightLabel !== undefined && card.label === highlightLabel
         // Chave de Fitzgerald: a cor da celula codifica a CLASSE da palavra, e
         // nao a categoria tematica. Nao e decoracao — e a pista que sustenta a
         // construcao de frase quando a leitura ainda nao esta formada. Fica
@@ -156,7 +181,9 @@ export function CardGrid({
               refs.current[i] = el
             }}
             type="button"
-            className={`card ${scanRow ? 'card--scan-row' : ''} ${scanCell ? 'card--scan-cell' : ''}`}
+            className={`card ${scanRow ? 'card--scan-row' : ''} ${scanCell ? 'card--scan-cell' : ''} ${
+              aceso ? 'card--ajuda' : ''
+            }`}
             {...(wordClass ? { 'data-class': wordClass } : {})}
             // Roving tabindex: so uma celula entra na ordem de tabulacao, para
             // que Tab pule a grade inteira em vez de 149 paradas.

@@ -4,6 +4,7 @@ import { loadVoices, portugueseVoices, speak } from '../lib/speech'
 import { exportProfile, parseProfile, type Profile } from '../lib/storage'
 import type { BoardEdits, CustomBoard } from '../lib/boardEdits'
 import type { Script } from '../lib/scripts'
+import type { ScriptStats } from '../lib/ensaio'
 import { REGIONS } from '../lib/regional'
 import { useMediaQuery } from '../lib/useMediaQuery'
 import { Dialog } from './Dialog'
@@ -28,6 +29,7 @@ interface Props {
   edits: BoardEdits
   customBoards: CustomBoard[]
   scripts: Script[]
+  scriptStats: ScriptStats
   onChange: (patch: Partial<Settings>) => void
   onImport: (profile: Profile) => void
   onClose: () => void
@@ -40,6 +42,7 @@ export function SettingsPanel({
   edits,
   customBoards,
   scripts,
+  scriptStats,
   onChange,
   onImport,
   onClose,
@@ -76,7 +79,7 @@ export function SettingsPanel({
   const [transfer, setTransfer] = useState<string | null>(null)
 
   const download = () => {
-    const blob = new Blob([exportProfile({ settings, favorites, phrases, edits, customBoards, scripts })], {
+    const blob = new Blob([exportProfile({ settings, favorites, phrases, edits, customBoards, scripts, scriptStats })], {
       type: 'application/json',
     })
     const url = URL.createObjectURL(blob)

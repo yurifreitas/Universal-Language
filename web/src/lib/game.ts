@@ -30,6 +30,24 @@ import type { Card } from '../types'
  *    penalizaria exatamente quem tem comprometimento motor.
  */
 
+/**
+ * MODOS.
+ *
+ * O jogo nasceu com um so: ouvir a palavra e achar a celula. Os outros dois
+ * treinam a mesma habilidade de localizacao por caminhos diferentes, e cada um
+ * serve a um momento — quem ainda nao le so consegue o primeiro; quem esta
+ * formando leitura ganha muito com o segundo.
+ *
+ *  - `nome`     "Cadê a água?" — busca por palavra falada.
+ *  - `inicial`  "Qual começa com A?" — consciencia fonologica, e o unico modo
+ *               em que MAIS DE UMA resposta esta certa: vale qualquer card
+ *               daquela letra. Aceitar so o sorteado seria mentir para a
+ *               crianca que acertou.
+ *  - `silencio` a pista aparece ESCRITA e nao e falada. Para treinar leitura, e
+ *               para jogar em lugar onde nao se pode ter som.
+ */
+export type Modo = 'nome' | 'inicial' | 'silencio'
+
 export interface GameState {
   /** A palavra que se procura agora. */
   target: Card
@@ -38,9 +56,37 @@ export interface GameState {
   acertos: number
   /** Quantas palavras tem a rodada inteira. */
   total: number
+  modo: Modo
+  /**
+   * Toques fora do alvo NESTA palavra. Nao e contador de erro para placar
+   * nenhum — e o gatilho da ajuda: passou de dois, o app acende a celula certa
+   * em vez de repetir a pista pela quinta vez. Zera a cada palavra nova.
+   */
+  tentativas: number
+  /**
+   * Acertos seguidos sem precisar de ajuda. Existe para dar RITMO — "engatou" —
+   * e nunca aparece como nota: quebrar a sequencia nao tira nada, e a proxima
+   * palavra comeca igual.
+   */
+  sequencia: number
 }
 
 export const RODADA_PADRAO = 5
+
+/** Depois de duas tentativas, a celula certa acende. Ajudar > insistir. */
+export const TENTATIVAS_ATE_AJUDA = 2
+
+/** Primeira letra, sem acento e em maiuscula — a pista do modo `inicial`. */
+export function inicialDe(label: string): string {
+  return (
+    label
+      .trim()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .charAt(0)
+      .toUpperCase() || '?'
+  )
+}
 
 /**
  * Sorteia a proxima palavra entre as da prancha aberta, sem repetir.
@@ -66,10 +112,19 @@ export function comecar(
   cards: Card[],
   total = RODADA_PADRAO,
   aleatorio: () => number = Math.random,
+  modo: Modo = 'nome',
 ): GameState | null {
   const target = sortear(cards, [], aleatorio)
   if (!target) return null
-  return { target, usadas: [target.label], acertos: 0, total: Math.min(total, cards.length) }
+  return {
+    target,
+    usadas: [target.label],
+    acertos: 0,
+    total: Math.min(total, cards.length),
+    modo,
+    tentativas: 0,
+    sequencia: 0,
+  }
 }
 
 export interface Resultado {
@@ -79,24 +134,54 @@ export interface Resultado {
   terminou: boolean
 }
 
+/**
+ * O toque acertou?
+ *
+ * No modo `inicial` a pergunta e "qual comeca com A" — entao QUALQUER card
+ * daquela letra vale. Exigir justamente o que foi sorteado transformaria um
+ * acerto legitimo em erro, que e a pior coisa que um jogo de aprendizado pode
+ * fazer.
+ */
+export function acerta(estado: GameState, escolhido: Card): boolean {
+  if (estado.modo === 'inicial') {
+    return inicialDe(escolhido.label) === inicialDe(estado.target.label)
+  }
+  return escolhido.label === estado.target.label
+}
+
 export function responder(
   estado: GameState,
   escolhido: Card,
   cards: Card[],
   aleatorio: () => number = Math.random,
 ): Resultado {
-  // Errar nao muda nada: o estado permanece e a pista pode ser repetida. Nao ha
-  // contador de erro nem penalidade — ver a decisao 2 no topo do arquivo.
-  if (escolhido.label !== estado.target.label) {
-    return { acertou: false, proximo: estado, terminou: false }
+  // Errar nao encerra nem penaliza: o estado permanece e a pista pode ser
+  // repetida — ver a decisao 2 no topo do arquivo. O que muda e `tentativas`,
+  // que existe so para o app saber a hora de AJUDAR, e `sequencia`, que volta
+  // a zero sem tirar nada de ninguem.
+  if (!acerta(estado, escolhido)) {
+    return {
+      acertou: false,
+      terminou: false,
+      proximo: { ...estado, tentativas: estado.tentativas + 1, sequencia: 0 },
+    }
   }
 
   const acertos = estado.acertos + 1
+  // Achou de primeira, sem precisar da celula acesa: a sequencia continua.
+  const sequencia = estado.tentativas === 0 ? estado.sequencia + 1 : 0
+
   if (acertos >= estado.total) {
     return { acertou: true, proximo: null, terminou: true }
   }
 
-  const proximaPalavra = sortear(cards, estado.usadas, aleatorio)
+  // No modo `inicial` o acerto pode ser um card diferente do sorteado; ele
+  // tambem entra em `usadas`, senao volta a ser sorteado logo em seguida.
+  const usadas = estado.usadas.includes(escolhido.label)
+    ? estado.usadas
+    : [...estado.usadas, escolhido.label]
+
+  const proximaPalavra = sortear(cards, usadas, aleatorio)
   if (!proximaPalavra) return { acertou: true, proximo: null, terminou: true }
 
   return {
@@ -104,24 +189,62 @@ export function responder(
     terminou: false,
     proximo: {
       target: proximaPalavra,
-      usadas: [...estado.usadas, proximaPalavra.label],
+      usadas: [...usadas, proximaPalavra.label],
       acertos,
       total: estado.total,
+      modo: estado.modo,
+      tentativas: 0,
+      sequencia,
     },
   }
+}
+
+/** A celula certa deve acender? Ajuda depois de duas tentativas, nunca antes. */
+export function mostrarAjuda(estado: GameState): boolean {
+  return estado.tentativas >= TENTATIVAS_ATE_AJUDA
 }
 
 /**
  * A pista falada. Varia a formula de proposito: ouvir sempre a mesma frase
  * vira ruido, e a variacao mantem a atencao sem exigir nada novo de quem ouve.
  */
-export function pista(target: string, rodada: number): string {
+export function pista(target: string, rodada: number, modo: Modo = 'nome'): string {
+  if (modo === 'inicial') {
+    const letra = inicialDe(target)
+    const formas = [
+      `Qual começa com ${letra}?`,
+      `Acha uma palavra com ${letra}.`,
+      `Cadê a palavra que começa com ${letra}?`,
+    ]
+    return formas[rodada % formas.length] ?? `Qual começa com ${letra}?`
+  }
   const formas = [`Cadê ${target}?`, `Acha ${target}.`, `Onde está ${target}?`, `Mostra ${target}.`]
   return formas[rodada % formas.length] ?? `Cadê ${target}?`
+}
+
+/** A mesma pista, escrita — no modo silencioso ela e a unica que existe. */
+export function pistaEscrita(target: string, modo: Modo): string {
+  return modo === 'inicial' ? `Começa com ${inicialDe(target)}` : target
 }
 
 /** Elogio do acerto. Curto, e sem exagero — o objetivo e seguir, nao celebrar. */
 export function elogio(rodada: number): string {
   const formas = ['Isso!', 'Achou!', 'Muito bem!', 'É essa mesmo!']
   return formas[rodada % formas.length] ?? 'Isso!'
+}
+
+/**
+ * O que dizer quando engata uma sequencia. So a partir de tres, e so de vez em
+ * quando: um elogio a cada acerto vira ruido e para de significar alguma coisa.
+ */
+export function embalo(sequencia: number): string | null {
+  if (sequencia === 3) return 'Três seguidas!'
+  if (sequencia === 5) return 'Cinco seguidas, olha só.'
+  if (sequencia > 0 && sequencia % 10 === 0) return `${sequencia} seguidas!`
+  return null
+}
+
+/** Quando a celula acende, o app diz o que fez — a ajuda nao pode ser silenciosa. */
+export function fraseDaAjuda(target: string): string {
+  return `Está aqui, ó: ${target}.`
 }

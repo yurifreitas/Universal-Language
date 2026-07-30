@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS, type Settings } from '../types'
 import type { BoardEdits, CustomBoard } from './boardEdits'
 import type { Script } from './scripts'
+import type { ScriptStats } from './ensaio'
 
 const KEY = 'autista-caa:settings:v1'
 
@@ -191,6 +192,94 @@ export function saveScripts(scripts: Script[]): void {
   }
 }
 
+const STATS_KEY = 'autista-caa:script-stats:v1'
+
+/**
+ * Quantas vezes cada roteiro foi ensaiado inteiro. Ver `lib/ensaio.ts` para o
+ * que isto e — e para o que ele deliberadamente nao mede.
+ */
+export function loadScriptStats(): ScriptStats {
+  try {
+    const raw = localStorage.getItem(STATS_KEY)
+    if (!raw) return {}
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    // Sem filtrar os valores aqui de proposito: `vezes()` ja trata numero
+    // quebrado, negativo e fracionario, e ha teste para isso.
+    return parsed as ScriptStats
+  } catch {
+    return {}
+  }
+}
+
+export function saveScriptStats(stats: ScriptStats): void {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats))
+  } catch {
+    /* idem */
+  }
+}
+
+/* ------------------------------------------------------------------ jogo */
+
+const GAME_KEY = 'autista-caa:game-stats:v1'
+
+/**
+ * Rodadas do "Cadê?" completadas, por prancha. Mesma forma e mesma politica dos
+ * ensaios de roteiro: conta presenca, nunca acerto — ver `lib/ensaio.ts`.
+ */
+export function loadGameStats(): ScriptStats {
+  try {
+    const raw = localStorage.getItem(GAME_KEY)
+    if (!raw) return {}
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed as ScriptStats
+  } catch {
+    return {}
+  }
+}
+
+export function saveGameStats(stats: ScriptStats): void {
+  try {
+    localStorage.setItem(GAME_KEY, JSON.stringify(stats))
+  } catch {
+    /* idem */
+  }
+}
+
+/* --------------------------------------------------------- uso de frases */
+
+const USES_KEY = 'autista-caa:phrase-uses:v1'
+
+/**
+ * Quantas vezes cada frase pronta foi dita.
+ *
+ * Serve a UM proposito: montar o grupo "As mais faladas", que poupa procurar
+ * numa lista de sete grupos a mesma frase de sempre. **Nao reordena grade
+ * nenhuma** — o grupo e separado, e a posicao de toda celula existente
+ * continua onde estava (LAMP). Nada disto vira placar.
+ */
+export function loadPhraseUses(): ScriptStats {
+  try {
+    const raw = localStorage.getItem(USES_KEY)
+    if (!raw) return {}
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed as ScriptStats
+  } catch {
+    return {}
+  }
+}
+
+export function savePhraseUses(uses: ScriptStats): void {
+  try {
+    localStorage.setItem(USES_KEY, JSON.stringify(uses))
+  } catch {
+    /* idem */
+  }
+}
+
 /* -------------------------------------------------------------- perfil */
 
 export interface Profile {
@@ -202,6 +291,8 @@ export interface Profile {
   edits?: BoardEdits
   customBoards?: CustomBoard[]
   scripts?: Script[]
+  /** Ensaios de roteiro. Ausente em perfis exportados antes do modo ensaio. */
+  scriptStats?: ScriptStats
 }
 
 /**
@@ -229,6 +320,10 @@ export function parseProfile(raw: string): Profile | null {
       edits: typeof p.edits === 'object' && p.edits ? p.edits : {},
       customBoards: Array.isArray(p.customBoards) ? p.customBoards : [],
       scripts: Array.isArray(p.scripts) ? p.scripts : [],
+      scriptStats:
+        typeof p.scriptStats === 'object' && p.scriptStats && !Array.isArray(p.scriptStats)
+          ? p.scriptStats
+          : {},
     }
   } catch {
     return null
