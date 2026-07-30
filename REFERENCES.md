@@ -99,7 +99,7 @@ listas construídas só por frequência sub-representam conceitos relacionais.
 
 O acervo tem 13.801 pictogramas. Exibir todos na tela inicial produz uma pessoa
 navegando categorias em vez de comunicando. A prancha **Núcleo** tem 32 células
-curadas; as outras 9 pranchas somam 141 — 173 no total. O resto do acervo é periferia,
+curadas; as outras 10 pranchas somam 165 — 197 no total. O resto do acervo é periferia,
 alcançável por busca.
 
 ---
@@ -201,6 +201,34 @@ comerciais se apresenta ao sistema operacional (emulam teclado).
 ---
 
 ## 6. Acessibilidade — normas
+
+### 6.0 A norma brasileira que vale para este app
+
+> **ABNT NBR 17225:2025 — Acessibilidade em conteudo e aplicacoes web:
+> requisitos.** ABNT / Ceweb.br / NIC.br, publicada em **11 de marco de 2025**,
+> 69 paginas, ~178 especialistas.
+> [Resumo (IFRS)](https://cta.ifrs.edu.br/abnt-nbr-17225-2025-acessibilidade-em-conteudo-e-aplicacoes-web-requisitos/) ·
+> [Texto (Camara dos Deputados)](https://www2.camara.leg.br/a-camara/estruturaadm/gestao-na-camara-dos-deputados/responsabilidade-social-e-ambiental/acessibilidade/pdfs/ABNTNBR17225AcessibilidadeDigitalparaWeb.pdf)
+
+E a norma **brasileira** de acessibilidade web, alinhada a WCAG 2.2. Como este
+app e uma PWA, ele cai sob ela — e nao sob a NBR 17060, que e de aplicativo
+movel nativo. Citar uma norma ABNT em portugues tem peso institucional diante de
+escola e de orgao publico que citar WCAG nao tem.
+
+> **ABNT NBR 17060:2022 — Acessibilidade em aplicativos de dispositivos moveis.**
+> [NIC.br](https://nic.br/noticia/releases/norma-da-abnt-sobre-acessibilidade-para-dispositivos-moveis-torna-a-navegacao-mais-inclusiva/) ·
+> analise: [IHC/ACM 2024](https://dl.acm.org/doi/fullHtml/10.1145/3638067.3638121)
+
+Primeira norma brasileira a cobrir explicitamente elemento nao textual: toque,
+**tamanho da area de toque**, descricao de botao, legenda. Vale se o app for
+empacotado como aplicativo movel — e ai o piso de 88px vira conformidade
+domestica, nao so recomendacao internacional. Quando o app e produto de consumo,
+o CDC torna esses requisitos exigiveis do fornecedor.
+
+**Sobre o eMAG:** segue na versao **3.1, de abril de 2014**, sem atualizacao. A
+referencia atual para web no Brasil e a NBR 17225:2025.
+
+
 
 ### WCAG 2.2 — tamanho de alvo
 
@@ -320,7 +348,7 @@ Levantamento que originou o projeto.
 
 Registro honesto do que **não** está fundamentado:
 
-1. **A curadoria das 173 palavras é nossa**, informada pela literatura de núcleo,
+1. **A curadoria das 197 palavras é nossa**, informada pela literatura de núcleo,
    mas não validada com usuários. Precisa de teste com fonoaudiólogos.
 2. **A escolha de qual pictograma representa cada palavra** usa uma regra
    heurística (prefere `aac`, evita esquemático, menor id). Não há evidência de
@@ -332,3 +360,144 @@ Registro honesto do que **não** está fundamentado:
 5. **Não há dados de uso.** Por decisão de privacidade, o app não coleta nada —
    o que significa que melhorias dependem de observação presencial, não de
    telemetria.
+
+---
+
+## 12. Revisao de 2026 — o que a literatura recente mudou aqui
+
+Levantamento novo, posterior a primeira redacao deste documento. Cada item traz
+**o que a fonte afirma** e **o que mudou no produto por causa dela** — referencia
+que nao muda nada nao entra.
+
+### 12.1 Comentar e o ato comunicativo negligenciado
+
+> Spencer, T. D., Tonsing, K. & Dada, S. (2025). *AAC interventions that promote
+> commenting: a systematic review.* Augmentative and Alternative Communication.
+> [DOI 10.1080/07434618.2025.2477694](https://www.tandfonline.com/doi/full/10.1080/07434618.2025.2477694)
+
+**Catorze estudos de caso unico no mundo inteiro** sobre ensinar a comentar,
+contra centenas sobre ensinar a pedir. Comentar e o que sustenta proximidade
+social e troca de informacao.
+
+> Chavers Edgar, T., Schlosser, R. & Koul, R. (2024). *Effects of an AAC
+> Intervention Package on Socio-Communicative Behaviors Between Minimally
+> Speaking Autistic Children and Their Peers.* AJSLP 33(4), 1619-1638.
+> [PubMed](https://pubmed.ncbi.nlm.nih.gov/38771825/)
+
+Ensino sistematico com saida de voz produziu **tres** comportamentos distintos —
+pedir a vez, **responder pergunta** e **comentar** — e com pares, nao com adulto.
+
+**Consequencia aqui:** prancha **Comentar** (24 celulas), acrescentada ao fim
+para nao mover nenhuma posicao ja aprendida. Traz o que faltava: comentario
+avaliativo (*gostei, nao gostei, legal, chato*), marcadores de reacao (*nossa,
+serio, eu tambem*), **resposta a pergunta** (*sim, nao, nao sei, talvez*) e
+devolucao de turno (*e voce?*). Antes o app suportava bem uma unica funcao —
+pedir —, que e justamente o limite do PECS que a secao 1 diz superar.
+
+### 12.2 O aparelho nao e melhor que a figura para pedir
+
+> Pak, N. S., Bailey, K. M., Ledford, J. R. & Kaiser, A. P. (2023). *Comparing
+> Interventions With Speech-Generating Devices and Other AAC Modes: A
+> Meta-Analysis.* AJSLP 32(2), 786-802.
+> [PubMed](https://pubmed.ncbi.nlm.nih.gov/36812483/)
+
+19 estudos, 66 participantes: dispositivo de fala e troca de figuras sao
+**equivalentes** para ensinar pedido; o dispositivo supera o sinal manual. Quem
+preferia figura aprendia melhor com figura.
+
+**Consequencia aqui:** derruba qualquer alegacao de que este app substitui o
+PECS. O ganho dele e outro — volume de vocabulario, fala sintetizada, varredura,
+motor de frases — e a preferencia da pessoa e variavel clinica, nao detalhe.
+
+> Therrien, M. C. S., Whalon, K., Nunes, D., Marti, P. & Sellers, A. (2025).
+> *A Systematic Review of AAC Interventions Using Speech Generating Devices for
+> Autistic Preschoolers.* AAC 41(2), 114-128.
+> [DOI 10.1080/07434618.2025.2479768](https://www.tandfonline.com/doi/full/10.1080/07434618.2025.2479768)
+
+20 estudos: **12 de 14 usaram iPad com app generico**, nao dispositivo dedicado.
+Critica central: baixa validade ecologica e concentracao excessiva em pedir.
+
+### 12.3 Predicao por IA acelera e tira a voz
+
+> Valencia, S. et al. (2023). *"The less I type, the better": How AI Language
+> Models can Enhance or Impede Communication for AAC Users.* CHI '23.
+> [DOI 10.1145/3544548.3581560](https://dl.acm.org/doi/full/10.1145/3544548.3581560)
+
+Usuarios reais relatam **perda de voz propria e de agencia** quando a sugestao e
+longa demais ou chega na hora errada.
+
+**Consequencia aqui:** decisao registrada de **nao** gerar frase pronta
+automaticamente. As frases prontas do app sao curadas e editaveis, e "Minhas
+frases" vem do repertorio da propria familia. Se um dia houver predicao, ela
+aparece em faixa separada e nunca substitui a montagem celula a celula.
+
+### 12.4 Nao existe lista de vocabulario-nucleo validada para pt-BR
+
+A busca nao encontrou nenhuma. E uma lacuna real do campo, nao deste projeto —
+mas significa que **a curadoria das 197 palavras se apoia em estudos de lingua
+inglesa**, e isso continua sendo o limite mais honesto a declarar.
+
+O que existe de mais proximo:
+
+> Pereira, J., Nogueira, R., Zanchettin, C. & Fidalgo, R. (2025). *Predictive
+> Authoring for Brazilian Portuguese Augmentative and Alternative
+> Communication.* Natural Language Processing (Cambridge).
+> [arXiv](https://arxiv.org/abs/2308.09497) ·
+> [Cambridge](https://www.cambridge.org/core/journals/natural-language-processing/article/predictive-authoring-for-brazilian-portuguese-augmentative-and-alternative-communication/6E0F60312E55A307C289DF6C41EE5D8C)
+
+Construiram **um corpus de CAA em portugues brasileiro** — que nao existia — e
+testaram tres formas de representar o pictograma: legenda, definicao e
+sinonimos. **A legenda da a maior acuracia.**
+
+> Providello, Carrilho, Peixoto, Maia & Hage (2024). *Repertorio lexical de
+> criancas de 24 e 30 meses falantes do portugues brasileiro.* CoDAS.
+> [DOI 10.1590/2317-1782/20242023268en](https://pmc.ncbi.nlm.nih.gov/articles/PMC11129851/)
+
+Mediana de **283 palavras aos 24 meses e 401 aos 30**. Nao e lista de nucleo de
+CAA — e inventario de vocabulario expressivo tipico — mas da ordem de grandeza:
+197 celulas curadas nao e subdimensionado.
+
+**Proximo passo concreto:** contatar Pereira et al. pelo corpus. E o unico
+caminho verificavel para tirar a curadoria da base anglofona.
+
+### 12.5 A competencia comunicativa foi reorganizada
+
+> Deckers, S. R. J. M., van Onna, M., Gros, E. & van Balkom, H. (2024).
+> *Developing a screening instrument for underlying core domains of communicative
+> competence in children with communication support needs.* AAC.
+> [PubMed](https://pubmed.ncbi.nlm.nih.gov/38967645/)
+
+Propoe abordagem **socio-neurocognitiva**: em vez dos quatro dominios de Light
+(linguistico, operacional, social, estrategico), rastreia os dominios
+**subjacentes** — atencao, percepcao, cognicao, memoria, orientacao,
+desenvolvimento socioemocional, motricidade e linguagem.
+
+**Consequencia aqui:** os ajustes sensoriais e a varredura deixam de ser
+"acessibilidade" e passam a enderecar **atencao, percepcao e motricidade** — que
+sao dominios do proprio rastreio. Fica como pendencia espelhar isso na tela de
+Ajustes, dizendo qual dominio cada ajuste atende.
+
+### 12.6 Sotaque e identidade, nao detalhe
+
+> Weinberg, T., Lewis, A., Gonzalez Penuela, R. E., Hong, W., Mankoff, J. &
+> Roumen, T. (2026). *Me, Myself, and My Voice: Exploring Cultural and Linguistic
+> Identity in AAC AI-generated Voices.* arXiv preprint 2605.24337 —
+> **nao revisado por pares**. [arXiv](https://arxiv.org/abs/2605.24337)
+
+Vozes de CAA se relacionam com identidade cultural e linguistica — sotaque,
+variedade regional, pertencimento — e nao so com inteligibilidade.
+
+**Consequencia aqui:** o app ja ordena vozes pt-BR a frente de pt-PT; passou a
+**avisar explicitamente** quando so ha voz pt-PT instalada, em vez de falar em
+portugues europeu em silencio. Reforca tambem a decisao do modo de regionalismos
+(ver [GRAMMAR.md secao 5](GRAMMAR.md)).
+
+### 12.7 O que a busca NAO encontrou
+
+Registrado porque ausencia de evidencia tambem informa decisao:
+
+- **Lista de vocabulario-nucleo de CAA validada para pt-BR** — nao existe publicada.
+- **Mudanca de licenca, API ou acervo da ARASAAC em 2024-2026** — nada verificavel;
+  a conclusao de CC BY-NC-SA e a saida Mulberry permanecem validas.
+- **Voz sintetizada vs. gravada, e voz infantil, em 2022-2026** — nada. O que ha e
+  de 2012 e 1996, e nao sera apresentado como recente.

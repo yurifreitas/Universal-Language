@@ -319,3 +319,32 @@ Registro honesto do que **não** está resolvido:
   normas técnicas e acervos de símbolos.
 - [LICENSE-ARASAAC.md](LICENSE-ARASAAC.md) — obrigações concretas da licença
   dos pictogramas usados neste projeto.
+
+---
+
+## Decreto nº 11.793/2023 — o plano que executa a LBI
+
+> **Decreto nº 11.793, de 23 de novembro de 2023** — institui o Plano Nacional
+> dos Direitos da Pessoa com Deficiência **"Novo Viver sem Limite"**.
+> [Planalto](https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/decreto/d11793.htm) ·
+> [Portal do plano (MDHC)](https://novoviversemlimite.mdh.gov.br/)
+
+95 ações, R$ 6,5 bilhões na primeira fase, coordenação do Ministério dos
+Direitos Humanos e da Cidadania. Um dos eixos é explicitamente **acessibilidade
+e tecnologia assistiva**.
+
+**Por que importa aqui:** entre a Lei Brasileira de Inclusão (13.146/2015), que
+declara o direito, e a prática, faltava a camada executiva — o instrumento pelo
+qual estado e município de fato adotam e financiam tecnologia assistiva. É este
+decreto. Um app de CAA gratuito se encaixa nele como tecnologia assistiva, e o
+MDHC publicou cartilhas de adesão para entes federativos.
+
+## ABNT NBR 17225:2025 — a norma técnica brasileira
+
+> **Acessibilidade em conteúdo e aplicações web: requisitos.** ABNT / Ceweb.br /
+> NIC.br, publicada em 11 de março de 2025.
+> [Resumo](https://cta.ifrs.edu.br/abnt-nbr-17225-2025-acessibilidade-em-conteudo-e-aplicacoes-web-requisitos/)
+
+Alinhada à WCAG 2.2. Como este app é uma PWA, é **esta** a norma que o alcança —
+e não a NBR 17060:2022, que trata de aplicativo móvel nativo. Ver
+[REFERENCES.md § 6.0](REFERENCES.md).

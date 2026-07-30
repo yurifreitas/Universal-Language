@@ -2035,3 +2035,13 @@ kbd {
   border-style: solid;
   border-color: var(--accent);
 }
+
+/* Aviso dentro de Ajustes. Não é erro — é uma condição do aparelho que a pessoa
+   precisa saber para poder corrigir. */
+.settings__note--warn {
+  padding: 10px 12px;
+  color: var(--text);
+  background: color-mix(in oklab, var(--danger) 12%, transparent);
+  border-left: 3px solid var(--danger);
+  border-radius: 8px;
+}

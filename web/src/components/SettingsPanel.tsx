@@ -47,6 +47,17 @@ export function SettingsPanel({
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
 
   /**
+   * So ha voz de portugues EUROPEU instalada?
+   *
+   * O app ja ordena pt-BR na frente, mas quando nao existe nenhuma ele falava
+   * em pt-PT calado. Sotaque nao e detalhe cosmetico: a voz do aparelho e a voz
+   * da pessoa, e ouvir "autocarro" e "casa de banho" na propria fala e um
+   * desencontro de identidade, nao de pronuncia. Ver REFERENCES.md 12.6.
+   */
+  const soVozEuropeia =
+    voices.length > 0 && voices.every((v) => v.lang.toLowerCase() !== 'pt-br')
+
+  /**
    * Ajustes no celular: indice primeiro, secao depois.
    *
    * Sao nove grupos. Numa tela de 390px isso vira um tunel de rolagem de mais
@@ -208,6 +219,15 @@ export function SettingsPanel({
             />
             <span>Falar cada card ao tocar</span>
           </label>
+          {soVozEuropeia && (
+            <p className="settings__note settings__note--warn" role="status">
+              <strong>Só há voz de português europeu neste aparelho.</strong> O app vai falar
+              "autocarro" e "casa de banho" onde a criança diz "ônibus" e "banheiro". Instale uma
+              voz <strong>pt-BR</strong> nas configurações de Texto&nbsp;para&nbsp;fala do
+              sistema — em Android, Google Text-to-Speech → Instalar dados de voz → Português
+              (Brasil).
+            </p>
+          )}
           <p className="settings__note">
             O acervo ARASAAC não possui áudio gravado em português — a voz é sempre sintetizada
             pelo dispositivo.
