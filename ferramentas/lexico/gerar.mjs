@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { inferir, lerAcervo, chavesRevisadas } from './inferir.mjs'
+import { inferir, lerAcervo, chavesRevisadas, construirContexto } from './inferir.mjs'
 
 const aqui = dirname(fileURLToPath(import.meta.url))
 const raiz = join(aqui, '..', '..')
@@ -39,18 +39,23 @@ if (manual.size < 150) {
 }
 
 const acervo = lerAcervo(join(raiz, 'data', 'arasaac.sqlite'))
+// O par masculino de um adjetivo em -a é evidência que só existe olhando o
+// acervo inteiro; por isso o contexto é montado uma vez, antes das inferências.
+const contexto = construirContexto(acervo)
 
 const entradas = {}
 const revisar = []
-const porClasse = { noun: 0, verb: 0, adjective: 0 }
+const porClasse = {}
 let semGenero = 0
 let doisGeneros = 0
+let femBase = 0
+let reclassificados = 0
 
 for (const [termo, linhas] of [...acervo].sort((a, b) => a[0].localeCompare(b[0], 'pt'))) {
   // O manual sempre vence. Nem sequer entra na fila de revisão: já foi revisado.
   if (manual.has(termo)) continue
 
-  const r = inferir(termo, linhas)
+  const r = inferir(termo, linhas, contexto)
   if (!r) continue
 
   if (r.confianca === 'alta') {
@@ -64,8 +69,10 @@ for (const [termo, linhas] of [...acervo].sort((a, b) => a[0].localeCompare(b[0]
       continue
     }
     entradas[termo] = r.entrada
-    porClasse[r.entrada.class] += 1
+    porClasse[r.entrada.class] = (porClasse[r.entrada.class] ?? 0) + 1
     if (r.doisGeneros) doisGeneros += 1
+    if (r.entrada.femininoBase) femBase += 1
+    if (r.reclassificado) reclassificados += 1
   } else {
     revisar.push({ palavra: termo, motivo: 'sinais insuficientes', ...r.entrada, sinais: r.sinais })
   }
@@ -102,7 +109,12 @@ console.log(`
   PUBLICADAS  web/public/data/lexico.json      ${total}
       noun        ${porClasse.noun}   (${doisGeneros} comuns de dois gêneros, sem gênero de propósito)
       verb        ${porClasse.verb}
-      adjective   ${porClasse.adjective}
+      adjective   ${porClasse.adjective}   (${porClasse.adjective - femBase} rótulo masculino, ${femBase} femininoBase)
+${['adverb', 'quantifier', 'determiner', 'article']
+  .filter((c) => porClasse[c])
+  .map((c) => `      ${c.padEnd(11)} ${porClasse[c]}`)
+  .join('\n')}
+      ^ resgatados do type=4 da ARASAAC, que mistura modificadores: ${reclassificados}
 
   REVISÃO     ferramentas/lexico/revisar.jsonl ${revisar.length}
       destas, substantivo sem gênero  ${semGenero}

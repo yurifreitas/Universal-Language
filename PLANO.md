@@ -335,6 +335,18 @@ automaticamente.**
 
 **Pronto quando:** `npm run cobertura` imprime o que ainda não foi visto.
 
+### D5b. A árvore — a mudança estrutural
+**Tamanho:** contínuo · **Depende de:** D2
+
+A auditoria em lote mostrou que os defeitos que sobram são todos do mesmo tipo:
+o motor decide numa passada só e não pode rever. A resposta é uma árvore
+sintática entre a decisão e a escrita — raiz, tronco, galho, folha.
+
+Desenho completo, defeitos que ela resolve caso a caso, e a estratégia de troca
+por **comparação diferencial** (os dois motores sobre os mesmos 20.000 casos)
+em [ARVORE.md](ARVORE.md). `web/src/lib/arvore.ts` tem os tipos, os percursos e
+a verificação estrutural das garantias; o construtor ainda não alimenta o app.
+
 ### D6. Rodada longa
 **Tamanho:** contínuo · **Depende de:** D5
 

@@ -125,6 +125,18 @@ export interface Lexeme {
    * diferentes.
    */
   nounPrepInf?: string
+  /**
+   * ADJETIVO cujo rotulo esta na forma FEMININA de um par biforme:
+   * "preguiçosa" (de preguiçoso), "amarela", "cansada".
+   *
+   * O acervo nomeia muitos pictogramas assim, e o card imprime o rotulo que
+   * tem. Sem esta marca o motor so sabia ir de masculino para feminino, e
+   * `BEIJO · PREGUIÇOSA` saia "O beijo está preguiçosa".
+   *
+   * Nao se deduz da terminacao: ha adjetivo invariavel em -a ("otimista",
+   * "hipócrita"), e converter esses daria "otimisto".
+   */
+  femininoBase?: boolean
 }
 
 /* ------------------------------------------------------------------ verbos */

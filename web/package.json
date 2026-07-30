@@ -10,10 +10,11 @@
     "typecheck": "tsc -b --noEmit",
     "test:grammar": "esbuild tests/grammar.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/grammar-test.mjs --log-level=warning && node node_modules/.cache/grammar-test.mjs",
     "test:predict": "esbuild tests/predict.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/predict-test.mjs --log-level=warning && node node_modules/.cache/predict-test.mjs",
-    "test": "npm run test:grammar && npm run test:predict && npm run test:game && npm run test:ensaio && npm run test:lexico",
+    "test": "npm run test:grammar && npm run test:predict && npm run test:game && npm run test:ensaio && npm run test:lexico && npm run test:arvore",
     "test:game": "esbuild tests/game.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/game-test.mjs --log-level=warning && node node_modules/.cache/game-test.mjs",
     "test:ensaio": "esbuild tests/ensaio.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/ensaio-test.mjs --log-level=warning && node node_modules/.cache/ensaio-test.mjs",
-    "test:lexico": "esbuild tests/lexico.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/lexico-test.mjs --log-level=warning && node node_modules/.cache/lexico-test.mjs"
+    "test:lexico": "esbuild tests/lexico.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/lexico-test.mjs --log-level=warning && node node_modules/.cache/lexico-test.mjs",
+    "test:arvore": "esbuild tests/arvore.test.ts --bundle --format=esm --platform=node --outfile=node_modules/.cache/arvore-test.mjs --log-level=warning && node node_modules/.cache/arvore-test.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

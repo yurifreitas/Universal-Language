@@ -12,10 +12,13 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { inferir, lerAcervo, gabarito, pluralDoMotor } from './inferir.mjs'
+import { inferir, lerAcervo, gabarito, pluralDoMotor, construirContexto } from './inferir.mjs'
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const acervo = lerAcervo(join(raiz, 'data', 'arasaac.sqlite'))
+// O par masculino de um adjetivo em -a é evidência que só existe olhando o
+// acervo inteiro; por isso o contexto é montado uma vez, antes das inferências.
+const contexto = construirContexto(acervo)
 const revisado = gabarito(readFileSync(join(raiz, 'web', 'src', 'lib', 'lexicon.ts'), 'utf8'))
 
 /* As classes que a inferência sabe produzir. Comparar contra pronome ou
@@ -39,7 +42,7 @@ for (const [palavra, esperado] of revisado) {
   noGabarito += 1
   const linhas = acervo.get(palavra)
   if (!linhas) continue
-  const r = inferir(palavra, linhas)
+  const r = inferir(palavra, linhas, contexto)
   if (!r) continue
   coberto += 1
   if (r.confianca === 'alta') conta.alta += 1
@@ -132,7 +135,7 @@ const vazaram = []
 for (const palavra of DOIS_GENEROS) {
   const linhas = acervo.get(palavra)
   if (!linhas) continue
-  const r = inferir(palavra, linhas)
+  const r = inferir(palavra, linhas, contexto)
   if (r?.entrada.gender) vazaram.push(`${palavra} saiu como ${r.entrada.gender}`)
 }
 
@@ -159,7 +162,7 @@ const flexionaram = []
 for (const palavra of INVARIAVEIS) {
   const linhas = acervo.get(palavra)
   if (!linhas) continue
-  const r = inferir(palavra, linhas)
+  const r = inferir(palavra, linhas, contexto)
   if (r?.entrada.class === 'adjective' && r.entrada.gender) {
     flexionaram.push(`${palavra} saiu como ${r.entrada.gender}`)
   }
@@ -172,10 +175,99 @@ console.log(
     : `    OK — ${INVARIAVEIS.length} conferidos, nenhum com gênero`,
 )
 
+/* ------------------------------- femininoBase: exclusividade e armadilha */
+
+/**
+ * `gender` e `femininoBase` são mutuamente exclusivos por definição: um diz "o
+ * rótulo é a forma masculina, flexione para feminino", o outro diz o contrário.
+ * Uma entrada com os dois é contradição, e `agree()` aplicaria os dois ramos em
+ * sequência. Varrido sobre o acervo inteiro, não sobre uma amostra.
+ */
+const contraditorias = []
+for (const [termo, linhas] of acervo) {
+  const r = inferir(termo, linhas, contexto)
+  if (r?.entrada.gender && r.entrada.femininoBase) contraditorias.push(termo)
+}
+
+console.log('\n  gender + femininoBase NA MESMA ENTRADA — impossível')
+console.log(
+  contraditorias.length
+    ? `    FALHOU: ${contraditorias.slice(0, 10).join(', ')} (${contraditorias.length})`
+    : `    OK — ${acervo.size} termos varridos, nenhuma contradição`,
+)
+
+/**
+ * A armadilha do `-ista` de roupa nova: adjetivo invariável em `-a` que ganha
+ * `femininoBase` faz o motor imprimir "otimisto".
+ */
+const INVARIAVEIS_EM_A = [
+  'otimista', 'pessimista', 'hipócrita', 'agrícola', 'indígena', 'azteca',
+  'egoísta', 'realista', 'idealista', 'careca', 'poliglota',
+]
+
+const converteram = []
+for (const palavra of INVARIAVEIS_EM_A) {
+  const linhas = acervo.get(palavra)
+  if (!linhas) continue
+  const r = inferir(palavra, linhas, contexto)
+  if (r?.entrada.femininoBase) converteram.push(palavra)
+}
+
+console.log('\n  INVARIÁVEIS EM -a — nenhum pode sair com femininoBase')
+console.log(
+  converteram.length
+    ? `    FALHOU: ${converteram.join(', ')}`
+    : `    OK — ${INVARIAVEIS_EM_A.length} conferidos, nenhum marcado`,
+)
+
+/* ------------------------------------ o `type=4` não pode virar adjetivo */
+
+/**
+ * O `type=4` da ARASAAC mistura modificadores: advérbio, numeral e possessivo
+ * vinham publicados como adjetivo, e o motor punha cópula onde cabia adjunto
+ * ("Nosso dia não vai estar depressa"). Aparecia como erro de concordância, mas
+ * era de classe.
+ *
+ * A trava é por classe ESPERADA, não só "não é adjetivo": trocar advérbio por
+ * numeral passaria despercebido de outro jeito.
+ */
+const CLASSE_ESPERADA = Object.entries({
+  depressa: 'adverb', agora: 'adverb', nunca: 'adverb', fora: 'adverb',
+  ali: 'adverb', atrás: 'adverb', longe: 'adverb',
+  trinta: 'quantifier', oitenta: 'quantifier', cem: 'quantifier',
+  quinze: 'quantifier', mil: 'quantifier',
+  minha: 'determiner', suas: 'determiner', algum: 'determiner',
+  qualquer: 'determiner',
+  esta: 'article', aqueles: 'article',
+})
+
+const classeErrada = []
+for (const [palavra, esperada] of CLASSE_ESPERADA) {
+  const linhas = acervo.get(palavra)
+  if (!linhas) continue
+  const r = inferir(palavra, linhas, contexto)
+  const obtida = r?.entrada.class ?? '(descartado)'
+  if (obtida !== esperada) classeErrada.push(`${palavra}: ${obtida}, esperava ${esperada}`)
+}
+
+console.log('\n  MODIFICADORES DO type=4 — classe certa, nunca adjetivo')
+console.log(
+  classeErrada.length
+    ? `    FALHOU: ${classeErrada.join('; ')}`
+    : `    OK — ${CLASSE_ESPERADA.length} conferidos, todos na classe certa`,
+)
+
 const meta = conta.generoAltoTotal ? conta.generoAltoOk / conta.generoAltoTotal : 1
 console.log(
   `\n  META: gênero em confiança alta ≥ 96% → ${pc(conta.generoAltoOk, conta.generoAltoTotal)}` +
     ` ${meta >= 0.96 ? 'OK' : 'ABAIXO DA META'}\n`,
 )
 
-if (vazaram.length || flexionaram.length || meta < 0.96) process.exit(1)
+if (
+  vazaram.length ||
+  flexionaram.length ||
+  contraditorias.length ||
+  converteram.length ||
+  classeErrada.length ||
+  meta < 0.96
+) process.exit(1)

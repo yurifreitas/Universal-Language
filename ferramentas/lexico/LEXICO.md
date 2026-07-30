@@ -113,6 +113,54 @@ Exceções tabeladas, cada uma vinda de um erro visto na medição:
 - o sufixo `-ção/-são` é feminino, mas a regra é cega e casa com palavras em que
   aquelas letras não são sufixo nenhum: **arte-são**, **cora-ção**.
 
+### O `type=4` não é "adjetivo" — é "modificador"
+
+Dentro do `type=4` da ARASAAC vêm advérbio, numeral, possessivo e demonstrativo
+misturados com adjetivo de verdade. Publicá-los como adjetivo fazia o motor pôr
+cópula onde cabia adjunto:
+
+```
+["nossa","dia","não","depressa"] → "Nosso dia não vai estar depressa."
+```
+
+Isso aparecia no detector de **concordância**, mas nunca foi de concordância:
+advérbio não concorda com substantivo nenhum porque não é para concordar. O
+defeito era de **classe**, e o conserto é dar a classe certa.
+
+São **classes fechadas** — dá para listá-las inteiras, e listar é mais seguro
+que inferir:
+
+| família | classe | forma |
+|---|---|---|
+| advérbio (agora, depressa, longe, atrás) | `adverb` | — |
+| cardinal (trinta, oitenta, cem, mil) | `quantifier` | `plural: true` |
+| possessivo (meu, minhas, suas) | `determiner` | `gender`, `plural` |
+| demonstrativo (este, aquelas) | `article` | `gender`, `plural` |
+
+A forma não foi escolhida por mim: `dois: { class: 'quantifier', plural: true }`
+já estava no léxico revisado à mão, e lá possessivo é `determiner` (`meu`)
+enquanto demonstrativo é `article` (`esse`, `aquele`). Segui o que já existia.
+
+**Ordinais NÃO entram.** "primeira", "segunda", "terceira" são adjetivos de
+verdade e flexionam como tais — só o cardinal vira quantificador.
+
+Além das listas, uso a marca do próprio acervo: a definição de `depressa` começa
+com **"adv."**. Vale como último recurso, e só para advérbio — o marcador
+`pron.` também existe, mas vem contaminado (a ARASAAC o usa em numeral também),
+e um sinal sujo não decide nada aqui.
+
+**O que não deu para separar, saiu.** `como` e `onde` são interrogativos: têm
+classe própria (`question`) e regem estrutura de pergunta, que a inferência não
+sabe montar. Publicá-los como advérbio trocaria um erro por outro, então eles
+não são publicados e voltam para `guess()` — o comportamento de antes.
+
+Ficou de fora também o que é ambíguo de verdade: `todo/toda` e `mesmo/mesma`
+funcionam como determinante **e** como adjetivo ("o dia todo", "ele mesmo"), e
+`sobre`/`sob` são preposições que preferi não mexer. Continuam como estavam.
+
+Resultado: **77 palavras saíram de `adjective`** (617 → 540), 76 publicadas na
+classe certa e 2 descartadas.
+
 ### Adjetivo — `gender` ali não quer dizer gênero
 
 Em substantivo, `gender` é o gênero da palavra. **Em adjetivo é outra coisa**, e
@@ -143,30 +191,41 @@ estatística firme.
 A armadilha simétrica à do `-ista` é dar gênero a invariável: `feliz`, `grande`,
 `azul`, `fácil` e `verde` saem sem o campo, e `medir.mjs` trava isso.
 
-#### O que esta ferramenta NÃO consegue consertar
+#### `femininoBase` — quando o rótulo já vem no feminino
 
-Dos 617 adjetivos publicados, **181 vêm do acervo já na forma feminina**
-(`preguiçosa`, `amarela`, `cansada`) — 129 deles com o par masculino publicado
-ao lado.
+O acervo nomeia muitos pictogramas pela forma feminina: `preguiçosa`, `amarela`,
+`cansada`. O cartão imprime o rótulo que tem, e por um tempo isto não teve
+conserto do lado do léxico — `agree()` só sabia ir de masculino para feminino, e
+nenhum campo reescreve o rótulo.
 
-Para esses, **nenhum valor de `gender` ajuda**, e vale dizer por quê em vez de
-publicar algo que pareça um conserto:
+`grammar.ts` ganhou o caminho de volta e o `Lexeme` ganhou o campo:
 
-- `agree()` só sabe ir de masculino para feminino. Não existe caminho f→m;
-- o texto impresso é `it.card.label` — o rótulo do pictograma. Nenhum campo do
-  léxico reescreve o rótulo, então não há como fazer o cartão `preguiçosa`
-  imprimir "preguiçoso";
-- marcá-lo `gender: 'f'` seria mentir sob a convenção do projeto, onde o campo
-  significa "biforme, base masculina" — e não mudaria uma frase.
+```ts
+if (gender === 'm' && lex?.femininoBase && out.endsWith('a')) out = out.slice(0, -1) + 'o'
+```
 
-Então eles saem **só com a classe**, que é dado bom e verdadeiro: o motor sabe
-que é adjetivo, usa "estar", separa lista. E acerta metade das vezes por sorte —
-com substantivo feminino, `preguiçosa` já é a forma certa.
+`femininoBase: true` quer dizer "o rótulo está na forma feminina de um par
+biforme". Ele e `gender` são **mutuamente exclusivos**: um diz "o rótulo é a
+forma masculina, flexione para feminino", o outro diz o contrário. Uma entrada
+com os dois é contradição, e `medir.mjs` varre o acervo inteiro para garantir
+que ela não existe.
 
-O conserto de verdade é em `grammar.ts` e não aqui: `agree()` precisaria de um
-caminho f→m (`-a` → `-o` quando `gender === 'm'`), e o léxico de uma marca que
-diga "esta é a forma feminina de um biforme". Enquanto isso não existe, publicar
-gênero nesses 181 seria trocar um erro conhecido por um erro novo.
+**A marca não se deduz da terminação** — é a armadilha do `-ista` de roupa nova.
+Adjetivo invariável em `-a` é comum (*otimista*, *hipócrita*, *agrícola*,
+*indígena*, *poliglota*), e marcá-lo faz o motor imprimir "otimisto".
+
+O sinal usado é direto e não inferido: **o par masculino existe no acervo,
+também como adjetivo**. "amarela" tem "amarelo" ao lado; "otimista" não tem
+"otimisto", e nunca vai ter. São **141 marcadas**, de 187 adjetivos em `-a`.
+
+As 46 que sobram não têm par no acervo, e a resposta ali é **não marcar**. Olhei
+uma a uma: cerca de um terço nem adjetivo é — o `type=4` da ARASAAC recolhe
+advérbio (*agora*, *depressa*, *nunca*), numeral (*trinta*, *oitenta*) e
+determinante (*essa*, *minha*) —, e junto vêm invariáveis de verdade (*careca*,
+*grávida*, *poliglota*, *rosa*). Marcar o bloco por terminação acertaria uns dois
+terços, muito abaixo do corte do resto do arquivo. As biformes legítimas que se
+perdem ali (*bêbada*, *medrosa*, *espanhola*) continuam saindo com a classe, que
+é o comportamento de antes: nada piora, só não melhora.
 
 ### Plural — só o que o motor ainda não sabe
 
@@ -208,6 +267,15 @@ revisadas à mão:
 
   ADJETIVOS INVARIÁVEIS — nenhum pode sair com gênero
     OK — 15 conferidos, nenhum com gênero
+
+  gender + femininoBase NA MESMA ENTRADA — impossível
+    OK — 6882 termos varridos, nenhuma contradição
+
+  INVARIÁVEIS EM -a — nenhum pode sair com femininoBase
+    OK — 11 conferidos, nenhum marcado
+
+  MODIFICADORES DO type=4 — classe certa, nunca adjetivo
+    OK — 18 conferidos, todos na classe certa
 ```
 
 `medir.mjs` sai com código 1 se a trava falhar ou se a meta de 96% cair — dá
@@ -224,10 +292,12 @@ evidência de que o corte está apertado o bastante.
 
 `gerar.mjs` produz duas saídas:
 
-- **`web/public/data/lexico.json`** — 4.906 entradas, só confiança alta.
+- **`web/public/data/lexico.json`** — 4.905 entradas, só confiança alta.
   3.299 substantivos (dos quais **132 comuns de dois gêneros, sem gênero de
-  propósito**), 990 verbos, 617 adjetivos (**269 com `gender: 'm'`, que é o que
-  liga a flexão**; 348 invariáveis ou já em forma feminina).
+  propósito**), 990 verbos, 540 adjetivos (**262 com `gender: 'm'` e 139 com
+  `femininoBase: true`** — as duas chaves que ligam a flexão em `agree()`),
+  e 76 modificadores resgatados do `type=4`: 31 `quantifier`, 22 `determiner`,
+  16 `adverb`, 7 `article`.
 - **`ferramentas/lexico/revisar.jsonl`** — 1.249 termos, uma linha por termo,
   com os sinais que cada um produziu. Fila de revisão humana.
 

@@ -256,6 +256,79 @@ const CASES: Record<string, Case[]> = {
     { cards: ['um', 'titia'], articles: ['auto', 'def'], expect: 'Uma titia.' },
   ],
 
+  /**
+   * A negação por CARD sai no predicado ONDE ELA ESTÁ.
+   *
+   * Foram duas tentativas. A primeira punha `emitNegation` no topo do ramo do
+   * verbo, antes do separador de lista, e saía "Eu quero água **não e** quero o
+   * pão" — o "não" atravessava na frente do "e". A ordem certa é a da fala:
+   * primeiro liga as duas orações, depois nega a segunda.
+   *
+   * E "nem" só existe em série JÁ negativa, porque ele é literalmente "e não":
+   * sem um predicado negado antes, o segundo "não" tem de sair como "e não".
+   */
+  'negação na posição do card': [
+    {
+      cards: ['eu', 'querer', 'água', 'não', 'querer', 'pão'],
+      expect: 'Eu quero água e não quero o pão.',
+    },
+    {
+      cards: ['eu', 'não', 'querer', 'água', 'querer', 'pão'],
+      expect: 'Eu não quero água e quero o pão.',
+    },
+    // Série negativa: o segundo "não" vira "nem".
+    {
+      cards: ['não', 'querer', 'suco', 'não', 'querer', 'leite'],
+      expect: 'Não quero suco, nem quero leite.',
+    },
+    // O marcador da faixa não tem posição: vale para a oração inteira.
+    {
+      cards: ['eu', 'querer', 'água', 'querer', 'pão'],
+      marks: { negated: true },
+      expect: 'Eu não quero água e quero o pão.',
+    },
+    // Sem verbo nenhum, a partícula abre a frase.
+    { cards: ['não', 'bolo'], expect: 'Não o bolo.' },
+  ],
+
+  /**
+   * Duas predicações sobre o mesmo sujeito.
+   *
+   * `EU · FELIZ · MEDO` saía "Eu estou feliz medo": a cópula do adjetivo já
+   * tinha sido emitida, e o substantivo de estado era descartado em silêncio.
+   * São duas predicações legítimas com cópulas diferentes — "estar feliz" e
+   * "ter medo" — e a língua as junta com "e", como já se faz com dois verbos.
+   *
+   * Quando a cópula é a MESMA, ela é elidida: "estou feliz e **com** dor", e
+   * não "estou feliz e estou com dor", que soa a lista de formulário.
+   */
+  'duas predicações no mesmo sujeito': [
+    { cards: ['eu', 'feliz', 'medo'], expect: 'Eu estou feliz e tenho medo.' },
+    { cards: ['eu', 'triste', 'fome'], expect: 'Eu estou triste e tenho fome.' },
+    { cards: ['eu', 'feliz', 'dor'], expect: 'Eu estou feliz e com dor.' },
+    // Uma predicação só continua como era.
+    { cards: ['eu', 'medo'], expect: 'Eu tenho medo.' },
+    { cards: ['eu', 'dor', 'barriga'], expect: 'Eu estou com dor na barriga.' },
+  ],
+
+  /**
+   * A oração nova abre por PREDICADO, não por card de verbo.
+   *
+   * `FELIZ · EU · GOSTAR · IRMÃO` saía "Vou estar feliz eu gostar do irmão":
+   * o "eu" não abria oração porque, para a contagem, ainda não havia verbo —
+   * mas havia predicado, "estou feliz", montado com uma cópula que o motor
+   * insere e que não é card nenhum.
+   */
+  'cópula inserida conta como predicado': [
+    {
+      cards: ['feliz', 'eu', 'gostar', 'irmão'],
+      expect: 'Estou feliz, eu gosto do irmão.',
+    },
+    // Adjetivo depois de substantivo é modificador, e não abre nada.
+    { cards: ['eu', 'querer', 'bolo', 'grande'], expect: 'Eu quero o bolo grande.' },
+    { cards: ['casa', 'bonito'], expect: 'A casa está bonita.' },
+  ],
+
   'listas de pessoas': [
     { cards: ['mãe', 'pai', 'avó'], expect: 'A mãe, o pai e a avó.' },
     { cards: ['eu', 'querer', 'mãe', 'pai'], expect: 'Eu quero a mãe e o pai.' },

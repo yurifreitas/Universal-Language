@@ -46,8 +46,31 @@ let carregado: Record<string, Lexeme> = {}
 let estado: 'vazio' | 'carregando' | 'pronto' | 'falhou' = 'vazio'
 let emCurso: Promise<void> | null = null
 
-/** Classes que esta camada aceita. Qualquer outra é descartada na leitura. */
-const CLASSES = new Set(['noun', 'verb', 'adjective'])
+/**
+ * Classes que esta camada aceita. Qualquer outra é descartada na leitura.
+ *
+ * As quatro últimas entraram quando a inferência passou a separar o que o
+ * `type=4` da ARASAAC junta: aquele código não quer dizer "adjetivo", quer
+ * dizer **modificador**, e recolhe advérbio (*depressa*, *agora*), numeral
+ * cardinal (*trinta*, *cem*), possessivo (*minhas*) e demonstrativo (*aquelas*)
+ * no mesmo balde.
+ *
+ * Publicá-los como adjetivo fazia o motor pôr cópula onde não cabe — "o dia vai
+ * estar depressa". Com a classe certa ele trata cada um como deve.
+ *
+ * Classes que exigem estrutura própria — `question`, `preposition` — ficam de
+ * fora de propósito: a inferência não sabe montar o que elas regem, e publicar
+ * meia informação sobre elas trocaria um erro por outro.
+ */
+const CLASSES = new Set([
+  'noun',
+  'verb',
+  'adjective',
+  'adverb',
+  'quantifier',
+  'determiner',
+  'article',
+])
 
 /**
  * Valida entrada a entrada, e descarta a que não couber.
@@ -69,6 +92,11 @@ function limpar(bruto: Record<string, unknown>): Record<string, Lexeme> {
     if (typeof v['pluralForm'] === 'string' && v['pluralForm'].trim()) {
       entrada.pluralForm = v['pluralForm'].trim()
     }
+    // Numeral cardinal já é plural por natureza — "trinta bolos". Sem copiar
+    // este campo, os 31 numerais entrariam mudos e o substantivo não
+    // pluralizaria.
+    if (v['plural'] === true) entrada.plural = true
+    if (v['femininoBase'] === true) entrada.femininoBase = true
     if (v['mass'] === true) entrada.mass = true
     if (v['animate'] === true) entrada.animate = true
     if (v['place'] === true) entrada.place = true

@@ -23,7 +23,7 @@
  * ninguém previu — que é exatamente o que ele existe para achar. Ver REVISAO.md.
  */
 
-import { createReadStream, createWriteStream } from 'node:fs'
+import { createReadStream, createWriteStream, writeFileSync } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -86,6 +86,18 @@ const ARTIGOS = {
   nos: { g: 'm', p: true }, nas: { g: 'f', p: true },
   ao: { g: 'm', p: false }, aos: { g: 'm', p: true },
 }
+
+/**
+ * O que encerra o escopo de concordância.
+ *
+ * A lista está aqui, e não só na classe `connector` do léxico, porque a
+ * fronteira de oração é um fato de sintaxe: "então", "aí", "mas" e "porque"
+ * abrem oração nova mesmo quando o léxico os classifica de outro jeito, e um
+ * adjetivo do outro lado deles não tem nada a ver com o substantivo de cá.
+ */
+const FRONTEIRAS = new Set([
+  'então', 'aí', 'mas', 'porque', 'e', 'ou', 'que', 'se', 'quando', 'enquanto', 'nem', 'daí', 'aliás',
+])
 
 const CONECTIVOS_ANTES_DE_INFINITIVO = new Set([
   'de', 'a', 'para', 'pra', 'que', 'e', 'ou', 'ao', 'sem', 'com', 'por', 'até', 'vírgula',
@@ -191,14 +203,32 @@ detector(
 
 /* --- suspeitas --- */
 
-detector('repeticao', 'alta', 'Palavra repetida em sequência ("a a água", "de de").', (c) => {
-  const palavras = c.saida.text.toLowerCase().replace(/[.?!,]/g, '').split(/\s+/).filter(Boolean)
-  const achados = []
-  for (let i = 1; i < palavras.length; i++) {
-    if (palavras[i] === palavras[i - 1]) achados.push(`"${palavras[i]} ${palavras[i]}"`)
-  }
-  return achados
-})
+detector(
+  'repeticao',
+  'alta',
+  'Palavra repetida em sequência com origem no motor ("a a água", "de de").',
+  (c) => {
+    const tokens = c.saida.tokens
+    const achados = []
+    const nu = (t) => t.text.toLowerCase().replace(/[.?!,;:]/g, '')
+    for (let i = 1; i < tokens.length; i++) {
+      if (!nu(tokens[i]) || nu(tokens[i]) !== nu(tokens[i - 1])) continue
+      /*
+       * A ORIGEM DECIDE. Repetição em que as duas palavras vieram de card é a
+       * pessoa tendo escolhido o mesmo card duas vezes — "beijo, beijo e
+       * silhueta" —, e apagar uma seria o motor removendo palavra escolhida,
+       * exatamente o que a invariante deste mesmo arquivo proíbe. A saída está
+       * certa; era o detector que estava errado.
+       *
+       * O que este detector existe para pegar é duplicação que o MOTOR criou:
+       * "a a água", "de de". Por isso basta uma das duas ser `inserted`.
+       */
+      if (tokens[i].kind !== 'inserted' && tokens[i - 1].kind !== 'inserted') continue
+      achados.push(`"${nu(tokens[i - 1])} ${nu(tokens[i])}" (${tokens[i - 1].kind}+${tokens[i].kind})`)
+    }
+    return achados
+  },
+)
 
 detector('preposicao-dupla', 'alta', 'Preposição seguida de preposição.', (c) => {
   const palavras = c.saida.text.toLowerCase().replace(/[.?!,]/g, '').split(/\s+/).filter(Boolean)
@@ -224,6 +254,12 @@ detector('concordancia', 'alta', 'Determinante, substantivo e adjetivo em gêner
       ? lookup(regionalLabel(t.original ?? c.entrada[t.cardIndex], c.opcoes.region))
       : null
 
+  /*
+   * Determinante concorda com o núcleo do SEU sintagma — o substantivo que ele
+   * introduz, e nenhum outro. Por isso a checagem é de adjacência: o artigo
+   * está imediatamente antes do núcleo, e a pontuação viaja colada ao token,
+   * então uma vírgula entre os dois já impede a chave de casar em `ARTIGOS`.
+   */
   for (let i = 1; i < tokens.length; i++) {
     const art = ARTIGOS[tokens[i - 1].text.toLowerCase()]
     const ficha = fichaDe(tokens[i])
@@ -233,18 +269,45 @@ detector('concordancia', 'alta', 'Determinante, substantivo e adjetivo em gêner
     }
   }
 
-  // Adjetivo depois de substantivo: só a terminação -o/-a é verificável sem
-  // saber flexionar, e é justamente onde o erro de concordância aparece.
-  let ultimoSubstantivo = null
+  /*
+   * Adjetivo depois de substantivo. Só a terminação -o/-a é verificável sem
+   * saber flexionar, e é justamente onde o erro de concordância aparece.
+   *
+   * O ALVO É O SUBSTANTIVO IMEDIATAMENTE ANTERIOR, e o escopo morre em
+   * fronteira de oração. Antes isto guardava "o último substantivo visto na
+   * frase inteira", e acusava frase correta:
+   *
+   *   "…amar a titia então o guri chato?"  →  "titia … chato" (falso)
+   *
+   * `chato` concorda com `guri`; `titia` está em outra oração, do outro lado
+   * de um conectivo. Duas coisas encerram o escopo, e as duas são fronteira de
+   * verdade: outro substantivo (que passa a ser o alvo, ou nenhum se o gênero
+   * dele for desconhecido) e conectivo, vírgula ou ponto.
+   *
+   * Um detector que grita à toa é um detector que as pessoas param de ler —
+   * e aí ele deixa de valer também quando está certo.
+   */
+  let alvo = null
   for (const t of tokens) {
+    const texto = t.text.toLowerCase()
     const ficha = fichaDe(t)
-    if (!ficha) continue
-    if (ficha.class === 'noun' && ficha.gender && !ficha.guessed) ultimoSubstantivo = { t, ficha }
-    else if (ficha.class === 'adjective' && ultimoSubstantivo) {
-      const fim = t.text.toLowerCase().slice(-1)
-      if ((fim === 'o' && ultimoSubstantivo.ficha.gender === 'f') || (fim === 'a' && ultimoSubstantivo.ficha.gender === 'm')) {
-        achados.push(`"${ultimoSubstantivo.t.text} ... ${t.text}" — adjetivo discorda do substantivo`)
+
+    if (ficha && ficha.class === 'noun') {
+      // Substantivo sem gênero confiável não vira alvo, mas apaga o anterior:
+      // ele está entre o adjetivo e o candidato antigo.
+      alvo = ficha.gender && !ficha.guessed ? { t, ficha } : null
+    } else if (ficha && ficha.class === 'adjective' && alvo) {
+      const fim = texto.replace(/[.,?!;:]/g, '').slice(-1)
+      if ((fim === 'o' && alvo.ficha.gender === 'f') || (fim === 'a' && alvo.ficha.gender === 'm')) {
+        achados.push(`"${alvo.t.text} ${t.text}" — adjetivo discorda do substantivo`)
       }
+    }
+
+    // Fronteira de oração: conectivo ou pontuação. Vale mesmo quando o token
+    // acabou de ser o alvo — "a titia, …" já não alcança o que vem depois.
+    const classe = ficha ? ficha.class : lookup(texto.replace(/[.,?!;:]/g, '')).class
+    if (classe === 'connector' || FRONTEIRAS.has(texto.replace(/[.,?!;:]/g, '')) || /[.,?!;:]/.test(texto)) {
+      alvo = null
     }
   }
   return achados
@@ -497,3 +560,41 @@ for (const d of todos) {
   }
 }
 console.log(`\nfila de revisão: ${destino.replace(/\\/g, '/')}`)
+
+/*
+ * Resumo legível por máquina, para a rodada de várias sementes agregar sem
+ * ninguém precisar analisar a saída de texto. Um relatório que só existe em
+ * prosa obriga quem for somá-lo a fazer regex sobre prosa — e aí o número
+ * agregado passa a depender de um espaço em branco.
+ */
+const resumoEm = argumento('json', null)
+if (resumoEm) {
+  writeFileSync(
+    resumoEm,
+    JSON.stringify(
+      {
+        casos: total,
+        familias: familias.size,
+        invariantes,
+        suspeitas,
+        contexto,
+        contagem: Object.fromEntries(contagem),
+        exemplos: Object.fromEntries(
+          [...exemplos].map(([nome, lista]) => [
+            nome,
+            lista.map((e) => ({
+              motivo: e.motivo,
+              forma: e.caso.forma,
+              entrada: e.caso.entrada,
+              texto: e.caso.saida.text,
+              marcadores: e.caso.marcadores,
+              opcoes: e.caso.opcoes,
+            })),
+          ]),
+        ),
+      },
+      null,
+      1,
+    ),
+  )
+}

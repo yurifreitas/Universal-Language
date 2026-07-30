@@ -297,6 +297,20 @@ function agree(word: string, gender: 'm' | 'f', plural: boolean, lex?: Lexeme): 
   // So flexiona genero quem tem forma feminina: o lexico marca `gender: 'm'`
   // nos adjetivos de duas formas (bonito/bonita) e omite nos invariaveis.
   if (gender === 'f' && lex?.gender === 'm' && out.endsWith('o')) out = `${out.slice(0, -1)}a`
+  /**
+   * O caminho de volta: FEMININO → MASCULINO.
+   *
+   * O acervo nomeia muitos pictogramas pela forma feminina — "preguiçosa",
+   * "amarela", "cansada" —, e o card imprime o rotulo que tem. Sem este ramo,
+   * `BEIJO · PREGUIÇOSA` saia "O beijo está preguiçosa": o motor so sabia ir de
+   * masculino para feminino, e a forma do cartao ficava congelada.
+   *
+   * A marca `femininoBase` e obrigatoria, e nao se deduz da terminacao: ha
+   * adjetivo INVARIAVEL em -a ("otimista", "hipócrita", "agrícola"), e
+   * converter esses produziria "otimisto". Quem nao declara nao flexiona — a
+   * mesma regra do resto do arquivo.
+   */
+  if (gender === 'm' && lex?.femininoBase && out.endsWith('a')) out = `${out.slice(0, -1)}o`
   if (plural) out = pluralize(out, undefined)
   return out
 }
@@ -566,10 +580,27 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const abriuOracao = new Set<number>()
   {
     let c = 0
-    let verboNaOracao = false
+    /**
+     * A oração já tem PREDICADO — e não "já vi um card de verbo".
+     *
+     * A diferença apareceu em `FELIZ · EU · GOSTAR · IRMÃO`, que saía
+     * "Vou estar feliz eu gostar do irmão": duas orações coladas e a segunda
+     * sem conjugar. O "eu" não abria oração nova porque, para esta contagem,
+     * ainda não havia verbo — mas havia predicado, "estou feliz", montado com
+     * uma cópula que o motor insere e que não é card nenhum.
+     *
+     * Contar predicado em vez de card de verbo é o conserto na estrutura. O
+     * adjetivo só forma predicado quando é o PRIMEIRO da oração: depois de um
+     * substantivo ele é modificador ("a casa bonita"), e a cópula não entra.
+     */
+    let predicadoNaOracao = false
+    let houveNomeNaOracao = false
     for (const it of items) {
       clauseOf[it.index] = c
-      if (it.lex.class === 'verb') verboNaOracao = true
+      if (it.lex.class === 'verb') predicadoNaOracao = true
+      // Adjetivo sem nome antes vira "estar X" — isso é predicado.
+      if (it.lex.class === 'adjective' && !houveNomeNaOracao) predicadoNaOracao = true
+      if (it.lex.class === 'noun') houveNomeNaOracao = true
 
       const depois = items.slice(it.index + 1)
 
@@ -590,7 +621,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       // verbo proprio depois dele. Sem isto o "eu" era lido como objeto do
       // verbo anterior e virava clitico — "quando o papai me chegar".
       const ehSujeitoNovo =
-        verboNaOracao &&
+        predicadoNaOracao &&
         (it.lex.class === 'pronoun' || (it.lex.class === 'noun' && Boolean(it.lex.animate))) &&
         depois.some((x) => x.lex.class === 'verb')
 
@@ -640,7 +671,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
             clauseVirgula.add(c)
           }
         }
-        verboNaOracao = false
+        predicadoNaOracao = false
+        houveNomeNaOracao = false
       }
     }
   }
@@ -1037,6 +1069,16 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   }
 
   /** Insere a copula quando a frase e "eu triste" — sem verbo nenhum. */
+  /**
+   * Qual cópula já entrou nesta oração.
+   *
+   * Existe para permitir DUAS predicações sobre o mesmo sujeito quando elas
+   * pedem cópulas diferentes — "eu estou feliz **e tenho** medo". Sem isto,
+   * `EU · FELIZ · MEDO` saía "Eu estou feliz medo": a segunda predicação era
+   * silenciosamente descartada porque já havia verbo.
+   */
+  let copulaEmitida: 'estar' | 'ter' | 'ser' | null = null
+
   const emitCopula = (verb: 'estar' | 'ter' | 'ser' = 'estar') => {
     emitNegation()
     const p = subjectPerson()
@@ -1050,6 +1092,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         : conjugate(verb, p, tense === 'past' ? 'imperfect' : tense)
     push(forma, 'inserted')
     verbDone = true
+    copulaEmitida = verb
   }
 
   let oracaoAtual = 0
@@ -1057,7 +1100,23 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   for (let i = 0; i < items.length; i++) {
     const it = items[i]!
     const { lex, label } = it
-    const next = items[i + 1]
+    /**
+     * O proximo item que IMPORTA — a negacao e transparente.
+     *
+     * Quase toda decisao do motor olha uma posicao a frente: concordancia de
+     * determinante, regencia de preposicao, se o substantivo abre lista, se o
+     * adjetivo liga a um verbo. Um card "nao" no meio escondia tudo isso e
+     * produzia uma familia inteira de defeitos:
+     *
+     *     EU · CANSADO · NAO · ESPERAR  ->  "cansado esperar"  (sem o "de")
+     *     UM · NAO · TITIA  + plural    ->  "um titias"        (sem concordar)
+     *
+     * A negacao nega a oracao; ela nunca e alvo de concordancia nem de
+     * regencia. Torna-la transparente AQUI conserta todos os pontos de uma vez,
+     * em vez de um remendo por lugar — e foi assim que os dois acima
+     * apareceram, com semanas de diferenca, cada um no seu canto.
+     */
+    const next = proximoIgnorandoNegacao(i)
     const isPlural = it.index === lastNounIndex
 
     // Fronteira de oracao: troca o sujeito, a pessoa e o clitico, e zera o
@@ -1311,8 +1370,53 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // Sem verbo antes de um substantivo de estado ("eu fome"), a copula
         // correta e TER: "eu tenho fome", nao "eu estou fome". DOR pede
         // "estar com": "estou com dor".
-        if (!verbDone && (label === 'fome' || label === 'sede' || label === 'medo' || label === 'dor')) {
-          emitCopula(label === 'dor' ? 'estar' : 'ter')
+        const ehEstado =
+          label === 'fome' || label === 'sede' || label === 'medo' || label === 'dor'
+        const copulaDoEstado = label === 'dor' ? 'estar' : 'ter'
+
+        /**
+         * Segunda predicação sobre o mesmo sujeito: "eu estou feliz E TENHO
+         * medo".
+         *
+         * O ramo abaixo exigia `!verbDone`, então com a cópula de um adjetivo
+         * já emitida o substantivo de estado caía solto — "Eu estou feliz
+         * medo". São duas predicações legítimas com cópulas diferentes, e a
+         * língua as junta com "e", exatamente como já se faz com dois verbos.
+         *
+         * Só vale quando a cópula anterior foi OUTRA: com a mesma, "tenho fome
+         * e tenho sede" seria repetição desnecessária, e o caminho de lista que
+         * já existe resolve melhor.
+         */
+        /**
+         * "Eu estou feliz **e com** dor" — a cópula é elidida.
+         *
+         * Quando a segunda predicação usa a MESMA cópula da primeira, repeti-la
+         * ("estou feliz e estou com dor") soa a lista de formulário. A língua
+         * elide o verbo e liga direto pelo "com", e é isso que sai da boca de
+         * quem fala.
+         */
+        const elideCopula = ehEstado && verbDone && copulaEmitida === copulaDoEstado
+        if (ehEstado && verbDone && copulaEmitida && copulaEmitida !== copulaDoEstado) {
+          emitListSeparator(!items.slice(i + 1).some((x) => x.lex.class === 'noun'), true, it.index)
+          emitCopula(copulaDoEstado)
+          if (label === 'dor') push('com', 'inserted')
+          push(it.card.label, 'card', { cardIndex: it.index })
+          previousWasNoun = true
+          lastNoun = { gender: lex.gender ?? 'm', plural: false, label, lex }
+          break
+        }
+
+        if (elideCopula) {
+          emitListSeparator(!items.slice(i + 1).some((x) => x.lex.class === 'noun'), true, it.index)
+          if (label === 'dor') push('com', 'inserted')
+          push(it.card.label, 'card', { cardIndex: it.index })
+          previousWasNoun = true
+          lastNoun = { gender: lex.gender ?? 'm', plural: false, label, lex }
+          break
+        }
+
+        if (!verbDone && ehEstado) {
+          emitCopula(copulaDoEstado)
           if (label === 'dor') pendingPrep = 'com'
         }
 
@@ -1517,7 +1621,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // olhava só uma posição à frente, e a preposição sumia. A negação não
         // muda a relação entre o adjetivo e o verbo — ela nega a oração — e
         // por isso não pode entrar no meio dessa leitura.
-        if (proximoIgnorandoNegacao(i)?.lex.class === 'verb') pendingVerbPrep = 'de'
+        if (next?.lex.class === 'verb') pendingVerbPrep = 'de'
         previousWasNoun = false
         break
       }

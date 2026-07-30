@@ -118,7 +118,7 @@ detector passar a acusar o motor de inventar verbo.
 
 | Detector | Gravidade | O que procura |
 |---|---|---|
-| `concordancia` | alta | artigo/contração com gênero ou número diferente do substantivo; adjetivo terminado em -o/-a discordando do último substantivo nomeado |
+| `concordancia` | alta | artigo/contração com gênero ou número diferente do núcleo que ele introduz; adjetivo terminado em -o/-a discordando do substantivo **imediatamente anterior**, dentro da mesma oração |
 | `regionalismo-pela-metade` | alta | a região tem variante para a palavra e a saída trouxe a forma canônica mesmo assim |
 | `repeticao` | alta | palavra repetida em sequência ("a a água", "de de") |
 | `preposicao-dupla` | alta | preposição seguida de preposição |
@@ -136,6 +136,13 @@ Duas decisões de calibragem que já custaram fila cheia de nada:
 - **A concordância consulta a palavra regional, não a canônica.** "A criança"
   vira "o guri" no Sul, e é o gênero da variante que manda no artigo
   (GRAMMAR.md 5). Consultar a canônica acusava "o guri" de erro.
+- **O adjetivo concorda com o substantivo imediatamente anterior, e fronteira
+  de oração corta o escopo.** Guardar "o último substantivo da frase inteira"
+  acusava frase perfeita: em "…amar a titia então o guri chato?", `chato`
+  concorda com `guri`, e `titia` está do outro lado de um conectivo. Encerram o
+  escopo: outro substantivo (que vira o alvo — ou nenhum, se o gênero dele for
+  desconhecido), conectivo (`então`, `aí`, `mas`, `porque`, `e`…), vírgula e
+  ponto.
 
 O detector de registro merece nota à parte: o que o registro **pode** mudar é
 "pra"/"para" (e o artigo que vem junto), o imperativo e a conjugação de "tu" —
@@ -173,6 +180,21 @@ variedades: 416/8700 comparações de região mudaram a frase, 1614/5220 de regi
    byte a byte o mesmo arquivo.
 
 ---
+
+## Quando o relatório zera
+
+Zero suspeitas é o objetivo — e é também exatamente o que um detector quebrado
+imprime. **Um relatório limpo não vale nada sozinho.**
+
+Antes de anunciar que o motor está sem defeito conhecido, injete defeito e
+veja se ele é pego: monte à mão um JSONL de sonda com saídas erradas — artigo
+de gênero trocado, palavra repetida, palavra de conteúdo inserida, card
+faltando, dois cards fora de ordem — e rode `detectar.mjs --casos=` sobre ele.
+Se as contagens não subirem, o problema é o detector, não a boa notícia.
+
+O JSONL de sonda é descartável e mora fora do repositório: a sonda comprova o
+detector do dia, e um arquivo versionado só criaria a ilusão de que ela cobre
+o que passou a existir depois.
 
 ## Determinismo
 

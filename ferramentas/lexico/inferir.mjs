@@ -261,6 +261,197 @@ export function generoDeAdjetivo(palavra) {
   return /o$/.test(p) ? 'm' : null
 }
 
+/* ------------------------------------------ o que o `type=4` traz de errado */
+
+/**
+ * O `type=4` da ARASAAC não é "adjetivo": é "modificador", e dentro dele vêm
+ * advérbio, numeral, possessivo e demonstrativo junto com adjetivo de verdade.
+ *
+ * Publicar `depressa` como adjetivo fazia o motor pôr cópula onde cabia
+ * adjunto — "Nosso dia não vai estar depressa". O defeito aparecia no detector
+ * de concordância, mas nunca foi de concordância: era de CLASSE. Advérbio não
+ * concorda com substantivo nenhum porque não é para concordar.
+ *
+ * Estas são CLASSES FECHADAS — dá para listá-las inteiras, e listar é mais
+ * seguro que inferir. Onde a lista não alcança, a palavra fica como está.
+ */
+
+/** `-mente` não aparece uma única vez no acervo; a regra produtiva seria morta. */
+const ADVERBIOS = new Set([
+  'agora', 'depressa', 'nunca', 'fora', 'ali', 'aqui', 'lá', 'cá', 'aí',
+  'atrás', 'adiante', 'diante', 'longe', 'perto', 'dentro', 'debaixo', 'acima',
+  'abaixo', 'bem', 'mal', 'demais', 'hoje', 'ontem', 'amanhã', 'anteontem',
+  'sempre', 'jamais', 'já', 'ainda', 'também', 'talvez', 'antes', 'depois',
+  'logo', 'assim', 'devagar', 'cedo', 'tarde', 'quase', 'apenas', 'junto',
+])
+
+/**
+ * Cardinais viram `quantifier` com `plural: true`, na forma que o léxico manual
+ * já usa para `dois`, `três` e `dez`. Os ordinais NÃO entram: "primeira",
+ * "segunda", "terceira" são adjetivos de verdade e flexionam como tais.
+ */
+const NUMERAIS = new Set([
+  'zero', 'seis', 'sete', 'oito', 'nove', 'onze', 'doze', 'treze', 'catorze',
+  'quatorze', 'quinze', 'dezasseis', 'dezesseis', 'dezassete', 'dezessete',
+  'dezoito', 'dezanove', 'dezenove', 'vinte', 'trinta', 'quarenta', 'cinquenta',
+  'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa', 'cem', 'cento',
+  'duzentos', 'duzentas', 'trezentos', 'trezentas', 'quatrocentos',
+  'quatrocentas', 'quinhentos', 'quinhentas', 'seiscentos', 'seiscentas',
+  'setecentos', 'setecentas', 'oitocentos', 'oitocentas', 'novecentos',
+  'novecentas', 'mil', 'milhão', 'milhões', 'bilhão', 'bilião', 'milhar',
+])
+
+/** `mais` e `menos` são quantificadores, não advérbios — é o que o manual faz. */
+const QUANTIFICADORES = new Set(['menos', 'muitíssimo', 'muitíssima', 'bastante'])
+
+/**
+ * Possessivo é `determiner` e demonstrativo é `article` — não é escolha minha,
+ * é o que o léxico revisado à mão já faz (`meu` determiner, `esse` article).
+ * O valor é `[classe, gênero, plural]`.
+ */
+const FECHADAS_COM_FLEXAO = new Map(Object.entries({
+  meu: ['determiner', 'm', false], meus: ['determiner', 'm', true],
+  minha: ['determiner', 'f', false], minhas: ['determiner', 'f', true],
+  teu: ['determiner', 'm', false], teus: ['determiner', 'm', true],
+  tua: ['determiner', 'f', false], tuas: ['determiner', 'f', true],
+  seu: ['determiner', 'm', false], seus: ['determiner', 'm', true],
+  sua: ['determiner', 'f', false], suas: ['determiner', 'f', true],
+  nossos: ['determiner', 'm', true], nossas: ['determiner', 'f', true],
+  este: ['article', 'm', false], esta: ['article', 'f', false],
+  estes: ['article', 'm', true], estas: ['article', 'f', true],
+  essa: ['article', 'f', false], essas: ['article', 'f', true],
+  esses: ['article', 'm', true],
+  aquele: ['article', 'm', false], aquela: ['article', 'f', false],
+  aqueles: ['article', 'm', true], aquelas: ['article', 'f', true],
+  algum: ['determiner', 'm', false], alguma: ['determiner', 'f', false],
+  alguns: ['determiner', 'm', true], algumas: ['determiner', 'f', true],
+  nenhum: ['determiner', 'm', false], nenhuma: ['determiner', 'f', false],
+  outro: ['determiner', 'm', false], outra: ['determiner', 'f', false],
+  outros: ['determiner', 'm', true], outras: ['determiner', 'f', true],
+  vários: ['determiner', 'm', true], várias: ['determiner', 'f', true],
+  diversos: ['determiner', 'm', true], diversas: ['determiner', 'f', true],
+  ambos: ['determiner', 'm', true], ambas: ['determiner', 'f', true],
+  qualquer: ['determiner', null, false], quaisquer: ['determiner', null, true],
+  tal: ['determiner', null, false], tais: ['determiner', null, true],
+  cada: ['determiner', null, false],
+}))
+
+/**
+ * Interrogativos. Saem do arquivo em vez de entrarem como advérbio: eles têm
+ * classe própria (`question`) e regem estrutura de pergunta, coisa que a
+ * inferência não sabe montar. Publicar `onde` como advérbio trocaria um erro
+ * por outro; deixá-los para `guess()` é o comportamento de antes.
+ */
+const INTERROGATIVOS = new Set([
+  'como', 'onde', 'quando', 'quanto', 'quanta', 'quantos', 'quantas',
+  'porque', 'porquê', 'qual', 'quais', 'quem', 'aonde',
+])
+
+/**
+ * Reclassifica o que veio do `type=4` e não é adjetivo.
+ *
+ * Devolve `'descartar'`, uma entrada nova, ou `null` para deixar como está.
+ * A ordem é a da confiança: lista fechada primeiro, marca do dicionário
+ * (`adv.` no começo da definição) por último, porque a lista é certa e a marca
+ * é evidência.
+ */
+export function reclassificar(termo, definicoes) {
+  const p = termo.toLowerCase()
+
+  if (INTERROGATIVOS.has(p)) return 'descartar'
+  if (NUMERAIS.has(p)) return { class: 'quantifier', plural: true }
+  if (QUANTIFICADORES.has(p)) return { class: 'quantifier' }
+
+  const fechada = FECHADAS_COM_FLEXAO.get(p)
+  if (fechada) {
+    const [classe, genero, plural] = fechada
+    const entrada = { class: classe }
+    if (genero) entrada.gender = genero
+    if (plural) entrada.plural = true
+    return entrada
+  }
+
+  if (ADVERBIOS.has(p)) return { class: 'adverb' }
+
+  // A marca do dicionário, que o próprio acervo traz: "adv. Com celeridade..."
+  // em `depressa`. Vale como último recurso e só para advérbio — o marcador
+  // `pron.` existe mas vem contaminado (a ARASAAC o usa também em numeral).
+  if (definicoes.some((d) => /^adv\./i.test(d.trim()))) return { class: 'adverb' }
+
+  return null
+}
+
+/* ------------------------------------------------------------ femininoBase */
+
+/**
+ * Adjetivo INVARIÁVEL terminado em `-a`. Converter estes produz "otimisto".
+ *
+ * A maioria já é barrada por `comumDeDoisGeneros()` (todo o `-ista`, `-crata`,
+ * `-iatra`), que é a mesma família vista de outro ângulo: palavra de forma
+ * única não tem par masculino para virar. Aqui ficam só as que nenhum sufixo
+ * pega.
+ */
+const ADJETIVOS_INVARIAVEIS_EM_A = new Set([
+  'hipócrita', 'agrícola', 'indígena', 'azteca', 'asteca', 'careca', 'grávida',
+  'rosa', 'poliglota', 'belga', 'celta', 'persa', 'cor-de-rosa',
+])
+
+/**
+ * A classe do termo, pela maioria das linhas. Separada de `inferir()` porque o
+ * contexto precisa saber a classe de TODO o acervo antes de qualquer inferência
+ * rodar — e chamar `inferir()` para descobrir isso seria circular.
+ */
+export function classeDoTermo(linhas) {
+  const porClasse = new Map()
+  for (const l of linhas) {
+    const c = classeDoTipo(l.type)
+    if (!c) continue
+    porClasse.set(c, (porClasse.get(c) ?? 0) + 1)
+  }
+  if (porClasse.size === 0) return null
+  return [...porClasse.entries()].sort((a, b) => b[1] - a[1])[0][0]
+}
+
+/**
+ * O conjunto dos adjetivos do acervo — a evidência de que `femininoBase`
+ * precisa. Monte uma vez e passe para `inferir()`.
+ */
+export function construirContexto(acervo) {
+  const adjetivos = new Set()
+  for (const [termo, linhas] of acervo) {
+    if (classeDoTermo(linhas) === 'adjective') adjetivos.add(termo)
+  }
+  return { adjetivos }
+}
+
+/**
+ * O rótulo está na forma feminina de um par biforme?
+ *
+ * **A marca não se deduz da terminação.** Adjetivo invariável em `-a` é comum
+ * (otimista, hipócrita, agrícola), e marcá-lo faria o motor imprimir
+ * "otimisto" — o mesmo erro do `-ista`, de roupa nova.
+ *
+ * O sinal usado é direto e não inferido: **o par masculino existe no acervo,
+ * também como adjetivo**. "amarela" tem "amarelo" ao lado; "otimista" não tem
+ * "otimisto", e nunca vai ter.
+ *
+ * Onde o par não existe, a resposta é NÃO. Olhei as 44 palavras em `-a` sem par
+ * e cerca de um terço nem adjetivo é — o `type=4` da ARASAAC recolhe advérbio
+ * (agora, depressa, nunca), numeral (trinta, oitenta) e determinante (essa,
+ * minha). Junto vinham invariáveis de verdade (careca, grávida, poliglota).
+ * Marcar esse bloco por terminação acertaria talvez dois terços, o que está
+ * muito abaixo do corte do resto do arquivo. As biformes legítimas que se
+ * perdem ali (bêbada, medrosa, espanhola) continuam saindo com a classe, que é
+ * o comportamento de hoje: nada piora, só não melhora.
+ */
+export function temFemininoBase(palavra, contexto) {
+  const p = palavra.toLowerCase()
+  if (!p.endsWith('a')) return false
+  if (ADJETIVOS_INVARIAVEIS_EM_A.has(p)) return false
+  if (comumDeDoisGeneros(p)) return false
+  return Boolean(contexto?.adjetivos?.has(p.slice(0, -1) + 'o'))
+}
+
 /* ---------------------------------------------------------------- plural */
 
 /**
@@ -337,15 +528,9 @@ export function pluralIrregular(palavra, plural) {
  * palavra a menos no léxico é uma frase mais telegráfica — o custo de uma
  * palavra errada é a frase dizer outra coisa. O resto vai para revisão humana.
  */
-export function inferir(termo, linhas) {
-  const porClasse = new Map()
-  for (const l of linhas) {
-    const c = classeDoTipo(l.type)
-    if (!c) continue
-    porClasse.set(c, (porClasse.get(c) ?? 0) + 1)
-  }
-  if (porClasse.size === 0) return null
-  const classe = [...porClasse.entries()].sort((a, b) => b[1] - a[1])[0][0]
+export function inferir(termo, linhas, contexto) {
+  const classe = classeDoTermo(linhas)
+  if (!classe) return null
 
   let plural = null
   for (const l of linhas) {
@@ -357,9 +542,22 @@ export function inferir(termo, linhas) {
   if (plural && classe === 'noun') entrada.pluralForm = plural
 
   if (classe === 'adjective') {
+    // O `type=4` traz advérbio, numeral e possessivo junto com adjetivo. Isso
+    // vem ANTES de qualquer regra de gênero: não adianta acertar o gênero de
+    // uma palavra que nem adjetivo é.
+    const outra = reclassificar(termo, linhas.map((l) => desfazerMojibake(l.meaning || '')))
+    if (outra === 'descartar') return null
+    if (outra) {
+      if (entrada.pluralForm) delete entrada.pluralForm
+      return { entrada: { ...outra }, confianca: 'alta', sinais: {}, pontos: 0, reclassificado: true }
+    }
+
     // Sem gênero aqui significa INVARIÁVEL, e é uma afirmação, não uma dúvida.
     const g = generoDeAdjetivo(termo)
     if (g) entrada.gender = g
+    // `gender` e `femininoBase` se excluem: um diz "o rótulo é a forma
+    // masculina", o outro diz "é a feminina". Nunca os dois.
+    else if (temFemininoBase(termo, contexto)) entrada.femininoBase = true
     return { entrada, confianca: 'alta', sinais: {}, pontos: 0 }
   }
 
