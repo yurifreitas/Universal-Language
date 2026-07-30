@@ -327,6 +327,44 @@ function agree(word: string, gender: 'm' | 'f', plural: boolean, lex?: Lexeme): 
  * Só `com` contrai assim. "para eu", "de eu" têm outras regras e outras formas
  * ("para mim", "de mim"), e entram à parte quando forem tratadas.
  */
+/**
+ * Depois de preposição, `eu` e `tu` mudam de forma: "para **mim**", "de **mim**",
+ * "sem **mim**", "por **ti**". É o caso oblíquo, e é obrigatório — "para eu" não
+ * existe em variedade nenhuma do português, culta ou popular.
+ *
+ * Pesa mais aqui do que pesaria em outro lugar. "dá para mim", "é de mim",
+ * "brinca comigo" são pedidos de primeira necessidade numa prancha: estão entre
+ * as primeiras frases que alguém monta, e sair errado marca a fala como
+ * estrangeira logo no enunciado mais repetido do dia.
+ *
+ * Os outros pronomes não mudam ("para você", "de nós"), e a ausência deles nesta
+ * tabela é o que diz isso.
+ */
+/**
+ * Advérbios de aspecto que ficam ANTES do "não" quando a frase não tem verbo.
+ *
+ * "ainda não" e "já não" são respostas inteiras, e das mais usadas: dizem que a
+ * coisa não aconteceu *até agora*, o que é diferente de dizer que não acontece.
+ * Invertidas — "não ainda" — deixam de ser português e perdem justamente essa
+ * diferença.
+ */
+const ASPECTO_ANTES_DA_NEGACAO = new Set(['ainda', 'já', 'quase', 'hoje', 'agora'])
+
+const OBLIQUO: Record<string, string> = {
+  eu: 'mim',
+  tu: 'ti',
+}
+
+/**
+ * A exceção do oblíquo: antes de infinitivo o pronome volta a ser sujeito, porque
+ * é sujeito — de fato ele é quem faz a ação. "para **eu** comer", nunca "para mim
+ * comer"; compare com "para mim" sozinho, onde não há verbo para reger.
+ *
+ * Sem esta trava a correção acima quebraria "isso é para eu comer", que é uma
+ * frase tão comum quanto "isso é para mim".
+ */
+const PREP_ANTES_DE_INFINITIVO = new Set(['para', 'pra', 'por', 'até', 'sem', 'de', 'a'])
+
 const COM_PRONOME: Record<string, string> = {
   eu: 'comigo',
   tu: 'contigo',
@@ -830,7 +868,13 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         it.lex.class === 'pronoun' &&
         fv >= 0 &&
         it.index > fv &&
-        (it.lex.person === '1s' || it.lex.person === '2s'),
+        (it.lex.person === '1s' || it.lex.person === '2s') &&
+        // ...e que NÃO venha depois de uma preposição escolhida. Depois de
+        // preposição o pronome é termo dela, não objeto do verbo:
+        // `VOCÊ · IR · SEM · EU` dava "Você me vai" — o clítico roubava o
+        // pronome e a preposição sumia junto, trocando "sem mim" por
+        // exatamente o oposto do que a pessoa quis dizer.
+        !dentro.some((p) => p.index === it.index - 1 && p.lex.class === 'preposition'),
     )
     // O clitico acompanha o ULTIMO verbo antes do pronome, nao o primeiro: em
     // "quero ajudar você" quem rege o objeto e "ajudar".
@@ -915,6 +959,21 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
   let verbDone = false
   let negationDone = false
+  /**
+   * O intensificador que ainda não achou o adjetivo dele.
+   *
+   * "muito" antes de substantivo é quantificador e fica onde está ("muita
+   * água"). Antes de ADJETIVO é outra coisa — intensifica —, e aí ele pertence
+   * ao predicado, não à zona do sujeito: `EU · MUITO · FELIZ` saía "Eu muito
+   * estou feliz", porque a palavra era escrita antes de a cópula existir.
+   *
+   * Guardar e soltar depois é o mínimo que resolve sem mexer na ordem dos
+   * cards: a pessoa escolheu muito-feliz, e é muito-feliz que sai.
+   */
+  /** Índice do verbo que fica no infinitivo por ser de oração reduzida
+   *  aberta por preposição — "para eu **comer**". Ver `PREP_ANTES_DE_INFINITIVO`. */
+  let infinitivoDaPreposicao: number | null = null
+  let pendingIntensidade: { texto: string; cardIndex: number } | null = null
   let pendingPrep: string | null = null
   /** Regencia do verbo principal, que se repete em cada item de uma lista. */
   let regencyPrep: string | null = null
@@ -1281,9 +1340,27 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           previousWasSubject = false
           break
         }
+        // A preposição que rege ESTE pronome — venha ela de um card escolhido
+        // ("sem · eu") ou inserida pela regência do verbo ("gostar" -> "de").
+        const prepRegente = pendingPrep
         if (pendingPrep) {
           push(pendingPrep, 'inserted')
           pendingPrep = null
+        }
+        // Caso oblíquo: "para mim", "de mim", "por ti". Só quando o pronome é
+        // mesmo termo da preposição — se um infinitivo vem em seguida, ele é
+        // sujeito desse infinitivo e continua "eu": "para eu comer".
+        if (prepRegente) {
+          const sujeitoDeInfinitivo =
+            next?.lex.class === 'verb' && PREP_ANTES_DE_INFINITIVO.has(prepRegente)
+          if (sujeitoDeInfinitivo && next) infinitivoDaPreposicao = next.index
+          const obliquo = sujeitoDeInfinitivo ? undefined : OBLIQUO[label]
+          if (obliquo) {
+            push(obliquo, 'inflected', { cardIndex: it.index, original: it.card.label })
+            previousWasNoun = false
+            previousWasSubject = false
+            break
+          }
         }
         push(it.card.label, 'card', { cardIndex: it.index })
         previousWasNoun = false
@@ -1381,7 +1458,14 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           })
         }
 
-        if (lex.fixed || (lex as { guessed?: boolean }).guessed) {
+        if (infinitivoDaPreposicao === it.index) {
+          // "isso para eu COMER" — a preposição abriu uma oração reduzida, e o
+          // verbo dela é infinitivo. Foi o que segurou o pronome na forma reta
+          // ("eu", não "mim") algumas linhas atrás; conjugar aqui desfaria
+          // metade da regra e devolveria "para eu comemos".
+          infinitivoDaPreposicao = null
+          push(it.card.label, 'card', { cardIndex: it.index })
+        } else if (lex.fixed || (lex as { guessed?: boolean }).guessed) {
           // Palavra fora do lexico so foi ADIVINHADA como verbo pela
           // terminacao. Conjugar um chute produz forma inexistente ("ver" ->
           // "vo"); manter o infinitivo produz frase telegrafica, que e apenas
@@ -1724,6 +1808,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           lastNoun || speakerGender !== 'n' || plural
             ? agree(it.card.label, gender, plural, lex)
             : it.card.label
+        // O intensificador que estava esperando entra agora, entre a cópula e o
+        // adjetivo: "estou muito feliz".
+        if (pendingIntensidade) {
+          push(pendingIntensidade.texto, 'card', { cardIndex: pendingIntensidade.cardIndex })
+          pendingIntensidade = null
+        }
         push(text, text === it.card.label ? 'card' : 'inflected', {
           cardIndex: it.index,
           ...(text === it.card.label ? {} : { original: it.card.label }),
@@ -1746,6 +1836,15 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       }
 
       case 'quantifier': {
+        // Antes de adjetivo o quantificador não quantifica: intensifica. Ele
+        // espera a cópula e sai colado no adjetivo — "estou muito feliz".
+        // A leitura ignora a negação, como em toda parte: `EU · MUITO · NÃO ·
+        // FELIZ` não pode perder o "muito" de vista por causa do "não".
+        if (next?.lex.class === 'adjective' && !verbDone) {
+          pendingIntensidade = { texto: it.card.label, cardIndex: it.index }
+          previousWasNoun = false
+          break
+        }
         // "muito água" nao existe: o quantificador concorda com o substantivo
         // que ele quantifica.
         const alvoQ = next?.lex.class === 'noun' ? next.lex : undefined
@@ -1863,10 +1962,27 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     }
   }
 
+  // Um intensificador que ficou esperando um adjetivo que nunca veio sai assim
+  // mesmo, no fim. Perder palavra escolhida é a única coisa que o motor não
+  // pode fazer em hipótese nenhuma — melhor uma frase desajeitada do que uma
+  // frase que não é a da pessoa.
+  if (pendingIntensidade) {
+    push(pendingIntensidade.texto, 'card', { cardIndex: pendingIntensidade.cardIndex })
+    pendingIntensidade = null
+  }
+
   // Negacao escolhida sem nenhum verbo na frase ("não" + "bolo"): a particula
   // abre a frase, que e como se diz na fala ("não, bolo não").
   if (negated && !negationDone) {
-    tokens.unshift(
+    // ...mas depois de um advérbio de aspecto ela vem em segundo lugar:
+    // "ainda não", "já não", "quase não" — e nunca "não ainda", que inverte a
+    // leitura de uma das respostas mais usadas numa prancha.
+    const primeiro = tokens[0]
+    const depoisDeAspecto =
+      primeiro && ASPECTO_ANTES_DA_NEGACAO.has(primeiro.text.toLowerCase()) ? 1 : 0
+    tokens.splice(
+      depoisDeAspecto,
+      0,
       negationCard
         ? { text: 'não', kind: 'card', cardIndex: negationCard.index }
         : { text: 'não', kind: 'inserted' },

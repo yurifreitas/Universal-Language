@@ -18,7 +18,7 @@ build e auditoria que **não** vão para o navegador.
 
 | | |
 |---|---|
-| Testes | **268** em 6 suítes (`npm test`) |
+| Testes | **280** em 6 suítes (`npm test`) |
 | Auditoria do motor | **40 sementes · 800.160 casos · 0 suspeitas** |
 | Léxico revisado à mão | 250 palavras |
 | Léxico gerado do acervo | **4.905** publicadas · 1.249 em revisão |
@@ -75,9 +75,41 @@ com regressão fixada em `web/tests/grammar.test.ts`.
 | `agree()` f→m (`femininoBase`) | "o beijo está **preguiçosa**" |
 | Substantivo sem gênero não leva artigo | "**o** dentista" para uma mulher |
 
-### O que ainda não faz
+### A revisão de linguagem natural — 30/07
 
-Ver a seção 6.
+Varredura de construções do português que a auditoria **não enumerava**. O ponto
+cego é estrutural: um detector só acha o que sabe procurar, e as 800 mil frases
+por rodada só combinam as dimensões já previstas. Estas quatro famílias passavam
+por fora de todas elas.
+
+| conserto | o que saía antes |
+|---|---|
+| Caso oblíquo (`OBLIQUO`) | "isso para **eu**", "gosta de **eu**" |
+| Clítico não rouba pronome regido por preposição | `SEM · EU` → "Você **me vai**" |
+| Infinitivo da oração reduzida | "para eu **comemos**" |
+| Intensificador espera a cópula | "Eu **muito estou** feliz" |
+| Aspecto antes da negação | `AINDA · NÃO` → "**Não ainda**" |
+
+Depois: **196 casos** no motor, **800.160 frases · 0 violações · 0 suspeitas**.
+
+### O que ainda erra — achado, não consertado
+
+Sabido e escrito aqui de propósito: cada um destes precisa de decisão que a
+varredura sozinha não toma.
+
+| entrada | sai | devia sair |
+|---|---|---|
+| `TER · BOLO` + pergunta | "Tenho o bolo?" | "Tem bolo?" — o `tem` existencial |
+| `JÁ · EU · COMER` | "Já eu comi" | "Eu já comi" — mover advérbio é mexer na ordem escolhida |
+| `DEIXAR · EU · VER` | "Deixo que eu veja" | "Deixa eu ver" |
+| `ISSO · GRANDE · QUE · AQUILO` | "está grande que" | "é maior que" — comparativo |
+| `PORQUE` + pergunta | "Porque?" | "Por quê?" |
+| `BONECA · IRMÃ` | "Boneca da irmã" | artigo inconsistente com "O carro do pai" |
+
+O existencial é o de maior peso — "tem bolo?" é das perguntas mais frequentes
+numa prancha. Os dois seguintes exigem reordenar cards, o que o motor de uma
+passada não pode fazer sem quebrar invariante; é exatamente o que a árvore
+(seção 5) existe para destravar.
 
 ---
 
@@ -126,9 +158,8 @@ telegráfico de verdade, explicar a frase palavra a palavra.
 
 ## 6. O que falta, em ordem
 
-1. **Revisão de linguagem natural** — construções que o motor ainda não faz.
-   Detector só vê o que sabe procurar; esta é a lacuna que nenhuma ferramenta
-   fecha sozinha. Em curso.
+1. **O `tem` existencial** — "tem bolo?", "tem mais?". A pergunta mais comum que
+   o motor ainda erra; ver a lista aberta na seção 3.
 2. **Eixo C do `PLANO.md`** — os 229 pictogramas essenciais no precache. Custo
    2,2 MB; ganho: a prancha de fábrica funciona no primeiro uso, sem rede.
    Hoje **não funciona**.

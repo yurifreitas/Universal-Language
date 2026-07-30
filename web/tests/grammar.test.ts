@@ -584,6 +584,44 @@ const CASES: Record<string, Case[]> = {
     // errado que forma inexistente.
     { cards: ['eu', 'querer', 'dinossauro'], expect: 'Eu quero dinossauro.' },
   ],
+
+  // Achados varrendo construções do português que nenhum detector procurava —
+  // detector só vê o que sabe procurar, e estas quatro famílias estavam fora do
+  // que a auditoria enumerava.
+  'caso oblíquo — o pronome depois de preposição': [
+    // "para eu" não existe. É pedido de primeira necessidade numa prancha, e
+    // sair errado marca a fala logo no enunciado mais repetido do dia.
+    { cards: ['isso', 'para', 'eu'], expect: 'Isso para mim.' },
+    { cards: ['você', 'gostar', 'eu'], expect: 'Você gosta de mim.' },
+    // Aqui não era só a forma: o clítico roubava o pronome e levava a
+    // preposição junto — saía "Você me vai", o oposto de "sem mim".
+    { cards: ['você', 'ir', 'sem', 'eu'], expect: 'Você vai sem mim.' },
+    // A exceção: antes de infinitivo o pronome é sujeito e continua "eu".
+    { cards: ['isso', 'para', 'eu', 'comer'], expect: 'Isso para eu comer.' },
+    // "com" continua contraindo, e antes das outras regras.
+    { cards: ['brincar', 'com', 'eu'], expect: 'Brinco comigo.' },
+  ],
+
+  'intensificador — "muito" antes de adjetivo': [
+    // Saía "Eu muito estou feliz": a palavra era escrita antes de a cópula
+    // existir, porque quantificador ficava sempre onde estava.
+    { cards: ['eu', 'muito', 'feliz'], expect: 'Eu estou muito feliz.' },
+    { cards: ['eu', 'pouco', 'triste'], expect: 'Eu estou pouco triste.' },
+    // A negação no meio não pode esconder o adjetivo de quem olha à frente.
+    { cards: ['eu', 'muito', 'não', 'feliz'], expect: 'Eu não estou muito feliz.' },
+    // Antes de substantivo ele continua quantificando, e concordando.
+    { cards: ['eu', 'querer', 'muito', 'água'], expect: 'Eu quero muita água.' },
+  ],
+
+  'aspecto antes da negação': [
+    // "ainda não" é uma resposta inteira e das mais usadas. Invertida — "não
+    // ainda" — deixa de ser português e perde a diferença entre "não aconteceu
+    // até agora" e "não acontece".
+    { cards: ['ainda', 'não'], expect: 'Ainda não.' },
+    { cards: ['já', 'não'], expect: 'Já não.' },
+    // Sem advérbio de aspecto a negação continua abrindo a frase.
+    { cards: ['não', 'bolo'], expect: 'Não o bolo.' },
+  ],
 }
 
 let pass = 0
