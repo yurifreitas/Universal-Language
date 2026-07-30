@@ -27,6 +27,17 @@ export function Pictogram({ card, eager = false }: Props) {
     )
   }
 
+  // Imagem propria (Estudio de formas): vem pronta no card, sem acervo e sem
+  // rede. Nao passa pelo estado de carregamento porque uma `data:` URL nao
+  // carrega — ela ja esta ali.
+  if (card.imagem) {
+    return (
+      <div className="picto">
+        <img src={card.imagem} alt="" aria-hidden="true" draggable={false} />
+      </div>
+    )
+  }
+
   if (state === 'error') {
     return (
       <div className="picto picto--fallback" aria-hidden="true">

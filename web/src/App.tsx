@@ -44,16 +44,19 @@ import { registrarEnsaio, seloDe, vezes } from './lib/ensaio'
 import {
   loadDiario,
   loadGameStats,
+  loadCriacoes,
   loadObjetivos,
   loadPerfilPadroes,
   loadPhraseUses,
   saveDiario,
   saveGameStats,
+  saveCriacoes,
   saveObjetivos,
   savePerfilPadroes,
   savePhraseUses,
 } from './lib/storage'
 import { registrar as registrarPratica, type Motivo } from './lib/diario'
+import { carregarLexico } from './lib/lexicoGerado'
 import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
@@ -74,7 +77,9 @@ import { ObjectivesPanel } from './components/ObjectivesPanel'
 import { MathPanel } from './components/MathPanel'
 import { PatternsPanel } from './components/PatternsPanel'
 import { PoetryPanel } from './components/PoetryPanel'
+import { StudioPanel } from './components/StudioPanel'
 import type { Objetivo } from './lib/objetivos'
+import type { Criacao } from './lib/criacoes'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -105,6 +110,7 @@ type Panel =
   | 'numeros'
   | 'padroes'
   | 'poesia'
+  | 'estudio'
 
 /**
  * A barra superior tem dois grupos com donos diferentes, e misturar os dois
@@ -167,6 +173,8 @@ export default function App() {
   const [menu, setMenu] = useState(false)
   /** Perfil dos padrões visuais — caminho, nunca nota. Ver `lib/padroes.ts`. */
   const [perfilPadroes, setPerfilPadroes] = useState(loadPerfilPadroes)
+  /** Montagens salvas do Estúdio. Guardam a pilha, não a figura. */
+  const [criacoes, setCriacoes] = useState<Criacao[]>(loadCriacoes)
   const [boards, setBoards] = useState<Board[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeBoard, setActiveBoard] = useState(0)
@@ -186,6 +194,19 @@ export default function App() {
   const [panel, setPanel] = useState<Panel>('none')
   const unlockTimer = useRef<number | null>(null)
   const [unlocking, setUnlocking] = useState(false)
+
+  /**
+   * O lexico gerado entra DEPOIS da prancha abrir.
+   *
+   * Ele melhora a composicao de milhares de palavras, mas nao e requisito de
+   * nada: sem ele o motor volta a adivinhar por terminacao, que e o que fazia
+   * antes. Por isso carrega em segundo plano e a falha e silenciosa — segurar
+   * a abertura da prancha por causa de um arquivo de melhoria seria trocar o
+   * essencial pelo acessorio.
+   */
+  useEffect(() => {
+    void carregarLexico(BASE)
+  }, [])
 
   useEffect(() => {
     fetch(`${BASE}data/boards.json`)
@@ -210,6 +231,7 @@ export default function App() {
   useEffect(() => saveDiario(diario), [diario])
   useEffect(() => saveObjetivos(objetivos), [objetivos])
   useEffect(() => savePerfilPadroes(perfilPadroes), [perfilPadroes])
+  useEffect(() => saveCriacoes(criacoes), [criacoes])
   useEffect(() => saveModel(predict), [predict])
 
   useEffect(() => {
@@ -819,6 +841,18 @@ export default function App() {
                     <span className="btn__text">Poesia</span>
                   </button>
                 )}
+                {settings.estudio && (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--barra"
+                    tabIndex={-1}
+                    onClick={() => setPanel('estudio')}
+                    aria-label="Estúdio de formas"
+                  >
+                    <span aria-hidden="true">🧩</span>
+                    <span className="btn__text">Estúdio</span>
+                  </button>
+                )}
 
                 <span className="topbar__split" aria-hidden="true" />
 
@@ -1263,6 +1297,7 @@ export default function App() {
             setJogoStats(p.gameStats ?? {})
             if (p.diario) setDiario(p.diario)
             setObjetivos(p.objetivos ?? [])
+            setCriacoes(p.criacoes ?? [])
           }}
           onClose={() => setPanel('none')}
         />
@@ -1302,6 +1337,17 @@ export default function App() {
           vocabulario={[...vocabulario.keys()]}
           onSalvar={(c) =>
             setMyPhrases((list) => (list.some((x) => x.label === c.label) ? list : [...list, c]))
+          }
+          onClose={() => setPanel('none')}
+        />
+      )}
+      {panel === 'estudio' && (
+        <StudioPanel
+          settings={settings}
+          criacoes={criacoes}
+          onCriacoes={setCriacoes}
+          onSalvar={(c) =>
+            setFavorites((f) => (f.some((x) => x.label === c.label) ? f : [...f, c]))
           }
           onClose={() => setPanel('none')}
         />

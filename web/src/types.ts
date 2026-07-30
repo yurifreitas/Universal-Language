@@ -16,6 +16,14 @@ export interface Card {
    * que e o simbolo que a pessoa vai encontrar no mundo. Ver `lib/matematica.ts`.
    */
   texto?: boolean
+  /**
+   * Imagem propria, em vez do pictograma do acervo.
+   *
+   * Hoje so o Estudio de formas usa: o desenho vira uma `data:` URL de SVG e
+   * cabe no mesmo lugar onde antes havia um id. Sem servidor, sem arquivo, sem
+   * requisicao — o card continua funcionando offline como todos os outros.
+   */
+  imagem?: string
 }
 
 export interface Board {
@@ -152,6 +160,14 @@ export interface Settings {
   matAvancada: boolean
   /** Oficina de poesia: rima, silaba, modelos de poema. Ver `lib/poesia.ts`. */
   poesia: boolean
+  /**
+   * Estudio de formas: gerador de desenho + pilha de blocos, tipo Scratch.
+   *
+   * Laco e aninhamento sao a primeira logica de programacao, e aqui aparecem
+   * **sem texto e sem sintaxe** — da para construir uma ideia complexa sem
+   * escrever uma linha nem ler uma palavra. Ver `lib/blocos.ts`.
+   */
+  estudio: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -183,4 +199,5 @@ export const DEFAULT_SETTINGS: Settings = {
   padroes: false,
   matAvancada: false,
   poesia: false,
+  estudio: false,
 }

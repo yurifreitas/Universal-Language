@@ -5,6 +5,7 @@ import type { ScriptStats } from './ensaio'
 import { DIARIO_VAZIO, type Diario } from './diario'
 import type { Objetivo } from './objetivos'
 import { PERFIL_VAZIO, type Perfil } from './padroes'
+import { valida as criacaoValida, type Criacao } from './criacoes'
 
 const KEY = 'autista-caa:settings:v1'
 
@@ -333,6 +334,34 @@ export function savePerfilPadroes(perfil: Perfil): void {
   }
 }
 
+/* ------------------------------------------------------ criações do estúdio */
+
+const CRIACOES_KEY = 'autista-caa:criacoes:v1'
+
+/**
+ * As montagens salvas do Estúdio. Guardam a PILHA, nao a imagem — e por isso
+ * continuam editaveis. Ver `lib/criacoes.ts`.
+ */
+export function loadCriacoes(): Criacao[] {
+  try {
+    const raw = localStorage.getItem(CRIACOES_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(criacaoValida)
+  } catch {
+    return []
+  }
+}
+
+export function saveCriacoes(lista: Criacao[]): void {
+  try {
+    localStorage.setItem(CRIACOES_KEY, JSON.stringify(lista))
+  } catch {
+    /* idem */
+  }
+}
+
 /* --------------------------------------------------------- uso de frases */
 
 const USES_KEY = 'autista-caa:phrase-uses:v1'
@@ -383,6 +412,8 @@ export interface Profile {
   diario?: Diario
   /** Objetivos individuais — parte do plano, vai junto no perfil. */
   objetivos?: Objetivo[]
+  /** Montagens do Estudio de formas. */
+  criacoes?: Criacao[]
 }
 
 /**
@@ -423,6 +454,7 @@ export function parseProfile(raw: string): Profile | null {
           ? p.diario
           : DIARIO_VAZIO,
       objetivos: Array.isArray(p.objetivos) ? p.objetivos : [],
+      criacoes: Array.isArray(p.criacoes) ? p.criacoes.filter(criacaoValida) : [],
     }
   } catch {
     return null

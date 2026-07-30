@@ -16,6 +16,10 @@
  * nao um pictograma novo por flexao).
  */
 
+// Camada 2 do `lookup`. So o VALOR e importado daqui; o tipo `Lexeme` viaja no
+// sentido contrario e some no build, entao nao ha ciclo em tempo de execucao.
+import { lexicoGerado } from './lexicoGerado'
+
 export type WordClass =
   | 'pronoun'
   | 'determiner'
@@ -109,6 +113,18 @@ export interface Lexeme {
   postposed?: boolean
   /** Plural irregular, quando o rotulo for pluralizado por um marcador. */
   pluralForm?: string
+  /**
+   * SUBSTANTIVO que rege infinitivo por preposicao: "medo DE cair",
+   * "vontade DE ir", "pressa DE sair".
+   *
+   * Existe porque o motor usava `mass` para isto — e `mass` quer dizer
+   * INCONTAVEL, nao "substantivo de estado". Os dois conjuntos se cruzam em
+   * medo, fome e sede, o que fez a regra parecer certa por um tempo; mas suco,
+   * leite, arroz e carne tambem sao incontaveis, e produziam
+   * "quero suco DE QUERER leite". Sao coisas diferentes e agora tem marcas
+   * diferentes.
+   */
+  nounPrepInf?: string
 }
 
 /* ------------------------------------------------------------------ verbos */
@@ -432,7 +448,7 @@ export const LEXICON: Record<string, Lexeme> = {
   feliz: ADJ(),
   triste: ADJ(),
   bravo: ADJ('m'),
-  medo: N('m', { mass: true }),
+  medo: N('m', { mass: true, nounPrepInf: 'de' }),
   cansado: ADJ('m'),
   animado: ADJ('m'),
   calmo: ADJ('m'),
@@ -441,8 +457,8 @@ export const LEXICON: Record<string, Lexeme> = {
   envergonhado: ADJ('m'),
   sozinho: ADJ('m'),
   doente: ADJ(),
-  fome: N('f', { mass: true }),
-  sede: N('f', { mass: true }),
+  fome: N('f', { mass: true, nounPrepInf: 'de' }),
+  sede: N('f', { mass: true, nounPrepInf: 'de' }),
   confuso: ADJ('m'),
   orgulhoso: ADJ('m'),
   amar: V(),
@@ -664,8 +680,8 @@ export const LEXICON: Record<string, Lexeme> = {
   cocô: N('m', { mass: true }),
   ajuda: N('f', { mass: true }),
   raiva: N('f', { mass: true }),
-  vontade: N('f', { mass: true }),
-  saudade: N('f', { mass: true }),
+  vontade: N('f', { mass: true, nounPrepInf: 'de' }),
+  saudade: N('f', { mass: true, nounPrepInf: 'de' }),
   febre: N('f', { mass: true }),
   barulho: N('m', { mass: true }),
 
@@ -891,6 +907,20 @@ export function guess(label: string): Lexeme & { guessed: true } {
   const word = label.trim().toLowerCase()
   const head = word.split(' ')[0] ?? word
 
+  /**
+   * Algarismo é numeral, não substantivo.
+   *
+   * "dois" estava no léxico e "2" não, então `EU · QUERER · 9 · PÃO` saía como
+   * "Eu quero 9 **e** pão" — o motor lia o algarismo como mais uma coisa da
+   * lista. É um defeito que só aparece desde que o painel de Números existe, e
+   * é justamente lá que a criança vai buscar o número.
+   *
+   * `plural` a partir de 2 é o que faz "9 pães" sair certo, igual a "dois pães".
+   */
+  if (/^\d+$/.test(head)) {
+    return { class: 'quantifier', plural: Number(head) !== 1, guessed: true }
+  }
+
   if (VERB_SUFFIX.test(head) && head.length >= 3 && !PAROXITONA_ACENTUADA.test(head.slice(0, -2))) {
     return { class: 'verb', guessed: true }
   }
@@ -901,9 +931,25 @@ export function guess(label: string): Lexeme & { guessed: true } {
   }
 }
 
+/**
+ * A palavra, com tudo que se sabe dela.
+ *
+ * Três camadas, nesta ordem:
+ *
+ *   1. **`LEXICON`** — revisado à mão, 250 palavras. Sempre vence: uma pessoa
+ *      olhou cada entrada, e nenhuma inferência tem autoridade sobre isso.
+ *   2. **léxico gerado** — inferido do acervo ARASAAC, milhares de palavras,
+ *      só o que passou no corte de confiança medido. Ver `lexicoGerado.ts`.
+ *   3. **`guess()`** — adivinhação por terminação, para o que não está em
+ *      lugar nenhum. Marcado como `guessed`, e o motor de frases trata
+ *      `guessed` de forma conservadora (não arrisca artigo, não conjuga chute).
+ *
+ * A camada 2 pode não existir — o arquivo é carregado depois da abertura e
+ * pode falhar. Quando falta, isto aqui se comporta exatamente como antes dela.
+ */
 export function lookup(label: string): Lexeme & { guessed?: boolean } {
   const key = label.trim().toLowerCase()
-  return LEXICON[key] ?? guess(key)
+  return LEXICON[key] ?? lexicoGerado(key) ?? guess(key)
 }
 
 /** Classe de uma palavra — usada tambem pela codificacao de cor das celulas. */

@@ -18,6 +18,8 @@ mandioca, e o que ele se recusa a fazer
 pattern glare e earcons
 🗺️ **[Roadmap](ROADMAP.md)** — conversa do cotidiano, navegação e as dívidas
 em aberto, em ordem de impacto
+🧱 **[Plano de escala](PLANO.md)** — padronização de arquivos, o problema dos
+213 MB de imagem e a fundamentação gramatical em lote, quebrados em tarefas
 ⚖️ **[Legislação](LEGISLATION.md)** — CDPD/ONU, ADA, European Accessibility Act e
 o arcabouço brasileiro de direitos de neurodivergentes
 

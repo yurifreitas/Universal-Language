@@ -665,6 +665,23 @@ export function SettingsPanel({
           <label className="switch">
             <input
               type="checkbox"
+              checked={settings.estudio}
+              onChange={(e) => onChange({ estudio: e.target.checked })}
+            />
+            <span>Estúdio de formas</span>
+          </label>
+          <p className="settings__note">
+            Um gerador de desenho com uma <strong>pilha de blocos</strong> por cima — repetir,
+            grade, radial, girar, espelhar —, no espírito do Scratch. Laço e aninhamento são a
+            primeira lógica de programação que alguém aprende, e aqui eles aparecem{' '}
+            <strong>sem texto e sem sintaxe</strong>: dá para construir uma ideia complexa sem
+            escrever uma linha nem ler uma palavra. Nada é baixado — o desenho é gerado no
+            aparelho, então funciona offline por completo.
+          </p>
+
+          <label className="switch">
+            <input
+              type="checkbox"
               checked={settings.poesia}
               onChange={(e) => onChange({ poesia: e.target.checked })}
             />

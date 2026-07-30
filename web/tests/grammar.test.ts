@@ -92,6 +92,109 @@ const CASES: Record<string, Case[]> = {
     { cards: ['eu', 'ir', 'dormir'], expect: 'Eu vou dormir.' },
     { cards: ['eu', 'ir', 'casa'], expect: 'Eu vou pra casa.' },
   ],
+  /**
+   * Um modal já satisfeito não engole o verbo seguinte.
+   *
+   * Achado usando o app: `NÃO · QUERER · SUCO · QUERER · LEITE` saía como
+   * "Não quero suco DE QUERER leite". Eram dois defeitos empilhados, e o
+   * primeiro escondia o segundo:
+   *
+   *   1. a preposição vinha de `lex.mass` — que quer dizer INCONTÁVEL, não
+   *      "substantivo de estado". Os conjuntos só se cruzam por acaso em medo,
+   *      fome e sede; suco, leite e arroz também são incontáveis. Agora a
+   *      regência é declarada palavra a palavra em `nounPrepInf`.
+   *   2. "querer" é modal, e o motor tratava TODO verbo posterior como
+   *      complemento dele — por mais longe que estivesse e mesmo com o
+   *      complemento já preenchido. Agora um substantivo entre os dois fecha o
+   *      modal, e o segundo verbo coordena.
+   *
+   * Os dois primeiros casos são o defeito; os quatro seguintes existem para o
+   * conserto não quebrar o que funcionava.
+   */
+  'modal já satisfeito coordena, não completa': [
+    {
+      cards: ['não', 'querer', 'suco', 'querer', 'leite'],
+      expect: 'Não quero suco e quero leite.',
+    },
+    { cards: ['querer', 'suco', 'querer', 'leite'], expect: 'Quero suco e quero leite.' },
+    // O modal AINDA aberto continua pedindo infinitivo colado.
+    { cards: ['eu', 'querer', 'comer'], expect: 'Eu quero comer.' },
+    { cards: ['eu', 'poder', 'ir'], expect: 'Eu posso ir.' },
+    { cards: ['eu', 'querer', 'brincar', 'pintar'], expect: 'Eu quero brincar e pintar.' },
+    // Substantivo de estado continua regendo infinitivo — agora por declaração.
+    { cards: ['eu', 'fome', 'comer'], expect: 'Eu tenho fome de comer.' },
+  ],
+  /**
+   * O "não" nega ONDE A PESSOA O PÔS.
+   *
+   * Achado usando o app, e são dois erros opostos que o motor tinha de evitar
+   * ao mesmo tempo:
+   *
+   *   - negar só o primeiro predicado, sempre — saía "Não quero suco, quero
+   *     leite", e a pessoa era ouvida dizendo que QUER leite;
+   *   - negar tudo, sempre — tiraria dela "não quero suco, quero leite", que é
+   *     uma frase legítima de contraste.
+   *
+   * O critério não é adivinhar: é contar os cards. Um "não" nega um predicado;
+   * dois "não" negam dois, e a coordenação vira "nem" — que é literalmente
+   * "e não".
+   */
+  'escopo da negação': [
+    { cards: ['não', 'querer', 'suco', 'querer', 'leite'], expect: 'Não quero suco e quero leite.' },
+    {
+      cards: ['não', 'querer', 'suco', 'não', 'querer', 'leite'],
+      expect: 'Não quero suco, nem quero leite.',
+    },
+    {
+      cards: ['não', 'querer', 'suco', 'não', 'querer', 'leite', 'não', 'querer', 'pão'],
+      expect: 'Não quero suco, nem quero leite, nem quero o pão.',
+    },
+    // O marcador de negação é da ORAÇÃO inteira e não vira "nem".
+    {
+      cards: ['eu', 'querer', 'comer', 'dormir'],
+      marks: { negated: true },
+      expect: 'Eu não quero comer e dormir.',
+    },
+  ],
+
+  /**
+   * Numeral em algarismo.
+   *
+   * "dois" estava no léxico e "2" não, então o motor lia o algarismo como mais
+   * uma coisa da lista: `EU · QUERER · 9 · PÃO` saía "Eu quero 9 **e** pão".
+   * Só apareceu depois que o painel de Números passou a existir — e é
+   * justamente lá que a criança vai buscar o número.
+   */
+  'numeral em algarismo': [
+    { cards: ['eu', 'querer', '9', 'pão'], expect: 'Eu quero 9 pães.' },
+    { cards: ['eu', 'querer', '1', 'pão'], expect: 'Eu quero 1 pão.' },
+    { cards: ['eu', 'querer', '2', 'bolo'], expect: 'Eu quero 2 bolos.' },
+  ],
+
+  /**
+   * "Quero que você venha" — a oração encaixada.
+   *
+   * Saía "Quero você vem": duas orações coladas, sem o "que" e sem o
+   * subjuntivo. É uma construção cara de perder numa prancha de CAA, porque
+   * **pedir que outra pessoa faça algo** é metade da comunicação de quem
+   * depende de outras pessoas para quase tudo. Sem ela dá para dizer "eu quero
+   * água", mas não "quero que você abra".
+   *
+   * Com sujeito IGUAL o mesmo verbo rege infinitivo direto ("quero ir"), e um
+   * volitivo dentro de oração já subordinada não encaixa o que vem depois —
+   * "se você quiser, eu vou" é condicional, não encaixe.
+   */
+  'oração encaixada por verbo volitivo': [
+    { cards: ['eu', 'querer', 'você', 'vir'], expect: 'Eu quero que você venha.' },
+    { cards: ['eu', 'querer', 'mãe', 'vir'], expect: 'Eu quero que a mãe venha.' },
+    { cards: ['eu', 'precisar', 'você', 'ajudar'], expect: 'Eu preciso que você ajude.' },
+    { cards: ['eu', 'querer', 'você', 'ir'], expect: 'Eu quero que você vá.' },
+    { cards: ['não', 'querer', 'você', 'vir'], expect: 'Não quero que você venha.' },
+    // Sujeito igual: infinitivo, sem "que".
+    { cards: ['eu', 'querer', 'ir'], expect: 'Eu quero ir.' },
+    { cards: ['eu', 'precisar', 'dormir'], expect: 'Eu preciso dormir.' },
+  ],
+
   'listas de pessoas': [
     { cards: ['mãe', 'pai', 'avó'], expect: 'A mãe, o pai e a avó.' },
     { cards: ['eu', 'querer', 'mãe', 'pai'], expect: 'Eu quero a mãe e o pai.' },

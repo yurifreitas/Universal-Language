@@ -162,6 +162,53 @@ export function gerund(infinitive: string): string {
 }
 
 /**
+ * Presente do subjuntivo — o tempo da oração encaixada.
+ *
+ * "Quero **que você venha**", "preciso **que a mamãe ajude**". É a construção
+ * que faltava: `QUERER · VOCÊ · VIR` saía como "Quero você vem" — duas orações
+ * coladas, sem o "que" e sem o subjuntivo, dizendo uma coisa que ninguém fala.
+ *
+ * E é uma construção **cara de perder** numa prancha de CAA: pedir que outra
+ * pessoa faça algo é metade da comunicação de quem depende de outras pessoas
+ * para quase tudo. Sem ela, a criança consegue dizer "eu quero água" mas não
+ * "quero que você abra".
+ *
+ * `SUBJUNCTIVE` já tinha a forma de 3ª pessoa dos irregulares. As demais saem
+ * dela por sufixo — `venha` → `venhamos`/`venham` — com as duas exceções que
+ * não seguem a regra tabeladas à parte.
+ */
+const SUBJ_IRREGULAR_PESSOAS: Record<string, Partial<Record<Person, string>>> = {
+  ir: { '1p': 'vamos', '3p': 'vão' },
+  dar: { '1p': 'demos', '3p': 'deem' },
+}
+
+export function subjunctivePresent(infinitive: string, person: Person): string {
+  const parts = infinitive.split(' ')
+  const head = parts[0] ?? infinitive
+  const tail = parts.slice(1).join(' ')
+  const join = (v: string) => (tail ? `${v} ${tail}` : v)
+
+  const excecao = SUBJ_IRREGULAR_PESSOAS[head]?.[person]
+  if (excecao) return join(excecao)
+
+  const base =
+    SUBJUNCTIVE[head] ??
+    (() => {
+      const group = verbGroup(head)
+      if (!group) return null
+      return `${head.slice(0, -2)}${group === 'ar' ? 'e' : 'a'}`
+    })()
+
+  // Fora do léxico e sem terminação de verbo reconhecível: devolver o
+  // infinitivo é telegráfico, mas inventar uma forma inexistente é pior.
+  if (!base) return join(head)
+
+  if (person === '1p') return join(`${base}mos`)
+  if (person === '3p') return join(`${base}m`)
+  return join(base)
+}
+
+/**
  * Imperativo de 2a pessoa.
  *
  * No coloquial brasileiro o imperativo afirmativo usa a forma de 3a do presente
@@ -434,6 +481,18 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
    * "vou brincar quando ele chegar" e "brinco sempre que ele chega".
    */
   const SUBJUNTIVO_FUTURO = new Set(['quando', 'se', 'enquanto', 'assim que', 'depois que'])
+  /**
+   * Verbos que pedem oracao encaixada com "que" + subjuntivo quando o que vem
+   * depois tem sujeito PROPRIO: "quero que voce venha".
+   *
+   * Com sujeito igual, o mesmo verbo rege infinitivo direto — "quero ir" — e e
+   * por isso que a marca so nasce em `ehSujeitoNovo`.
+   */
+  const VOLITIVOS = new Set(['querer', 'precisar', 'pedir', 'deixar', 'mandar', 'esperar', 'preferir'])
+  /** Oracoes que precisam do "que" e do presente do subjuntivo. */
+  const clauseQue = new Set<number>()
+  /** O "que" sai uma vez por oracao, antes do sujeito dela. */
+  const queEmitido = new Set<number>()
 
   const CLAUSE_STARTERS = new Set([
     'porque',
@@ -494,6 +553,24 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           c++
           clauseSubjunctive[c] = false
           clauseOf[it.index] = c
+          /**
+           * Verbo volitivo antes de sujeito novo pede **que** + subjuntivo:
+           * "quero QUE você VENHA", "preciso QUE a mamãe AJUDE".
+           *
+           * Sem isto saía "quero você vem" — duas orações coladas. A marca é
+           * posta aqui, no mesmo lugar onde a oração nasce, para não haver um
+           * segundo lugar decidindo o mesmo.
+           */
+          const verboAntes = [...items.slice(0, items.indexOf(it))]
+            .reverse()
+            .find((x) => x.lex.class === 'verb')
+          // "SE · VOCE · QUERER · EU · IR" e condicional: a segunda oracao e a
+          // PRINCIPAL ("se voce quiser, eu vou"), nao uma encaixada de
+          // "querer". Um verbo volitivo dentro de uma oracao ja subordinada nao
+          // encaixa o que vem depois dela.
+          if (verboAntes && VOLITIVOS.has(verboAntes.label) && !clauseSubjunctive[c - 1]) {
+            clauseQue.add(c)
+          }
         }
         verboNaOracao = false
       }
@@ -626,8 +703,18 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const tense: Tense =
     marks.tense !== 'auto' ? marks.tense : (timeAdverb && TIME_ADVERBS[timeAdverb.label]) || 'present'
 
-  const negationCard = items.find((it) => it.lex.class === 'negation')
-  const negated = marks.negated || Boolean(negationCard)
+  /**
+   * TODOS os cards de negacao, e nao so o primeiro.
+   *
+   * Era `find`, entao um segundo "nao" na frase era simplesmente ignorado — e
+   * com ele a unica forma que a pessoa tinha de dizer onde a negacao pega.
+   * Ver `emitListSeparator`.
+   */
+  const negationCards = items.filter((it) => it.lex.class === 'negation')
+  const negationCard = negationCards[0]
+  const negated = marks.negated || negationCards.length > 0
+  /** Cards de negacao ja transformados em "nem" numa coordenacao. */
+  const negacoesUsadas = new Set<number>()
   // "quando" e "se" tambem sao interrogativos — mas quando abrem oracao
   // subordinada nao ha pergunta nenhuma: "quando o papai chegar eu brinco" e
   // afirmacao. Antes saia "Quando está o papai chegar?".
@@ -753,10 +840,55 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   }
 
   /** Virgula entre os itens do meio, "e" antes do ultimo. */
-  const emitListSeparator = (isLast: boolean) => {
+  const emitListSeparator = (isLast: boolean, predicado = false, i = Number.MAX_SAFE_INTEGER) => {
     // A pessoa acabou de escolher "e" ou "mas": o motor nao poe outro por cima.
     if (explicitConnector) {
       explicitConnector = false
+      return
+    }
+    /**
+     * NEGAÇÃO NÃO PARA NO PRIMEIRO PREDICADO.
+     *
+     * `NÃO · QUERER · SUCO · QUERER · LEITE · QUERER · PÃO` saía como
+     *
+     *     "Não quero suco, quero leite e quero pão."
+     *
+     * — que diz o **contrário** do que a pessoa montou: os dois últimos
+     * predicados ficavam afirmativos. Num app de fala, inverter o sentido é o
+     * pior defeito possível: a pessoa é ouvida dizendo o oposto do que quis, e
+     * não tem como corrigir a não ser remontando tudo.
+     *
+     * Em português a coordenação de predicados negados é feita com **nem**, que
+     * já carrega a negação — "não quero suco, nem quero leite". É mais curto e
+     * mais natural do que repetir "não" em cada um, e mantém cada palavra que a
+     * pessoa escolheu no lugar em que ela pôs.
+     */
+    /**
+     * O "não" nega ONDE A PESSOA O PÔS — nem mais, nem menos.
+     *
+     * Duas tentações erradas, e o app já caiu na primeira:
+     *
+     *   - **negar só o primeiro predicado, sempre.** Era o que acontecia:
+     *     `NÃO · QUERER · SUCO · QUERER · LEITE` saía "Não quero suco, quero
+     *     leite" — e a pessoa era ouvida dizendo que QUER leite.
+     *   - **negar a frase inteira, sempre.** Igualmente errado pelo motivo
+     *     oposto: "não quero suco, quero leite" é uma frase legítima, de
+     *     contraste, e o motor não pode tirá-la de ninguém.
+     *
+     * O critério não é adivinhar a intenção: é olhar onde estão os cards. Um
+     * "não" antes do segundo verbo vira **nem** — que é literalmente "e não" —
+     * e a coordenação sai correta sem o motor decidir nada por conta própria.
+     * Quem quer negar os dois toca "não" duas vezes; quem quer contrastar toca
+     * uma vez só.
+     */
+    const negacaoAqui = negationCards.find((n) => !negacoesUsadas.has(n.index) && n.index < i)
+    if (predicado && negacaoAqui) {
+      negacoesUsadas.add(negacaoAqui.index)
+      // A vírgula vem SEMPRE antes de "nem", inclusive antes do último — ao
+      // contrário do "e", que a dispensa. "Não quero suco, nem quero pão."
+      const last = tokens[tokens.length - 1]
+      if (last) last.text = `${last.text},`
+      push('nem', 'card', { cardIndex: negacaoAqui.index })
       return
     }
     if (isLast) {
@@ -779,8 +911,13 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const emitNegation = () => {
     if (!negated || negationDone) return
     negationDone = true
-    if (negationCard) push('não', 'card', { cardIndex: negationCard.index })
-    else push('não', 'inserted')
+    if (negationCard) {
+      // Este card já virou o "não" do primeiro predicado: não pode virar "nem"
+      // outra vez lá na coordenação. É o que distingue um "não" (contraste —
+      // "não quero suco, quero leite") de dois ("não quero suco, nem leite").
+      negacoesUsadas.add(negationCard.index)
+      push('não', 'card', { cardIndex: negationCard.index })
+    } else push('não', 'inserted')
   }
 
   /**
@@ -875,6 +1012,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // O pronome-objeto ja foi (ou sera) emitido como clitico antes do
         // verbo; repeti-lo aqui daria "me ajuda eu".
         if (clitic && objectPronoun?.index === it.index) break
+        // "quero QUE você venha": o "que" abre a oração encaixada, e vem antes
+        // do sujeito dela.
+        if (clauseQue.has(clauseOf[it.index] ?? 0) && !queEmitido.has(clauseOf[it.index] ?? 0)) {
+          queEmitido.add(clauseOf[it.index] ?? 0)
+          push('que', 'inserted')
+        }
         previousWasSubject = subjectGroup.some((x) => x.index === it.index)
         // Sujeito composto: "a mamãe, eu e você".
         if (listEligible(items[i - 1]) && !pendingPrep) {
@@ -943,9 +1086,11 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           const verboAnterior = [...items.slice(0, i)]
             .reverse()
             .find((x) => x.lex.class === 'verb')
-          if (verboAnterior && !verboAnterior.lex.modal) {
+          if (verboAnterior && !modalAindaAberto(items, i)) {
             const maisVerbos = items.slice(i + 1).some((x) => x.lex.class === 'verb')
-            emitListSeparator(!maisVerbos)
+            // `predicado`: é coordenação de PREDICADOS, e não de coisas numa
+            // lista. Só aqui a negação precisa atravessar para o item seguinte.
+            emitListSeparator(!maisVerbos, true, it.index)
           }
           // Regencia do verbo anterior antes de infinitivo: "terminei DE
           // comer", "comecei A pintar". Diferente da regencia antes de
@@ -961,10 +1106,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
         const coordenado =
           emCadeia &&
-          Boolean(
-            [...items.slice(0, i)].reverse().find((x) => x.lex.class === 'verb') &&
-              ![...items.slice(0, i)].reverse().find((x) => x.lex.class === 'verb')!.lex.modal,
-          )
+          Boolean([...items.slice(0, i)].reverse().find((x) => x.lex.class === 'verb')) &&
+          !modalAindaAberto(items, i)
 
         if (clitic && objectPronoun && it.index === cliticVerbIndex) {
           push(clitic, 'inflected', {
@@ -984,7 +1127,11 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // ir amanhã" — a perifrase produzia "eu VOU QUERER ir amanhã".
           const tempoDoVerbo = tense === 'future' && lex.modal ? 'present' : tense
           const subjFuturo = clauseSubjunctive[oracaoAtual] === true
-          const text = subjFuturo
+          // Oracao encaixada por verbo volitivo: presente do subjuntivo.
+          const subjPresente = clauseQue.has(oracaoAtual)
+          const text = subjPresente
+            ? subjunctivePresent(label, person)
+            : subjFuturo
             ? futuroDoSubjuntivo(label, person)
             : useImperative
             ? imperative(label, register)
@@ -1145,6 +1292,13 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
                   ? article(gender, plural)
                   : null
 
+        // "quero QUE A mãe venha": o "que" abre a oracao encaixada e vem antes
+        // do artigo do sujeito dela — senao sai "quero a que mãe venha".
+        if (clauseQue.has(clauseOf[it.index] ?? 0) && !queEmitido.has(clauseOf[it.index] ?? 0)) {
+          queEmitido.add(clauseOf[it.index] ?? 0)
+          push('que', 'inserted')
+        }
+
         const prepCard = pendingPrepCard
         pendingPrepCard = null
         const emitPrep = (t: string, primeiro: boolean) =>
@@ -1157,6 +1311,11 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
         const pluralizar = isPlural || numeralPlural
         numeralPlural = false
+        // "quero QUE a mamãe venha": sujeito novo tambem pode ser substantivo.
+        if (clauseQue.has(clauseOf[it.index] ?? 0) && !queEmitido.has(clauseOf[it.index] ?? 0)) {
+          queEmitido.add(clauseOf[it.index] ?? 0)
+          push('que', 'inserted')
+        }
         const text = pluralizar ? pluralize(it.card.label, lex) : it.card.label
         push(text, text === it.card.label ? 'card' : 'inflected', {
           cardIndex: it.index,
@@ -1166,9 +1325,23 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         explicitPrep = false
         previousWasSubject = subjectGroup.some((x) => x.index === it.index)
         lastNoun = { gender, plural: isPlural || Boolean(lex.plural), label, lex }
-        // "medo de cair", "vontade de ir": substantivo de estado tambem liga
-        // ao verbo seguinte por preposicao.
-        if (next?.lex.class === 'verb' && lex.mass) pendingVerbPrep = 'de'
+        // "medo de cair", "vontade de ir": substantivo de estado liga ao verbo
+        // seguinte por preposicao.
+        //
+        // A condicao era `lex.mass`, e estava errada. `mass` quer dizer
+        // INCONTAVEL, nao "substantivo de estado" — os dois conjuntos so se
+        // cruzam por acaso em medo, fome e sede, o que fez a regra passar
+        // despercebida. Mas suco, leite, arroz, carne e comida tambem sao
+        // incontaveis, e por isso
+        //
+        //     NAO · QUERER · SUCO · QUERER · LEITE
+        //
+        // saia como "Nao quero suco DE QUERER leite" em vez de coordenar os
+        // dois verbos. Agora a regencia e declarada palavra a palavra em
+        // `nounPrepInf`, e quem nao a declara nao ganha preposicao nenhuma.
+        if (next?.lex.class === 'verb' && lex.nounPrepInf) {
+          pendingVerbPrep = lex.nounPrepInf
+        }
         suppressArticle = false
         previousWasNoun = true
         break
@@ -1357,6 +1530,40 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 function isPluralNext(next: Item | undefined, lastNounIndex: number): boolean {
   if (!next || next.lex.class !== 'noun') return false
   return next.index === lastNounIndex || Boolean(next.lex.plural)
+}
+
+/**
+ * O verbo modal anterior ainda espera complemento?
+ *
+ * "Quero comer" — o segundo verbo é complemento do primeiro, e entra colado no
+ * infinitivo. Mas em
+ *
+ *     QUERER · SUCO · QUERER · LEITE
+ *
+ * o "suco" já é o complemento de "quero": o segundo "querer" não completa nada,
+ * ele abre um predicado novo e tem de ser coordenado — "quero suco **e quero**
+ * leite".
+ *
+ * A regra antiga olhava só se o verbo anterior era modal, e por isso saía
+ * "quero suco querer leite": um modal já satisfeito continuava engolindo todo
+ * verbo que viesse depois, por mais longe que estivesse.
+ *
+ * O que fecha um modal é um complemento entre ele e o verbo atual — substantivo
+ * ou pronome objeto. Adjetivo e advérbio não fecham: em "quero ficar quieto
+ * dormir" o "quieto" é do "ficar", não complemento de "quero".
+ */
+function modalAindaAberto(items: Item[], i: number): boolean {
+  for (let j = i - 1; j >= 0; j--) {
+    const anterior = items[j]
+    if (!anterior) continue
+    if (anterior.lex.class === 'verb') return Boolean(anterior.lex.modal)
+    if (anterior.lex.class === 'noun') return false
+    // Pronome depois do verbo é objeto ("quero ELE"), e também fecha; antes do
+    // verbo é sujeito, e aí não há modal aberto ainda para fechar.
+    if (anterior.lex.class === 'pronoun' && items.slice(0, j).some((x) => x.lex.class === 'verb'))
+      return false
+  }
+  return false
 }
 
 function decideArticle(args: {
