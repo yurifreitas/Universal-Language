@@ -105,7 +105,7 @@ export const PHRASE_GROUPS: PhraseGroup[] = [
       { id: 6009, label: 'Oi, tudo bem?' },
       { id: 6944, label: 'Bom dia!' },
       { id: 6942, label: 'Boa noite!' },
-      { id: 7061, label: 'Prazer, esse é o meu nome.' },
+      { id: 7061, label: 'Eu falo com a minha prancha.' },
       { id: 8128, label: 'Obrigado!' },
       { id: 8194, label: 'Por favor.' },
       { id: 6023, label: 'Posso te dar um abraço?' },
@@ -168,16 +168,108 @@ const FEMININE: Record<string, string> = {
   'Preciso ficar um tempo sozinho.': 'Preciso ficar um tempo sozinha.',
   'Obrigado!': 'Obrigada!',
   'Já chega, obrigado.': 'Já chega, obrigada.',
+  // As formas coloquiais tambem precisam de par feminino, senao trocar o
+  // registro fazia a concordancia de genero sumir.
+  'Tô enjoado.': 'Tô enjoada.',
+  'Quero ficar sozinho.': 'Quero ficar sozinha.',
+  'Tô com sono.': 'Tô com sono.',
 }
 
-export function inflectGroup(group: PhraseGroup, gender: 'n' | 'm' | 'f'): PhraseGroup {
-  if (gender !== 'f') return group
-  if (!group.phrases.some((p) => FEMININE[p.label])) return group
+/**
+ * As frases prontas em registro COLOQUIAL.
+ *
+ * O app abre em coloquial e conjuga "abre a porta" na prancha — e em seguida
+ * falava "Preciso de uma pausa" nas frases prontas, que e vocabulario de
+ * relatorio de terapia, nao de crianca. A incoerencia era do app, nao da
+ * pessoa.
+ *
+ * Duas coisas guiaram cada troca:
+ *
+ * 1. **Criança relata sensação, não faz diagnóstico.** "Estou com febre" vira
+ *    "Tô quente"; "Estou com dor" vira "Tá doendo" — que, de quebra, serve
+ *    antes de conseguir localizar onde dói.
+ * 2. **Justificativa enfraquece pedido.** "Está muito barulho PARA MIM" tem um
+ *    "para mim" que e concessao de adulto; ninguem precisa dela.
+ *
+ * O normativo continua ali inteiro, para quem precisa da forma que a escola
+ * espera. Nenhuma das duas e mais correta que a outra — ver GRAMMAR.md secao 5.
+ */
+const COLLOQUIAL: Record<string, string> = {
+  /* urgente */
+  'Estou passando mal.': 'Tô passando mal.',
+  'Estou enjoado.': 'Tô enjoado.',
+  'Estou com dor.': 'Tá doendo.',
+  'Estou com febre.': 'Tô quente.',
+  'Chama a minha mãe.': 'Quero a minha mãe.',
+  'Preciso do meu remédio.': 'Tá na hora do meu remédio.',
+
+  /* regulacao */
+  'Preciso de uma pausa.': 'Quero parar um pouco.',
+  'Preciso ficar um tempo sozinho.': 'Quero ficar sozinho.',
+  'Por favor, não me toque agora.': 'Não me pega agora.',
+  'Preciso sair daqui.': 'Quero ir embora.',
+  'Está muito barulho para mim.': 'Tá muito barulho.',
+  'Está muita luz aqui.': 'Tá muita luz.',
+  'Tem gente demais aqui.': 'Tem gente demais.',
+  'Já estou mais calmo.': 'Já tô melhor.',
+  'Posso colocar meu fone?': 'Me dá o meu fone.',
+
+  /* sim e nao */
+  'Sim, é isso.': 'É isso.',
+  'Não, não é isso.': 'Não é isso.',
+  'Espera um pouco, por favor.': 'Peraí.',
+  'Para, por favor.': 'Chega!',
+  'Quero escolher outro.': 'Quero outro.',
+
+  /* eu quero */
+  'Eu quero isso.': 'Quero isso.',
+  'Eu não quero isso.': 'Não quero isso.',
+  'Eu quero mais, por favor.': 'Quero mais.',
+  'Já chega, obrigado.': 'Já chega.',
+  'Estou com fome.': 'Tô com fome.',
+  'Estou com sede.': 'Tô com sede.',
+  'Eu quero brincar.': 'Vamos brincar?',
+  'Eu quero dormir.': 'Tô com sono.',
+
+  /* conversa */
+  'Estou com saudade de você.': 'Tô com saudade de você.',
+  'Posso te dar um abraço?': 'Quero um abraço.',
+
+  /* escola */
+  'Eu não entendi.': 'Não entendi.',
+  'Preciso de mais tempo.': 'Ainda não terminei.',
+  'Eu tenho uma pergunta.': 'Posso perguntar?',
+  'Já terminei a tarefa.': 'Já acabei.',
+  'Preciso de ajuda com isso.': 'Me ajuda aqui.',
+
+  /* reparo */
+  'Deixa eu dizer de outro jeito.': 'Deixa eu falar de outro jeito.',
+  'Você entendeu o que eu disse?': 'Você entendeu?',
+  'Preciso de mais tempo para responder.': 'Espera, eu tô escrevendo.',
+  'Espera, deixa eu terminar.': 'Peraí, deixa eu terminar.',
+}
+
+/**
+ * Aplica registro e genero, nessa ordem — o genero incide sobre a forma que vai
+ * de fato ser dita, e nao sobre a de dicionario.
+ */
+export function inflectGroup(
+  group: PhraseGroup,
+  gender: 'n' | 'm' | 'f',
+  register: 'coloquial' | 'normativo' = 'normativo',
+): PhraseGroup {
+  const precisa = group.phrases.some(
+    (p) => (register === 'coloquial' && COLLOQUIAL[p.label]) || FEMININE[p.label],
+  )
+  if (!precisa) return group
+
   return {
     ...group,
     phrases: group.phrases.map((p) => {
-      const f = FEMININE[p.label]
-      return f ? { ...p, label: f } : p
+      const texto = (register === 'coloquial' && COLLOQUIAL[p.label]) || p.label
+      const f = gender === 'f' ? FEMININE[texto] : undefined
+      const final = f ?? texto
+      return final === p.label ? p : { ...p, label: final }
     }),
   }
 }

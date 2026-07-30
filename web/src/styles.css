@@ -988,7 +988,13 @@ img,
   flex-wrap: nowrap;
   min-width: 0;
   gap: 6px;
-  overscroll-behavior-x: contain;
+  /* `none`, e nao `contain`.
+   *
+   * `contain` impede o gesto de ESCAPAR para a pagina, mas ainda permite o
+   * quique local: arrastar a faixa alem do fim desloca a propria faixa e
+   * revela uma tira vazia ao lado — que e exatamente o que se via ao rolar os
+   * menus. `none` desliga o quique tambem: a faixa para onde acaba. */
+  overscroll-behavior-x: none;
   padding-block: 10px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -1124,7 +1130,7 @@ img,
   margin-bottom: 14px;
   overflow-x: auto;
   /* Chegar ao fim da faixa nao pode continuar arrastando a pagina atras. */
-  overscroll-behavior-x: contain;
+  overscroll-behavior-x: none;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
@@ -1716,7 +1722,7 @@ kbd {
   .marks {
     flex-wrap: nowrap;
     overflow-x: auto;
-    overscroll-behavior-x: contain;
+    overscroll-behavior-x: none;
     scrollbar-width: none;
   }
   .marks::-webkit-scrollbar {

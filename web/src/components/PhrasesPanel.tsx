@@ -49,8 +49,8 @@ export function PhrasesPanel({
     // Grupos do usuario entram no FIM, nunca deslocando os fixos: a posicao de
     // "Urgente" nao pode depender de quantas frases a pessoa salvou. As frases
     // salvas pela propria pessoa nao sao reflexionadas — sao as palavras dela.
-    return [...ALL_GROUPS.map((g) => inflectGroup(g, settings.speakerGender)), ...dynamic]
-  }, [mine, history, settings.speakerGender])
+    return [...ALL_GROUPS.map((g) => inflectGroup(g, settings.speakerGender, settings.register)), ...dynamic]
+  }, [mine, history, settings.speakerGender, settings.register])
 
   const [active, setActive] = useState(0)
   const tabs = useRovingFocus(groups.length, setActive)
