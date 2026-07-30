@@ -3,6 +3,7 @@ import {
   ESTAR_IMPERFECT,
   TER_IMPERFECT,
   GERUND,
+  IMPERFECT_IRREGULAR,
   IRREGULAR_VERBS,
   LEXICON,
   SUBJUNCTIVE,
@@ -108,16 +109,19 @@ const REGULAR: Record<'ar' | 'er' | 'ir', Record<Tense, Record<Person, string>>>
   ar: {
     present: { '1s': 'o', '2s': 'a', '2t': 'as', '3s': 'a', '1p': 'amos', '3p': 'am' },
     past: { '1s': 'ei', '2s': 'ou', '2t': 'aste', '3s': 'ou', '1p': 'amos', '3p': 'aram' },
+    imperfect: { '1s': 'ava', '2s': 'ava', '2t': 'avas', '3s': 'ava', '1p': 'ávamos', '3p': 'avam' },
     future: { '1s': 'ar', '2s': 'ar', '2t': 'ar', '3s': 'ar', '1p': 'ar', '3p': 'ar' },
   },
   er: {
     present: { '1s': 'o', '2s': 'e', '2t': 'es', '3s': 'e', '1p': 'emos', '3p': 'em' },
     past: { '1s': 'i', '2s': 'eu', '2t': 'este', '3s': 'eu', '1p': 'emos', '3p': 'eram' },
+    imperfect: { '1s': 'ia', '2s': 'ia', '2t': 'ias', '3s': 'ia', '1p': 'íamos', '3p': 'iam' },
     future: { '1s': 'er', '2s': 'er', '2t': 'er', '3s': 'er', '1p': 'er', '3p': 'er' },
   },
   ir: {
     present: { '1s': 'o', '2s': 'e', '2t': 'es', '3s': 'e', '1p': 'imos', '3p': 'em' },
     past: { '1s': 'i', '2s': 'iu', '2t': 'iste', '3s': 'iu', '1p': 'imos', '3p': 'iram' },
+    imperfect: { '1s': 'ia', '2s': 'ia', '2t': 'ias', '3s': 'ia', '1p': 'íamos', '3p': 'iam' },
     future: { '1s': 'ir', '2s': 'ir', '2t': 'ir', '3s': 'ir', '1p': 'ir', '3p': 'ir' },
   },
 }
@@ -189,6 +193,11 @@ export function conjugate(infinitive: string, person: Person, tense: Tense): str
     // "vou ir" nao existe na fala: o futuro de IR e o proprio presente de IR.
     if (head === 'ir') return join(conjugate('ir', person, 'present'))
     return join(`${conjugate('ir', person, 'present')} ${head}`)
+  }
+
+  if (tense === 'imperfect') {
+    const irr = IMPERFECT_IRREGULAR[head]?.[person]
+    if (irr) return join(irr)
   }
 
   const irregular = IRREGULAR_VERBS[head]?.[tense]?.[person]
@@ -489,6 +498,10 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   let lastNoun: { gender: 'm' | 'f'; plural: boolean; label: string; lex: Lexeme } | null = null
   let previousWasNoun = false
   let questionSeen = false
+  /** Numeral maior que um antes do substantivo: "dois bolos". */
+  let numeralPlural = false
+  /** O ultimo item emitido ainda pertencia ao sujeito da frase. */
+  let previousWasSubject = false
   /** Ultimo verbo visto, para decidir o locativo de aparelho. */
   let lastVerbLabel: string | null = null
   /** A pessoa escolheu a preposicao; o motor nao sobrepoe a dele. */
@@ -665,17 +678,17 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   }
 
   /** Insere a copula quando a frase e "eu triste" — sem verbo nenhum. */
-  const emitCopula = (verb: 'estar' | 'ter' = 'estar') => {
+  const emitCopula = (verb: 'estar' | 'ter' | 'ser' = 'estar') => {
     emitNegation()
     const p = subjectPerson()
     // "eu estive triste" e perfeito, e soa como evento pontual; a lingua usa o
     // IMPERFEITO para estado passado — "eu estava triste", "eu tinha medo".
     const forma =
-      tense === 'past'
+      (tense === 'past' || tense === 'imperfect') && verb !== 'ser'
         ? verb === 'estar'
           ? ESTAR_IMPERFECT[p]
           : TER_IMPERFECT[p]
-        : conjugate(verb, p, tense)
+        : conjugate(verb, p, tense === 'past' ? 'imperfect' : tense)
     push(forma, 'inserted')
     verbDone = true
   }
@@ -720,6 +733,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // O pronome-objeto ja foi (ou sera) emitido como clitico antes do
         // verbo; repeti-lo aqui daria "me ajuda eu".
         if (clitic && objectPronoun?.index === it.index) break
+        previousWasSubject = subjectGroup.some((x) => x.index === it.index)
         // Sujeito composto: "a mamãe, eu e você".
         if (listEligible(items[i - 1]) && !pendingPrep) {
           emitListSeparator(!listEligible(next))
@@ -735,6 +749,20 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         break
 
       case 'determiner': {
+        // "dele"/"dela" sao pospostos: vem DEPOIS do substantivo e nao
+        // concordam com ele — concordam com o dono. "O carro dele", nunca
+        // "dele carro" nem "dela carro" virando "da carro".
+        if (lex.postposed) {
+          push(it.card.label, 'card', { cardIndex: it.index })
+          previousWasNoun = false
+          break
+        }
+        // Predicado nominal com possessivo: "isso · minha · bola" precisa da
+        // copula tanto quanto "isso · bola". Antes saia "Isso minha bola".
+        if (!verbDone && !questionSeen && subjectGroup.length > 0 && previousWasSubject) {
+          emitCopula('ser')
+        }
+
         // Concorda com o substantivo seguinte, nao com o rotulo do card:
         // MEU + MAO tem de virar "minha mão".
         const target = next?.lex.class === 'noun' ? next.lex : undefined
@@ -810,11 +838,14 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // menos polida. Na duvida, a saida menos errada.
           push(it.card.label, 'card', { cardIndex: it.index })
         } else if (!emCadeia) {
+          // Verbo modal ja carrega a futuridade em portugues falado: "eu quero
+          // ir amanhã" — a perifrase produzia "eu VOU QUERER ir amanhã".
+          const tempoDoVerbo = tense === 'future' && lex.modal ? 'present' : tense
           const text = useImperative
             ? imperative(label, register)
             : marks.progressive
-              ? `${tense === 'past' ? ESTAR_IMPERFECT[person] : conjugate('estar', person, tense)} ${gerund(label)}`
-              : conjugate(label, person, tense)
+              ? `${tense === 'past' || tense === 'imperfect' ? ESTAR_IMPERFECT[person] : conjugate('estar', person, tense)} ${gerund(label)}`
+              : conjugate(label, person, tempoDoVerbo)
           push(text, text === label ? 'card' : 'inflected', {
             cardIndex: it.index,
             ...(text === label ? {} : { original: it.card.label }),
@@ -876,6 +907,22 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         if (!verbDone && (label === 'fome' || label === 'sede' || label === 'medo' || label === 'dor')) {
           emitCopula(label === 'dor' ? 'estar' : 'ter')
           if (label === 'dor') pendingPrep = 'com'
+        }
+
+        // Predicado NOMINAL: "isso · meu" e "eu · menino" nao sao frase sem
+        // verbo. A copula aqui e SER, nao estar — identidade e posse, nao
+        // estado. Antes saia "Eu sua bola".
+        if (
+          !verbDone &&
+          !questionSeen &&
+          subjectGroup.length > 0 &&
+          previousWasSubject &&
+          // …e este substantivo NAO faz parte do proprio sujeito: em
+          // "eu · mamãe · ir" os dois sao sujeito composto, e inserir copula
+          // ali dava "eu vamos ser e a mamãe ir".
+          !subjectGroup.some((x) => x.index === it.index)
+        ) {
+          emitCopula('ser')
         }
 
         // "onde mãe" nao e frase: a pergunta de localizacao pede copula, e ela
@@ -963,13 +1010,16 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         else if (prep) emitPrep(prep, true)
         else if (art) push(art, 'inserted')
 
-        const text = isPlural ? pluralize(it.card.label, lex) : it.card.label
+        const pluralizar = isPlural || numeralPlural
+        numeralPlural = false
+        const text = pluralizar ? pluralize(it.card.label, lex) : it.card.label
         push(text, text === it.card.label ? 'card' : 'inflected', {
           cardIndex: it.index,
           ...(text === it.card.label ? {} : { original: it.card.label }),
         })
 
         explicitPrep = false
+        previousWasSubject = subjectGroup.some((x) => x.index === it.index)
         lastNoun = { gender, plural: isPlural || Boolean(lex.plural), label, lex }
         // "medo de cair", "vontade de ir": substantivo de estado tambem liga
         // ao verbo seguinte por preposicao.
@@ -986,6 +1036,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
         // Concorda com o ultimo substantivo ("a agua quente") ou, se nao houver,
         // com o falante ("estou cansada") — cujo genero e ajuste explicito.
+        // "eu cansado triste" nao e portugues: adjetivos em sequencia sao
+        // lista, como os substantivos e os verbos ja eram.
+        if (items[i - 1]?.lex.class === 'adjective') {
+          emitListSeparator(next?.lex.class !== 'adjective')
+        }
+
         const subject = subjectPerson()
         const gender = lastNoun?.gender ?? (speakerGender === 'f' ? 'f' : 'm')
         const plural = lastNoun?.plural ?? (subject === '1p' || subject === '3p')
@@ -1016,6 +1072,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           ...(q === it.card.label ? {} : { original: it.card.label }),
         })
         // "mais agua", "muito bolo": quantificador ja determina, artigo sobra.
+        if (lex.plural) numeralPlural = true
         suppressArticle = true
         previousWasNoun = false
         break

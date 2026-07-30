@@ -1058,5 +1058,108 @@
     "label": "claro"
    }
   ]
+ },
+ {
+  "id": "comentar",
+  "name": "Comentar",
+  "icon": "💭",
+  "cards": [
+   {
+    "id": 7124,
+    "label": "gostei"
+   },
+   {
+    "id": 5526,
+    "label": "não gostei"
+   },
+   {
+    "id": 6564,
+    "label": "olha"
+   },
+   {
+    "id": 8690,
+    "label": "sério"
+   },
+   {
+    "id": 12268,
+    "label": "nossa"
+   },
+   {
+    "id": 11591,
+    "label": "eu também"
+   },
+   {
+    "id": 5583,
+    "label": "sim"
+   },
+   {
+    "id": 5526,
+    "label": "não"
+   },
+   {
+    "id": 11696,
+    "label": "não sei"
+   },
+   {
+    "id": 2352,
+    "label": "talvez"
+   },
+   {
+    "id": 16091,
+    "label": "espera"
+   },
+   {
+    "id": 37163,
+    "label": "de novo"
+   },
+   {
+    "id": 4658,
+    "label": "legal"
+   },
+   {
+    "id": 4750,
+    "label": "feio"
+   },
+   {
+    "id": 4583,
+    "label": "chato"
+   },
+   {
+    "id": 11697,
+    "label": "entendi"
+   },
+   {
+    "id": 11348,
+    "label": "por quê"
+   },
+   {
+    "id": 22620,
+    "label": "o que"
+   },
+   {
+    "id": 17004,
+    "label": "acabou"
+   },
+   {
+    "id": 3220,
+    "label": "quero mais"
+   },
+   {
+    "id": 7217,
+    "label": "e você"
+   },
+   {
+    "id": 30620,
+    "label": "machucou"
+   },
+   {
+    "id": 5358,
+    "label": "chega"
+   },
+   {
+    "id": 4667,
+    "label": "igual"
+   }
+  ]
  }
 ]

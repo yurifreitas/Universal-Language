@@ -45,7 +45,10 @@ const CASES: Record<string, Case[]> = {
     { cards: ['ontem', 'eu', 'ir', 'escola'], expect: 'Ontem eu fui pra escola.' },
     { cards: ['amanhã', 'eu', 'ir', 'praia'], expect: 'Amanhã eu vou pra praia.' },
     { cards: ['eu', 'tomar banho'], marks: { tense: 'past' }, expect: 'Eu tomei banho.' },
-    { cards: ['eu', 'querer', 'água'], marks: { tense: 'future' }, expect: 'Eu vou querer água.' },
+    // Verbo modal ja carrega futuridade no portugues falado: ninguem diz
+    // "eu vou querer água amanhã", diz "eu quero água amanhã".
+    { cards: ['eu', 'querer', 'água'], marks: { tense: 'future' }, expect: 'Eu quero água.' },
+    { cards: ['eu', 'comer', 'bolo'], marks: { tense: 'future' }, expect: 'Eu vou comer o bolo.' },
     { cards: ['eu', 'pegar', 'bola'], marks: { tense: 'past' }, expect: 'Eu peguei a bola.' },
   ],
   'progressivo': [
@@ -232,6 +235,24 @@ const CASES: Record<string, Case[]> = {
     { cards: ['eu', 'ir', 'em', 'esse', 'parque'], expect: 'Eu vou nesse parque.' },
     // Marcador de plural pluralizava incontavel.
     { cards: ['eu', 'querer', 'água'], marks: { plural: true }, expect: 'Eu quero água.' },
+  ],
+  'imperfeito, numerais, posse e predicado nominal': [
+    // O imperfeito e o tempo de contar rotina e de pedir com cortesia.
+    { cards: ['eu', 'comer', 'bolo'], marks: { tense: 'imperfect' }, expect: 'Eu comia o bolo.' },
+    { cards: ['eu', 'querer', 'água'], marks: { tense: 'imperfect' }, expect: 'Eu queria água.' },
+    { cards: ['eu', 'ir', 'escola'], marks: { tense: 'imperfect' }, expect: 'Eu ia pra escola.' },
+    { cards: ['eu', 'ter', 'medo'], marks: { tense: 'imperfect' }, expect: 'Eu tinha medo.' },
+    // Numeral pluraliza e dispensa artigo; antes saia "quero dois e bolo".
+    { cards: ['eu', 'querer', 'dois', 'bolo'], expect: 'Eu quero dois bolos.' },
+    { cards: ['eu', 'querer', 'três', 'maçã'], expect: 'Eu quero três maçãs.' },
+    // Possessivo de 3a pessoa e POSPOSTO.
+    { cards: ['carro', 'dele'], expect: 'O carro dele.' },
+    { cards: ['eu', 'querer', 'bola', 'dela'], expect: 'Eu quero a bola dela.' },
+    // Predicado nominal pede SER, e antes nao havia verbo nenhum.
+    { cards: ['isso', 'minha', 'bola'], expect: 'Isso é minha bola.' },
+    { cards: ['eu', 'querer', 'isso'], expect: 'Eu quero isso.' },
+    // Adjetivos em sequencia sao lista.
+    { cards: ['eu', 'cansado', 'triste'], expect: 'Eu estou cansado e triste.' },
   ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos

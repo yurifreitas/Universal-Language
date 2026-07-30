@@ -53,7 +53,13 @@ export type WordClass =
  */
 export type Person = '1s' | '2s' | '2t' | '3s' | '1p' | '3p'
 
-export type Tense = 'present' | 'past' | 'future'
+/**
+ * `past` e o preterito PERFEITO ("eu comi"): evento acabado.
+ * `imperfect` e o IMPERFEITO ("eu comia"): habito, rotina, cenario — e a forma
+ * de narrar o dia e de pedir com cortesia ("eu queria água"), que e como se
+ * pede em portugues falado sem soar ríspido.
+ */
+export type Tense = 'present' | 'past' | 'imperfect' | 'future'
 
 export interface Lexeme {
   class: WordClass
@@ -99,6 +105,8 @@ export interface Lexeme {
    * conjuga so o primeiro elemento, ou nada, conforme o caso.
    */
   fixed?: boolean
+  /** Possessivo que vem DEPOIS do substantivo: "o carro dele". */
+  postposed?: boolean
   /** Plural irregular, quando o rotulo for pluralizado por um marcador. */
   pluralForm?: string
 }
@@ -222,6 +230,18 @@ export const IRREGULAR_VERBS: Record<string, VerbForms> = {
  * imperfeito de todos os verbos exigiria outra tabela inteira; a perifrase
  * resolve com um verbo so.
  */
+/**
+ * O imperfeito e o tempo mais regular do portugues: so QUATRO verbos fogem da
+ * regra (-ava / -ia). Por isso ele entra barato, e por isso vale a pena — e a
+ * forma de contar rotina, que e metade da conversa em casa.
+ */
+export const IMPERFECT_IRREGULAR: Record<string, Record<Person, string>> = {
+  ser: { '1s': 'era', '2s': 'era', '2t': 'eras', '3s': 'era', '1p': 'éramos', '3p': 'eram' },
+  ter: { '1s': 'tinha', '2s': 'tinha', '2t': 'tinhas', '3s': 'tinha', '1p': 'tínhamos', '3p': 'tinham' },
+  vir: { '1s': 'vinha', '2s': 'vinha', '2t': 'vinhas', '3s': 'vinha', '1p': 'vínhamos', '3p': 'vinham' },
+  pôr: { '1s': 'punha', '2s': 'punha', '2t': 'punhas', '3s': 'punha', '1p': 'púnhamos', '3p': 'punham' },
+}
+
 /** Imperfeito de TER, para estado passado: "eu tinha medo", "eu tinha fome". */
 export const TER_IMPERFECT: Record<Person, string> = {
   '1s': 'tinha',
@@ -555,8 +575,18 @@ export const LEXICON: Record<string, Lexeme> = {
      nem sabe genero de substantivo — e sao justamente as que mais aparecem
      numa terca-feira comum em casa. */
   elas: { class: 'pronoun', person: '3p' },
-  dele: { class: 'determiner', gender: 'm' },
-  dela: { class: 'determiner', gender: 'f' },
+  /* Demonstrativos-pronome. Estao na lista de Banajee (2003) citada em
+     REFERENCES.md como nucleo, e faltavam: "quero isso" e "isso e meu" sao
+     das frases mais frequentes de quem aponta antes de nomear. */
+  isso: { class: 'pronoun', person: '3s' },
+  aquilo: { class: 'pronoun', person: '3s' },
+  /* "dele"/"dela" sao os unicos possessivos POSPOSTOS: "o carro dele", nunca
+     "dele carro". Sem a marca, o motor os tratava como "meu" e produzia a
+     ordem errada. */
+  dele: { class: 'determiner', gender: 'm', postposed: true },
+  dela: { class: 'determiner', gender: 'f', postposed: true },
+  deles: { class: 'determiner', gender: 'm', postposed: true, plural: true },
+  delas: { class: 'determiner', gender: 'f', postposed: true, plural: true },
 
   cachorro: N('m', { animate: true }),
   cachorra: N('f', { animate: true }),
@@ -692,6 +722,30 @@ export const LEXICON: Record<string, Lexeme> = {
   claro: { class: 'interjection' },
   'que legal': { class: 'interjection' },
 
+  /* ------------------------------------------------- prancha "Comentar"
+
+     Comentar e o ato comunicativo que a literatura de CAA mais aponta como
+     negligenciado: ha centenas de estudos sobre ensinar a PEDIR e catorze, no
+     mundo inteiro, sobre ensinar a COMENTAR (Spencer, Tonsing & Dada, 2025).
+     E comentar e o que sustenta proximidade social — pedir sozinho faz do
+     aparelho um controle remoto. Ver REFERENCES.md secao 12. */
+  gostei: { class: 'interjection' },
+  'não gostei': { class: 'interjection' },
+  olha: { class: 'interjection' },
+  'eu também': { class: 'interjection' },
+  'não sei': { class: 'interjection' },
+  talvez: { class: 'adverb' },
+  entendi: { class: 'interjection' },
+  'por quê': { class: 'question' },
+  'e você': { class: 'question' },
+  'quero mais': { class: 'interjection' },
+  chega: { class: 'interjection' },
+  machucou: { class: 'verb', fixed: true },
+  legal: ADJ(),
+  feio: ADJ('m'),
+  chato: ADJ('m'),
+  igual: ADJ(),
+
   só: { class: 'adverb' },
   já: { class: 'adverb' },
   ainda: { class: 'adverb' },
@@ -706,6 +760,22 @@ export const LEXICON: Record<string, Lexeme> = {
   nunca: { class: 'adverb' },
   jamais: { class: 'adverb' },
   tudo: { class: 'quantifier' },
+  /* Numerais. Sao quantificadores que forcam o plural do que vem depois —
+     "dois bolos", nao "dois bolo" — e dispensam artigo. Criança pede
+     quantidade o tempo todo, e sem eles saia "quero dois e bolo". */
+  dois: { class: 'quantifier', plural: true },
+  duas: { class: 'quantifier', plural: true },
+  três: { class: 'quantifier', plural: true },
+  quatro: { class: 'quantifier', plural: true },
+  cinco: { class: 'quantifier', plural: true },
+  seis: { class: 'quantifier', plural: true },
+  sete: { class: 'quantifier', plural: true },
+  oito: { class: 'quantifier', plural: true },
+  nove: { class: 'quantifier', plural: true },
+  dez: { class: 'quantifier', plural: true },
+  vários: { class: 'quantifier', plural: true },
+  poucos: { class: 'quantifier', plural: true },
+  muitos: { class: 'quantifier', plural: true },
   nada: { class: 'quantifier' },
 
   /* ------------------------------------------------------------- social */
