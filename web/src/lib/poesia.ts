@@ -77,16 +77,19 @@ function simples(p: string): string {
 export function terminacao(palavra: string): string {
   const p = simples(palavra)
   if (p.length < 2) return p
-  for (let i = p.length - 1; i >= 0; i--) {
-    if ('aeiou'.includes(p[i]!)) {
-      const t = p.slice(i)
-      // Uma vogal solta no fim ("casa" → "a") rima com meio dicionário. Nesse
-      // caso volta mais uma letra para ter alguma consoante junto.
-      if (t.length === 1 && i > 0) return p.slice(i - 1)
-      return t
-    }
-  }
-  return p.slice(-2)
+
+  // Da PENÚLTIMA vogal em diante.
+  //
+  // Da última só, "bolo" e "cabelo" viravam rima — os dois terminam em "lo", e
+  // o ouvido não aceita isso. Com a penúltima, "bolo" vira "olo" e "cabelo"
+  // vira "elo", que é a distinção certa. A penúltima vogal também cai, na
+  // maioria das palavras do português, dentro da sílaba tônica ou junto dela —
+  // que é de onde a rima de verdade parte.
+  const vogais: number[] = []
+  for (let i = 0; i < p.length; i++) if ('aeiou'.includes(p[i]!)) vogais.push(i)
+  if (vogais.length === 0) return p.slice(-2)
+  const corte = vogais.length >= 2 ? vogais[vogais.length - 2]! : vogais[0]!
+  return p.slice(corte)
 }
 
 export function rima(a: string, b: string): boolean {
