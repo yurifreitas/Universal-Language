@@ -120,7 +120,7 @@ detector passar a acusar o motor de inventar verbo.
 |---|---|---|
 | `concordancia` | alta | artigo/contração com gênero ou número diferente do núcleo que ele introduz; adjetivo terminado em -o/-a discordando do substantivo **imediatamente anterior**, dentro da mesma oração |
 | `regionalismo-pela-metade` | alta | a região tem variante para a palavra e a saída trouxe a forma canônica mesmo assim |
-| `repeticao` | alta | palavra repetida em sequência ("a a água", "de de") |
+| `repeticao` | alta | palavra repetida em sequência em que **ao menos uma** das duas é `inserted` ("a a água", "de de") |
 | `preposicao-dupla` | alta | preposição seguida de preposição |
 | `diferenca-regiao` | alta | trocar a região mudou a frase sem que houvesse variante lexical nem tratamento de 2ª pessoa envolvido |
 | `infinitivo-solto` | média | verbo do léxico revisado ficou no infinitivo sem modal, preposição ou conectivo antes |
@@ -136,6 +136,11 @@ Duas decisões de calibragem que já custaram fila cheia de nada:
 - **A concordância consulta a palavra regional, não a canônica.** "A criança"
   vira "o guri" no Sul, e é o gênero da variante que manda no artigo
   (GRAMMAR.md 5). Consultar a canônica acusava "o guri" de erro.
+- **Repetição só conta se o motor tiver participado dela.** A pessoa escolher
+  o card BEIJO duas vezes produz "beijo, beijo e silhueta" — e apagar uma
+  seria o motor removendo palavra escolhida, exatamente o que a invariante
+  deste mesmo arquivo proíbe. A origem do token (`card` / `inserted`) resolve:
+  duas de card, legítimo; ao menos uma inserida, suspeita.
 - **O adjetivo concorda com o substantivo imediatamente anterior, e fronteira
   de oração corta o escopo.** Guardar "o último substantivo da frase inteira"
   acusava frase perfeita: em "…amar a titia então o guri chato?", `chato`
@@ -180,6 +185,37 @@ variedades: 416/8700 comparações de região mudaram a frase, 1614/5220 de regi
    byte a byte o mesmo arquivo.
 
 ---
+
+### 3. Rodada longa — `rodada.mjs`
+
+```
+node ferramentas/gramatica/rodada.mjs --sementes=40 --casos=20000
+```
+
+**Uma semente não é uma rodada.** A cobertura de pares e trios fecha em 100%
+com 20.000 casos, e isso engana: o que fecha é a cobertura das *dimensões*. O
+**conteúdo** de cada caso — qual verbo, qual substantivo, qual card repetido —
+muda com a semente, e é aí que aparecem tanto o detector mal calibrado quanto o
+defeito que mora numa célula específica da tabela.
+
+O histórico desta ferramenta é a prova:
+
+| Rodada | Resultado |
+|---|---|
+| semente 1 | 0 suspeitas |
+| semente 77 | 14 suspeitas — todas falso positivo de `repeticao` |
+| 10 sementes (200 mil casos, 1,5 min) | 0 |
+| 40 sementes (800 mil casos, 5,7 min) | 903 — uma vírgula indevida, real |
+
+Por isso o padrão é 40, e não 10: enquanto acrescentar semente ainda acha
+coisa, o padrão está baixo demais. Cada semente roda em processo próprio, para
+que a segunda não herde estado da primeira, e as sementes andam de 7919 em
+7919 — sementes vizinhas dão primeiros sorteios vizinhos, e quarenta rodadas
+quase iguais dariam a mesma falsa sensação de cobertura que uma só.
+
+A fila agregada (`suspeitas-longa.jsonl`) guarda a **semente** em cada linha:
+sem ela a suspeita não se reproduz, e suspeita que não se reproduz não se
+revisa.
 
 ## Quando o relatório zera
 

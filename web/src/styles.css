@@ -4857,3 +4857,272 @@ textarea {
     flex: 1 1 100%;
   }
 }
+
+/* =========================================================================
+   MARCADORES — o redesenho
+
+   Eram nove botões iguais com `◇ ◀ ● ▶ ? …ndo ✋ +1` dentro. Três problemas de
+   uma vez:
+
+   1. **Símbolo sem palavra não ensina.** Um losango não diz "passado" para
+      ninguém que ainda não saiba — e quem ainda não sabe é justamente quem
+      precisa do controle. Agora todo marcador tem NOME na tela.
+   2. **Todos tinham o mesmo peso.** Negar uma frase e pluralizar um
+      substantivo apareciam idênticos, embora um mude o sentido e o outro
+      ajuste um detalhe. A cor separa as famílias.
+   3. **Alvo pequeno demais.** 44px é o mínimo da WCAG 2.5.8 para controle de
+      cuidador; estes são tocados por quem está montando uma frase, muitas
+      vezes com dificuldade motora, e sem olhar direito.
+
+   A cor NUNCA é a única pista (WCAG 1.4.1): o nome escrito e o `aria-pressed`
+   continuam lá, e em alto contraste a cor some e vira borda grossa.
+   ========================================================================= */
+
+.marks {
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.marks__set {
+  gap: 6px;
+  padding: 5px;
+  align-items: center;
+}
+
+/* O grupo do tempo ganha rótulo: sem ele, quatro botões numa caixa não dizem
+   de que assunto são. */
+.marks__rotulo {
+  padding-inline: 8px 4px;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mark {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    transform 0.1s ease;
+}
+.mark:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.mark__icone {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.mark__nome {
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ as famílias
+
+   Cada grupo tem um matiz próprio, e todos passam pela mesma escala de
+   conforto sensorial do resto do app — quem baixa o estímulo baixa aqui
+   também. */
+
+.mark--wide,
+.mark--tempo {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+/* Tempo: neutro. É o único grupo excludente (um de quatro), e destacar cor
+   nele competiria com os que ligam e desligam. */
+.mark--tempo.mark--on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mark--nega {
+  --fam: var(--wc-negation);
+}
+.mark--pergunta {
+  --fam: var(--wc-question);
+}
+.mark--modo {
+  --fam: var(--wc-verb);
+}
+.mark--conta {
+  --fam: var(--wc-misc);
+}
+
+/* Desligado: só a borda insinua a família — o botão não pode gritar antes de
+   ser escolhido. */
+.mark--wide {
+  border-left: 4px solid color-mix(in oklab, var(--fam, var(--line)) 55%, transparent);
+}
+.mark--wide:hover:not(:disabled) {
+  border-color: var(--fam, var(--accent));
+  background: var(--surface-3);
+}
+
+/* Ligado: a família toma o botão. */
+.mark--wide.mark--on {
+  color: #fff;
+  background: var(--fam, var(--accent));
+  border-color: var(--fam, var(--accent));
+}
+@supports (color: color-mix(in oklab, red, blue)) {
+  .mark--wide.mark--on {
+    background: color-mix(in oklab, var(--fam) calc(100% - var(--sensory) * 40%), #6b7280);
+  }
+}
+
+/* Em alto contraste a cor sai de cena: o estado passa a ser borda grossa e
+   inversão, que é o que a baixa visão distingue. */
+:root[data-contrast='high'] .mark--wide,
+:root[data-contrast='high'] .mark--tempo {
+  border-width: 3px;
+  border-left-width: 3px;
+}
+:root[data-contrast='high'] .mark--wide.mark--on,
+:root[data-contrast='high'] .mark--tempo.mark--on {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+/* Em tela estreita o nome sai e fica o ícone — mas só nos que LIGAM E
+   DESLIGAM, cujo estado a cor já conta. O tempo mantém a palavra: ele é
+   excludente, e "qual dos quatro está ativo" não se lê num ícone só. */
+@media (max-width: 560px) {
+  .mark {
+    min-height: 48px;
+    padding: 0 10px;
+  }
+  .mark--wide .mark__nome {
+    display: none;
+  }
+  .mark--wide {
+    padding: 0 14px;
+  }
+  .mark--tempo {
+    padding: 0 10px;
+  }
+  .marks__rotulo {
+    display: none;
+  }
+}
+
+/* ---------------------------------------- trocar a forma da palavra no bloco
+
+   O app já sabe dizer "mamãe", "mãe" ou "minha mãe" — mas essas escolhas moram
+   em Ajustes, valem para o app inteiro e de uma vez. A fala real não é assim: a
+   mesma criança diz "mamãe" em casa e "minha mãe" na escola.
+
+   Aqui a escolha é DESTA palavra, NESTA frase, e não muda ajuste nenhum. */
+
+.chip__formas {
+  position: relative;
+}
+.chip__act--trocar {
+  width: 100%;
+}
+.chip__act--on {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+/* A lista sai POR CIMA, e não empurra: a barra da frase não pode crescer e
+   empurrar a prancha para fora da tela — ela é o visor, e some do lugar é o
+   pior que pode acontecer com ela. */
+/* A faixa das formas fica ABAIXO da barra, fora do overflow — dentro do bloco
+   ela era cortada pela rolagem lateral. */
+.formas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  grid-column: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-md);
+}
+.formas__titulo {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.formas__opcao {
+  display: grid;
+  gap: 1px;
+  min-height: 52px;
+  padding: 6px 14px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.formas__opcao:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+.formas__opcao small {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+/* A que ja esta na frase fica visivel e inerte: mostrar de onde se sai e o que
+   evita a troca por engano. */
+.formas__opcao--atual {
+  opacity: 0.55;
+  cursor: default;
+}
+.formas__fechar {
+  min-width: 44px;
+  min-height: 44px;
+  margin-left: auto;
+  font: inherit;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.chip__forma {
+  display: grid;
+  gap: 1px;
+  min-height: 46px;
+  padding: 6px 10px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.chip__forma:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+.chip__forma small {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+/* A que está na frase agora fica marcada e não é oferta: mostrar de onde se
+   está saindo é o que evita a troca por engano. */
+.chip__forma--atual {
+  color: var(--text-dim);
+  background: var(--surface-2);
+  cursor: default;
+}
+.chip__forma--atual:hover {
+  border-color: transparent;
+}

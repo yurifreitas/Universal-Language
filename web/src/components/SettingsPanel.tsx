@@ -7,6 +7,7 @@ import type { Script } from '../lib/scripts'
 import type { ScriptStats } from '../lib/ensaio'
 import type { Diario } from '../lib/diario'
 import { REGIONS } from '../lib/regional'
+import { TRATAMENTOS } from '../lib/tratamento'
 import { useMediaQuery } from '../lib/useMediaQuery'
 import { Dialog } from './Dialog'
 
@@ -438,6 +439,34 @@ export function SettingsPanel({
             de língua que não é o da família dela. Nenhuma variedade é mais correta que outra; o
             padrão de um app nacional acaba sendo o Sudeste por inércia, e isso é uma escolha,
             não um fato.
+          </p>
+
+          <label className="field">
+            <span>Como a pessoa fala</span>
+            <select
+              value={settings.tratamento}
+              onChange={(e) =>
+                onChange({ tratamento: e.target.value as Settings['tratamento'] })
+              }
+            >
+              {TRATAMENTOS.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="settings__note">
+            {TRATAMENTOS.find((t) => t.id === settings.tratamento)?.hint}{' '}
+            <em>{TRATAMENTOS.find((t) => t.id === settings.tratamento)?.exemplo}</em>
+          </p>
+          <p className="settings__note">
+            O rótulo de um card <strong>não é legenda</strong> — é a palavra que a pessoa vai
+            dizer, na frente de quem ela conhece. Uma criança de três anos não diz "mãe", diz
+            <strong> mamãe</strong>; e um adolescente de quinze não diz mamãe, e ser feito dizer
+            isso pelo próprio aparelho é constrangedor de um jeito que quem fala não precisa
+            suportar. No nível adulto, <strong>chamar</strong> continua sendo "mãe" — ninguém
+            chama alguém de "minha mãe".
           </p>
 
           <label className="field">

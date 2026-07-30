@@ -60,13 +60,26 @@ const FUNCIONAIS = new Set([
   'dele', 'dela', 'deles', 'delas',
 ])
 for (const verbo of ['ser', 'estar', 'ter', 'ir']) {
+  const formas = []
   for (const pessoa of ['1s', '2s', '2t', '3s', '1p', '3p']) {
     for (const tempo of ['present', 'past', 'imperfect', 'future']) {
-      FUNCIONAIS.add(motor.conjugate(verbo, pessoa, tempo))
+      formas.push(motor.conjugate(verbo, pessoa, tempo))
     }
   }
-  FUNCIONAIS.add(motor.gerund(verbo))
-  for (const registro of ['coloquial', 'normativo']) FUNCIONAIS.add(motor.imperative(verbo, registro))
+  formas.push(motor.gerund(verbo))
+  for (const registro of ['coloquial', 'normativo']) formas.push(motor.imperative(verbo, registro))
+  /*
+   * Cada forma entra inteira E palavra a palavra. O futuro é perifrástico:
+   * `conjugate('estar', …, 'future')` devolve "vou estar", e hoje o motor
+   * emite isso como UM token — mas se algum dia emitir dois, "estar" sozinho
+   * seria acusado de palavra de conteúdo inventada. Seria um alarme falso no
+   * canal mais barulhento que existe aqui, o das invariantes duras, e o
+   * detector perderia justamente a credibilidade de que ele depende.
+   */
+  for (const forma of formas) {
+    FUNCIONAIS.add(forma)
+    for (const palavra of forma.split(/\s+/)) FUNCIONAIS.add(palavra)
+  }
 }
 
 const PREPOSICOES = new Set([

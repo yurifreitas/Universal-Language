@@ -1,7 +1,9 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import type { Card } from '../types'
 import type { ArticleMode, Composed, GrammarMarks } from '../lib/grammar'
 import { regionalLabel, type Region } from '../lib/regional'
+import { alternativasDe } from '../lib/alternativas'
+import type { Tratamento } from '../lib/tratamento'
 import { Pictogram } from './Pictogram'
 import { Faixa } from './Faixa'
 
@@ -24,6 +26,10 @@ interface Props {
   onSpeakWord: (card: Card, inflected?: string) => void
   /** Artigo escolhido por posicao da frase. */
   articles: ArticleMode[]
+  /** Nivel de fala, para saber quais formas oferecer. */
+  tratamento: Tratamento
+  /** Troca a palavra desta posicao por outra forma dela. */
+  onTrocarPalavra: (index: number, label: string) => void
   onCycleArticle: (index: number) => void
   /** Guarda a frase montada em "Minhas frases", sem sair da tela. */
   onSave: () => void
@@ -39,11 +45,69 @@ const ARTICLE_UI: Record<ArticleMode, { icon: string; label: string }> = {
   none: { icon: '–', label: 'Sem artigo' },
 }
 
+/**
+ * QUANDO — o tempo do verbo.
+ *
+ * Os rótulos eram `◇ ◀ ● ▶`, sem nome nenhum na tela. Quatro losangos e setas
+ * não dizem "passado" para ninguém — nem para quem lê, e muito menos para quem
+ * não lê, que é metade de quem usa uma prancha. Um símbolo só funciona quando
+ * já se sabe o que ele quer dizer; até lá ele é decoração no lugar de controle.
+ *
+ * Agora cada um tem PALAVRA, e a palavra é a que se usa falando: "antes",
+ * "agora", "depois" — não "pretérito", "presente", "futuro". A criança que diz
+ * "antes eu comi" está certa; a gramática da escola vem depois.
+ */
 const TENSES = [
-  { value: 'auto', icon: '◇', label: 'Tempo automático' },
-  { value: 'past', icon: '◀', label: 'Passado' },
-  { value: 'present', icon: '●', label: 'Agora' },
-  { value: 'future', icon: '▶', label: 'Futuro' },
+  { value: 'auto', icon: '✨', label: 'Sozinho', ajuda: 'O app decide pelo que a frase pede.' },
+  { value: 'past', icon: '⏪', label: 'Antes', ajuda: 'Já aconteceu — "eu comi".' },
+  { value: 'present', icon: '⏺', label: 'Agora', ajuda: 'Está acontecendo — "eu como".' },
+  { value: 'future', icon: '⏩', label: 'Depois', ajuda: 'Vai acontecer — "eu vou comer".' },
+] as const
+
+/**
+ * O que muda o SENTIDO da frase, cada um com nome e cor própria.
+ *
+ * Antes eram cinco botões iguais, com `?`, `…ndo`, `✋` e `+1` dentro. Além de
+ * crípticos, todos tinham o mesmo peso visual — e negar uma frase não é a mesma
+ * coisa que pluralizar um substantivo. A cor separa as famílias: o que nega, o
+ * que pergunta, o que muda o modo, o que conta.
+ */
+const MARCADORES = [
+  {
+    chave: 'negated',
+    grupo: 'nega',
+    icon: '⃠',
+    label: 'Não',
+    ajuda: 'Nega a frase — "eu não quero".',
+  },
+  {
+    chave: 'question',
+    grupo: 'pergunta',
+    icon: '?',
+    label: 'Pergunta',
+    ajuda: 'Vira pergunta — "você quer?".',
+  },
+  {
+    chave: 'progressive',
+    grupo: 'modo',
+    icon: '↻',
+    label: 'Agora mesmo',
+    ajuda: 'Acontecendo agora — "estou comendo".',
+  },
+  {
+    chave: 'request',
+    grupo: 'modo',
+    icon: '🤲',
+    label: 'Pedido',
+    ajuda: 'Pede em vez de contar — "abre a porta".',
+  },
+  {
+    chave: 'plural',
+    grupo: 'conta',
+    icon: '＋',
+    label: 'Mais de um',
+    ajuda: 'Põe no plural a última coisa nomeada.',
+  },
 ] as const
 
 /**
@@ -79,9 +143,19 @@ export function SentenceBar({
   onSpeakWord,
   articles,
   onCycleArticle,
+  tratamento,
+  onTrocarPalavra,
   onSave,
   saved,
 }: Props) {
+  /**
+   * Qual bloco está com as formas abertas.
+   *
+   * Um por vez: a barra da frase é estreita, e duas listas abertas empurrariam
+   * a prancha para fora da tela — que é o que ela não pode fazer nunca.
+   */
+  const [trocando, setTrocando] = useState<number | null>(null)
+
   const empty = sentence.length === 0
   const spoken = composed
     ? composed.text
@@ -150,6 +224,26 @@ export function SentenceBar({
                   </button>
                 )}
 
+                {/* TROCAR A FORMA DA PALAVRA.
+                    O app já sabe dizer "mamãe", "mãe" ou "minha mãe"; mas essas
+                    escolhas moram em Ajustes, valem para o app inteiro e de uma
+                    vez. A fala real não é assim: a mesma criança diz "mamãe" em
+                    casa e "minha mãe" na escola. Aqui a escolha é DESTA palavra,
+                    NESTA frase, e não muda ajuste nenhum. */}
+                {alternativasDe(card.label, { region, tratamento }).length > 1 && (
+                  <button
+                    type="button"
+                    className={`chip__act chip__act--trocar ${
+                      trocando === i ? 'chip__act--on' : ''
+                    }`}
+                    aria-expanded={trocando === i}
+                    onClick={() => setTrocando(trocando === i ? null : i)}
+                    aria-label={`Outras formas de ${label}`}
+                  >
+                    ⇄
+                  </button>
+                )}
+
                 <div className="chip__bar">
                   <button
                     type="button"
@@ -183,6 +277,42 @@ export function SentenceBar({
           })
         )}
       </div>
+
+      {/* AS FORMAS DA PALAVRA — fora do bloco, de propósito.
+          Dentro dele a lista era cortada: a barra da frase tem rolagem lateral,
+          e `overflow` corta qualquer coisa posicionada por cima. Aqui embaixo
+          ela cabe inteira, aparece no mesmo lugar toda vez, e em tela estreita
+          não briga com a largura do bloco. */}
+      {trocando !== null && sentence[trocando] && (
+        <div className="formas" role="group" aria-label="Outras formas da palavra">
+          <span className="formas__titulo">
+            Em vez de <strong>{regionalLabel(sentence[trocando]!.label, region)}</strong>
+          </span>
+          {alternativasDe(sentence[trocando]!.label, { region, tratamento }).map((f) => (
+            <button
+              key={f.label}
+              type="button"
+              className={`formas__opcao ${f.origem === 'atual' ? 'formas__opcao--atual' : ''}`}
+              disabled={f.origem === 'atual'}
+              onClick={() => {
+                onTrocarPalavra(trocando, f.label)
+                setTrocando(null)
+              }}
+            >
+              <strong>{f.label}</strong>
+              <small>{f.nota}</small>
+            </button>
+          ))}
+          <button
+            type="button"
+            className="formas__fechar"
+            onClick={() => setTrocando(null)}
+            aria-label="Fechar as formas"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {composed && !empty && (
         <p className="gram" aria-hidden="true">
@@ -224,75 +354,46 @@ export function SentenceBar({
 
       {composed && !empty && (
         <Faixa className="marks" nome="marcadores" role="toolbar" ariaLabel="Marcadores gramaticais">
-          <div className="marks__set" role="group" aria-label="Tempo verbal">
+          <div className="marks__set marks__set--tempo" role="group" aria-label="Quando">
+            <span className="marks__rotulo" aria-hidden="true">
+              quando
+            </span>
             {TENSES.map((t) => (
               <button
                 key={t.value}
                 type="button"
-                className={`mark ${marks.tense === t.value ? 'mark--on' : ''}`}
+                className={`mark mark--tempo ${marks.tense === t.value ? 'mark--on' : ''}`}
                 aria-pressed={marks.tense === t.value}
                 disabled={empty}
                 onClick={() => onMark({ tense: t.value })}
-                title={t.label}
+                title={t.ajuda}
               >
-                <span aria-hidden="true">{t.icon}</span>
-                <span className="sr-only">{t.label}</span>
+                <span className="mark__icone" aria-hidden="true">
+                  {t.icon}
+                </span>
+                <span className="mark__nome">{t.label}</span>
               </button>
             ))}
           </div>
 
-          <button
-            type="button"
-            className={`mark mark--wide ${marks.negated ? 'mark--on' : ''}`}
-            aria-pressed={marks.negated}
-            disabled={empty}
-            onClick={() => onMark({ negated: !marks.negated })}
-          >
-            não
-          </button>
-          <button
-            type="button"
-            className={`mark mark--wide ${marks.question ? 'mark--on' : ''}`}
-            aria-pressed={marks.question}
-            disabled={empty}
-            onClick={() => onMark({ question: !marks.question })}
-          >
-            <span aria-hidden="true">?</span>
-            <span className="sr-only">Pergunta</span>
-          </button>
-          <button
-            type="button"
-            className={`mark mark--wide ${marks.progressive ? 'mark--on' : ''}`}
-            aria-pressed={marks.progressive}
-            disabled={empty}
-            onClick={() => onMark({ progressive: !marks.progressive })}
-            title="Acontecendo agora — “estou comendo”"
-          >
-            <span aria-hidden="true">…ndo</span>
-            <span className="sr-only">Acontecendo agora</span>
-          </button>
-          <button
-            type="button"
-            className={`mark mark--wide ${marks.request ? 'mark--on' : ''}`}
-            aria-pressed={marks.request}
-            disabled={empty}
-            onClick={() => onMark({ request: !marks.request })}
-            title="Pedido — “abre a porta”"
-          >
-            <span aria-hidden="true">✋</span>
-            <span className="sr-only">Pedido</span>
-          </button>
-          <button
-            type="button"
-            className={`mark mark--wide ${marks.plural ? 'mark--on' : ''}`}
-            aria-pressed={marks.plural}
-            disabled={empty}
-            onClick={() => onMark({ plural: !marks.plural })}
-            title="Plural — aplica-se à última coisa nomeada"
-          >
-            <span aria-hidden="true">+1</span>
-            <span className="sr-only">Plural</span>
-          </button>
+          {MARCADORES.map((m) => (
+            <button
+              key={m.chave}
+              type="button"
+              className={`mark mark--wide mark--${m.grupo} ${
+                marks[m.chave] ? 'mark--on' : ''
+              }`}
+              aria-pressed={marks[m.chave]}
+              disabled={empty}
+              onClick={() => onMark({ [m.chave]: !marks[m.chave] })}
+              title={m.ajuda}
+            >
+              <span className="mark__icone" aria-hidden="true">
+                {m.icon}
+              </span>
+              <span className="mark__nome">{m.label}</span>
+            </button>
+          ))}
         </Faixa>
       )}
 

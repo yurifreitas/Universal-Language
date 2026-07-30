@@ -1,4 +1,5 @@
 import type { Card } from '../types'
+import { tratamentoLabel, trazDeterminante, type Tratamento } from './tratamento'
 import {
   ESTAR_IMPERFECT,
   TER_IMPERFECT,
@@ -315,6 +316,25 @@ function agree(word: string, gender: 'm' | 'f', plural: boolean, lex?: Lexeme): 
   return out
 }
 
+/**
+ * COM + pronome vira uma palavra só: comigo, contigo, conosco.
+ *
+ * `MÃE · PAI · QUERER · BRINCAR · COM · EU` saía "…brincar **com eu**", que
+ * não é português em variedade nenhuma. É das primeiras coisas que uma criança
+ * pede — brincar **comigo** — e a forma errada marca a fala como estrangeira
+ * num lugar onde ela devia soar como a de qualquer criança.
+ *
+ * Só `com` contrai assim. "para eu", "de eu" têm outras regras e outras formas
+ * ("para mim", "de mim"), e entram à parte quando forem tratadas.
+ */
+const COM_PRONOME: Record<string, string> = {
+  eu: 'comigo',
+  tu: 'contigo',
+  nós: 'conosco',
+  // "com você", "com ele", "com a gente" não contraem: ficam como estão, e a
+  // ausência aqui é o que diz isso.
+}
+
 const DETERMINERS: Record<string, Record<'m' | 'f', [string, string]>> = {
   // singular, plural
   meu: { m: ['meu', 'meus'], f: ['minha', 'minhas'] },
@@ -441,6 +461,8 @@ export interface ComposeOptions {
   speakerGender?: SpeakerGender
   region?: Region
   register?: Register
+  /** Nivel de fala: mamae / mae / minha mae. Ver `lib/tratamento.ts`. */
+  tratamento?: Tratamento
 }
 
 export function compose(sentence: Card[], options: ComposeOptions = {}): Composed {
@@ -449,6 +471,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const region = options.region ?? 'padrao'
   const articles = options.articles ?? []
   const register = options.register ?? 'coloquial'
+  const tratamento = options.tratamento ?? 'neutro'
   const raw = sentence.map((c) => regionalLabel(c.label, region)).join(' ')
 
   /** "para" vira "pra" no coloquial — e assim que se fala, e o app fala. */
@@ -692,6 +715,60 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     it.lex.class === 'pronoun' || (it.lex.class === 'noun' && Boolean(it.lex.animate))
 
   /**
+   * VOCATIVO — chamar alguém antes de falar com ele.
+   *
+   * `MÃE · PAI · VOCÊS · NÃO · QUERER · BRINCAR` saía como sujeito composto:
+   * "A mãe, o pai **e vocês** não querem brincar?" — como se fossem três partes
+   * diferentes. Mas "vocês" já **é** a mãe e o pai: ninguém soma o interlocutor
+   * a si mesmo numa lista. O que a pessoa fez foi chamar os dois e perguntar a
+   * eles: "Mãe, pai, vocês não querem brincar?".
+   *
+   * Chamar alguém é o começo de toda interação, e numa prancha de CAA é mais
+   * do que isso: é como se **consegue a atenção** antes de dizer o resto. Sem
+   * isto, toda tentativa de chamar duas pessoas virava uma frase sobre elas em
+   * vez de uma frase para elas.
+   *
+   * O sinal é seguro e estreito: substantivos animados na ABERTURA, seguidos de
+   * pronome de 2ª pessoa (`você`/`vocês`) antes do verbo. Sem o pronome, a
+   * leitura de sujeito composto continua valendo — "a mãe e o pai querem
+   * brincar" é uma frase legítima sobre eles.
+   *
+   * E vocativo não leva artigo: chama-se "Mãe!", nunca "A mãe!".
+   */
+  const vocativos = new Set<number>()
+  {
+    const primeiroVerbo = items.find((it) => it.lex.class === 'verb')?.index ?? -1
+    const pronome2a = items.find(
+      (it) =>
+        it.lex.class === 'pronoun' &&
+        (it.label === 'você' || it.label === 'vocês' || it.label === 'tu') &&
+        (primeiroVerbo < 0 || it.index < primeiroVerbo),
+    )
+    /**
+     * Com um pronome de 1ª pessoa na abertura, não há vocativo.
+     *
+     * "MÃE · EU · VOCÊ · IR" é sujeito composto — "a mãe, eu e você vamos" —
+     * porque o falante se incluiu na lista. Quem chama alguém não se põe no
+     * meio do chamamento.
+     */
+    const temPrimeiraPessoa = items.some(
+      (it) =>
+        it.lex.class === 'pronoun' &&
+        (it.lex.person === '1s' || it.lex.person === '1p') &&
+        (primeiroVerbo < 0 || it.index < primeiroVerbo),
+    )
+    if (pronome2a && !temPrimeiraPessoa) {
+      for (const it of items) {
+        if (it.index >= pronome2a.index) break
+        // Só a sequência de abertura: um animado depois de outra coisa já não é
+        // chamamento.
+        if (it.lex.class === 'noun' && it.lex.animate) vocativos.add(it.index)
+        else break
+      }
+    }
+  }
+
+  /**
    * Tudo que e decidido POR ORACAO: quem e o sujeito, em que pessoa o verbo vai,
    * e qual pronome e objeto. Antes isto era calculado uma vez para a frase
    * inteira, o que so estava certo enquanto a frase tinha uma oracao.
@@ -714,7 +791,9 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       // adverbio de abertura: "amanhã a mamãe, eu e você vamos".
       for (const it of dentro) {
         if (it.index >= fv) break
-        if (ehSujeito(it)) grupo.push(it)
+        // Vocativo não é sujeito: "mãe, pai, VOCÊS querem" — quem concorda com
+        // o verbo é o pronome.
+        if (ehSujeito(it) && !vocativos.has(it.index)) grupo.push(it)
       }
     } else {
       // Sem verbo, so a sequencia de ABERTURA conta. Antes, todo animado da
@@ -1095,6 +1174,9 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
     copulaEmitida = verb
   }
 
+  /** Enquanto so houve vocativo, nao ha lista aberta para ligar com "e". */
+  let apenasVocativoAteAqui = false
+
   let oracaoAtual = 0
 
   for (let i = 0; i < items.length; i++) {
@@ -1185,11 +1267,20 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         virgulaDeOracao(clauseOf[it.index] ?? 0)
         previousWasSubject = subjectGroup.some((x) => x.index === it.index)
         // Sujeito composto: "a mamãe, eu e você".
-        if (listEligible(items[i - 1]) && !pendingPrep) {
+        if (listEligible(items[i - 1]) && !pendingPrep && !apenasVocativoAteAqui) {
           emitListSeparator(!listEligible(next))
         }
+        apenasVocativoAteAqui = false
         // Verbo que rege preposicao tambem a exige antes de pronome:
         // "gosto DE você", "brinco COM você".
+        // "com" + pronome vira uma palavra só — "comigo", e não "com eu".
+        const contraido = pendingPrep === 'com' ? COM_PRONOME[label] : undefined
+        if (contraido) {
+          pendingPrep = null
+          push(contraido, 'inflected', { cardIndex: it.index, original: it.card.label })
+          previousWasSubject = false
+          break
+        }
         if (pendingPrep) {
           push(pendingPrep, 'inserted')
           pendingPrep = null
@@ -1355,6 +1446,33 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       }
 
       case 'noun': {
+        /**
+         * Vocativo: sai antes de tudo, sem artigo e com vírgula depois.
+         *
+         * Precisa ser o PRIMEIRO ramo: o artigo e o separador de lista são
+         * emitidos mais abaixo, e com o vocativo no fim saía "A mãe,, o pai, e
+         * vocês" — artigo indevido e vírgula em cima de vírgula.
+         *
+         * Chama-se "Mãe!", nunca "A mãe!", e a vírgula é o que separa o
+         * chamamento do que se diz depois.
+         */
+        if (vocativos.has(it.index)) {
+          const nome = it.variante ?? it.card.label
+          push(nome, nome === it.card.label ? 'card' : 'inflected', {
+            cardIndex: it.index,
+            ...(nome === it.card.label ? {} : { original: it.card.label }),
+          })
+          const ultimo = tokens[tokens.length - 1]
+          if (ultimo) ultimo.text = `${ultimo.text},`
+          previousWasNoun = false
+          suppressArticle = false
+          // O chamamento nao entra na lista do sujeito: sem isto saia
+          // "Mãe, pai, E vocês" — o "e" de lista ligando o vocativo ao sujeito,
+          // que sao coisas diferentes.
+          apenasVocativoAteAqui = true
+          break
+        }
+
         // PARTE DO CORPO + DOR ("mão dor") e uma das construcoes mais
         // frequentes numa prancha, e a traducao natural nao usa o substantivo:
         // e o verbo DOER concordando com a parte do corpo — "minha mão dói".
@@ -1451,7 +1569,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // tres pessoas seguidas: MÃE · PAI · AVÓ virava "a mãe do pai da avó" —
         // uma genealogia que ninguem quis dizer. Tocar tres pessoas e uma
         // LISTA, e lista se faz com virgula e "e", nao com posse.
-        if (!pendingPrep && listEligible(items[i - 1]) && listEligible(it)) {
+        if (!pendingPrep && listEligible(items[i - 1]) && listEligible(it) && !apenasVocativoAteAqui) {
           emitListSeparator(!listEligible(next))
           // A regencia do verbo vale para TODOS os itens da lista: "gosto da
           // mãe, do pai e da irmã" — nao "gosto da mãe, o pai e a irmã".
@@ -1555,6 +1673,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // montagem dos itens.
         const baseDoNome = it.variante ?? it.card.label
         const text = pluralizar ? pluralize(baseDoNome, lex) : baseDoNome
+
         push(text, text === it.card.label ? 'card' : 'inflected', {
           cardIndex: it.index,
           ...(text === it.card.label ? {} : { original: it.card.label }),
@@ -1757,10 +1876,50 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   // O regionalismo entra aqui, no fim, e nao no lexico: internamente a frase e
   // sempre montada com o rotulo canonico, para que a gramatica funcione igual
   // em qualquer variedade. So a saida — o que se ve e o que se fala — muda.
+  /**
+   * O NIVEL DE FALA entra aqui, junto do regionalismo e pelo mesmo motivo.
+   *
+   * Internamente a frase e sempre montada com o rotulo canonico ("mae"), para
+   * que a gramatica funcione igual em qualquer nivel. So a saida — o que se ve
+   * e o que se fala — muda. Ver `lib/tratamento.ts`.
+   *
+   * O vocativo e tratado a parte: no nivel adulto, "mae" chamada continua
+   * "mae", mas referida vira "minha mae". Chamar alguem de "minha mae" nao e
+   * portugues.
+   */
+  const comNivel =
+    tratamento === 'neutro'
+      ? tokens
+      : (() => {
+          const saida: Token[] = []
+          for (const t of tokens) {
+            const m = /^(.*?)([,;:.!?]*)$/.exec(t.text)
+            const word = m?.[1] ?? t.text
+            const punct = m?.[2] ?? ''
+            const ehVocativo = t.cardIndex !== undefined && vocativos.has(t.cardIndex)
+            const novo = tratamentoLabel(word, tratamento, ehVocativo)
+            if (novo === word) {
+              saida.push(t)
+              continue
+            }
+            // "minha mae" ja traz determinante: o artigo que o motor inseriu
+            // antes dela vira "a minha mae", que soa a enfase ("a MINHA mae,
+            // nao a sua") e nao e o que se quer por padrao.
+            if (!ehVocativo && trazDeterminante(word, tratamento)) {
+              const anterior = saida[saida.length - 1]
+              if (anterior && anterior.kind === 'inserted' && /^(o|a|os|as)$/.test(anterior.text)) {
+                saida.pop()
+              }
+            }
+            saida.push({ ...t, text: novo + punct })
+          }
+          return saida
+        })()
+
   const shown =
     region === 'padrao'
-      ? tokens
-      : tokens.map((t) => {
+      ? comNivel
+      : comNivel.map((t) => {
           // A virgula de lista fica grudada na palavra ("mãe,"), e sem separa-la
           // a busca na tabela falha justamente no meio de uma enumeracao.
           const m = /^(.*?)([,;:.!?]*)$/.exec(t.text)

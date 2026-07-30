@@ -1,4 +1,5 @@
 import type { Region, Register } from './lib/regional'
+import type { Tratamento } from './lib/tratamento'
 
 export interface Card {
   /** id do pictograma na ARASAAC */
@@ -118,6 +119,15 @@ export interface Settings {
    * `normativo` fala como a escola cobra ("para", "abra a porta", "tu queres").
    */
   register: Register
+  /**
+   * Nivel de fala: mamae / mae / minha mae.
+   *
+   * O rotulo do card nao e legenda — e a palavra que a pessoa vai dizer. Uma
+   * crianca de tres anos nao diz "mae", e um adolescente de quinze nao diz
+   * "mamae"; ser feito dizer isso pelo proprio aparelho e constrangedor de um
+   * jeito que quem fala nao precisa suportar. Ver `lib/tratamento.ts`.
+   */
+  tratamento: Tratamento
 
   /* ------------------------------------------------------------ tipografia */
 
@@ -190,6 +200,7 @@ export const DEFAULT_SETTINGS: Settings = {
   wordColors: 'off',
   region: 'padrao',
   register: 'coloquial',
+  tratamento: 'neutro',
   coreStrip: true,
   suggestions: true,
   font: 'auto',

@@ -418,6 +418,24 @@ export const LEXICON: Record<string, Lexeme> = {
   ela: { class: 'pronoun', person: '3s' },
   nós: { class: 'pronoun', person: '1p' },
   eles: { class: 'pronoun', person: '3p' },
+  /**
+   * `vocês` faltava, e a falta era cara.
+   *
+   * Fora do lexico ele era adivinhado como SUBSTANTIVO masculino (termina em
+   * consoante), e a partir dai a frase desmontava inteira:
+   *
+   *     MÃE · PAI · VOCÊS · NÃO · QUERER · BRINCAR
+   *     -> "A mãe e o pai não é e vocês querer brincar."
+   *
+   * O motor via tres substantivos em lista, inseria copula, e o verbo nunca
+   * era conjugado porque nao havia sujeito reconhecivel. Um pronome de
+   * tratamento no plural e das primeiras coisas que alguem diz numa prancha —
+   * falar com duas pessoas ao mesmo tempo e a situacao da mesa de jantar.
+   *
+   * `3p` e nao `2p`: em portugues brasileiro "vocês" concorda na 3a do plural
+   * ("vocês querem"), como "eles".
+   */
+  vocês: { class: 'pronoun', person: '3p' },
 
   meu: { class: 'determiner', gender: 'm' },
   minha: { class: 'determiner', gender: 'f' },

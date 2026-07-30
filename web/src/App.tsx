@@ -337,6 +337,7 @@ export default function App() {
             speakerGender: settings.speakerGender,
             region: settings.region,
             register: settings.register,
+            tratamento: settings.tratamento,
           })
         : null,
     [
@@ -1112,6 +1113,10 @@ export default function App() {
           onMoveAt={moveInSentence}
           articles={articles}
           onCycleArticle={cycleArticle}
+          tratamento={settings.tratamento}
+          onTrocarPalavra={(i, label) =>
+            setSentence((atual) => atual.map((c, j) => (j === i ? { ...c, label } : c)))
+          }
           onSave={() => {
             if (!currentPhrase) return
             setMyPhrases((list) =>

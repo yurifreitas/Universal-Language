@@ -329,6 +329,63 @@ const CASES: Record<string, Case[]> = {
     { cards: ['casa', 'bonito'], expect: 'A casa está bonita.' },
   ],
 
+  /**
+   * VOCATIVO — chamar alguém antes de falar com ele.
+   *
+   * `MÃE · PAI · VOCÊS · NÃO · QUERER · BRINCAR` saía como sujeito composto:
+   * "A mãe, o pai e vocês não querem brincar?" — como se fossem três partes
+   * diferentes. Mas "vocês" JÁ É a mãe e o pai: ninguém soma o interlocutor a
+   * si mesmo numa lista.
+   *
+   * Chamar alguém é o começo de toda interação, e numa prancha de CAA é como
+   * se consegue a ATENÇÃO antes de dizer o resto.
+   *
+   * Descobriu junto que `vocês` não estava no léxico: fora dele era adivinhado
+   * como substantivo masculino, e a frase desmontava inteira —
+   * "A mãe e o pai não é e vocês querer brincar."
+   */
+  'vocativo': [
+    {
+      cards: ['mãe', 'pai', 'vocês', 'não', 'querer', 'brincar'],
+      marks: { question: true },
+      expect: 'Mãe, pai, vocês não querem brincar?',
+    },
+    { cards: ['mãe', 'você', 'querer', 'brincar'], marks: { question: true }, expect: 'Mãe, você quer brincar?' },
+    { cards: ['pai', 'você', 'ajudar', 'eu'], expect: 'Pai, você me ajuda.' },
+    // Sem pronome de 2a pessoa, continua sujeito composto — é frase sobre eles.
+    { cards: ['mãe', 'pai', 'querer', 'brincar'], expect: 'A mãe e o pai querem brincar.' },
+    // Com 1a pessoa na lista, o falante se incluiu: sujeito, não chamamento.
+    { cards: ['mãe', 'eu', 'você', 'ir'], expect: 'A mãe, eu e você vamos.' },
+    // `vocês` conjuga na 3a do plural.
+    { cards: ['vocês', 'querer', 'brincar'], expect: 'Vocês querem brincar.' },
+    { cards: ['vocês', 'feliz'], expect: 'Vocês estão felizes.' },
+  ],
+
+  /**
+   * COM + pronome vira uma palavra só.
+   *
+   * `MÃE · PAI · QUERER · BRINCAR · COM · EU` saía "brincar **com eu**", que
+   * não é português em variedade nenhuma. É das primeiras coisas que uma
+   * criança pede — brincar **comigo** — e a forma errada marca a fala como
+   * estrangeira num lugar onde ela devia soar como a de qualquer criança.
+   *
+   * Só `com` contrai assim: "para eu" e "de eu" têm outras formas ("para
+   * mim", "de mim") e entram à parte quando forem tratadas.
+   */
+  'com + pronome': [
+    {
+      cards: ['mãe', 'pai', 'querer', 'brincar', 'com', 'eu'],
+      marks: { question: true },
+      expect: 'A mãe e o pai querem brincar comigo?',
+    },
+    { cards: ['você', 'brincar', 'com', 'eu'], marks: { question: true }, expect: 'Você brinca comigo?' },
+    { cards: ['eu', 'ir', 'com', 'nós'], expect: 'Eu vou conosco.' },
+    // Estes NÃO contraem.
+    { cards: ['eu', 'brincar', 'com', 'você'], expect: 'Eu brinco com você.' },
+    { cards: ['eu', 'brincar', 'com', 'ele'], expect: 'Eu brinco com ele.' },
+    { cards: ['eu', 'brincar', 'com', 'mãe'], expect: 'Eu brinco com a mãe.' },
+  ],
+
   'listas de pessoas': [
     { cards: ['mãe', 'pai', 'avó'], expect: 'A mãe, o pai e a avó.' },
     { cards: ['eu', 'querer', 'mãe', 'pai'], expect: 'Eu quero a mãe e o pai.' },
