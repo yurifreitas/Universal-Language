@@ -452,21 +452,50 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const clauseOf: number[] = []
   /** Oracoes que o conectivo pos no futuro do subjuntivo. */
   const clauseSubjunctive: boolean[] = [false]
+  /** Itens que abriram uma oracao subordinada. */
+  const abriuOracao = new Set<number>()
   {
     let c = 0
+    let verboNaOracao = false
     for (const it of items) {
       clauseOf[it.index] = c
-      // Abre oracao se houver verbo OU pronome depois. O pronome importa
-      // porque a oracao pode ter o verbo INSERIDO pelo motor, e nao tocado:
-      // em "porque · eu · fome" o verbo ("tenho") nao existe como card, e
-      // exigir verbo explicito deixava a segunda oracao invisivel.
+      if (it.lex.class === 'verb') verboNaOracao = true
+
       const depois = items.slice(it.index + 1)
-      const abreOracao =
+
+      // (a) Conectivo explicito. Abre se houver verbo OU pronome depois — o
+      // pronome importa porque a oracao pode ter o verbo INSERIDO pelo motor:
+      // em "porque · eu · fome" o "tenho" nao existe como card, e exigir verbo
+      // explicito deixava a segunda oracao invisivel.
+      const porConectivo =
         CLAUSE_STARTERS.has(it.label) &&
         depois.some((x) => x.lex.class === 'verb' || x.lex.class === 'pronoun')
-      if (abreOracao) {
-        c++
-        clauseSubjunctive[c] = SUBJUNTIVO_FUTURO.has(it.label)
+
+      // (b) Fronteira IMPLICITA, sem conectivo nenhum.
+      //
+      //   "quando · papai · chegar | eu · brincar"
+      //
+      // A oracao principal comeca no "eu", e nada a anuncia. A pista e
+      // posicional: ja houve verbo nesta oracao, e agora aparece um sujeito com
+      // verbo proprio depois dele. Sem isto o "eu" era lido como objeto do
+      // verbo anterior e virava clitico — "quando o papai me chegar".
+      const ehSujeitoNovo =
+        verboNaOracao &&
+        (it.lex.class === 'pronoun' || (it.lex.class === 'noun' && Boolean(it.lex.animate))) &&
+        depois.some((x) => x.lex.class === 'verb')
+
+      if (porConectivo || ehSujeitoNovo) {
+        if (porConectivo) {
+          c++
+          abriuOracao.add(it.index)
+          clauseSubjunctive[c] = SUBJUNTIVO_FUTURO.has(it.label)
+        } else {
+          // O proprio item ja pertence a oracao nova.
+          c++
+          clauseSubjunctive[c] = false
+          clauseOf[it.index] = c
+        }
+        verboNaOracao = false
       }
     }
   }
@@ -599,7 +628,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
 
   const negationCard = items.find((it) => it.lex.class === 'negation')
   const negated = marks.negated || Boolean(negationCard)
-  const question = marks.question || items.some((it) => it.lex.class === 'question')
+  // "quando" e "se" tambem sao interrogativos — mas quando abrem oracao
+  // subordinada nao ha pergunta nenhuma: "quando o papai chegar eu brinco" e
+  // afirmacao. Antes saia "Quando está o papai chegar?".
+  const question =
+    marks.question ||
+    items.some((it) => it.lex.class === 'question' && !abriuOracao.has(it.index))
 
   // Incontavel nao pluraliza: o marcador em "água" produzia "águas".
   const lastNounIndex = marks.plural
@@ -1268,7 +1302,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         break
 
       case 'question':
-        questionSeen = true
+        // "quando" e "se" tambem sao interrogativos — mas quando ABREM oracao
+        // subordinada nao ha pergunta nenhuma: "quando o papai chegar eu
+        // brinco" e afirmacao. Antes o motor inseria copula de pergunta e saia
+        // "Quando ESTÁ o papai chegar?", o que ainda por cima impedia o verbo
+        // seguinte de ser conjugado.
+        if (!abriuOracao.has(it.index)) questionSeen = true
         push(it.card.label, 'card', { cardIndex: it.index })
         previousWasNoun = false
         break

@@ -268,9 +268,22 @@ const CASES: Record<string, Case[]> = {
       expect: 'Eu como mas eu quero o bolo.' },
     // Condicional.
     { cards: ['eu', 'brincar', 'se', 'você', 'deixar'],
-      expect: 'Eu brinco se você deixa.' },
+      expect: 'Eu brinco se você deixar.' },
     // "e" NAO abre oracao: continua sendo coordenacao de verbo.
     { cards: ['eu', 'querer', 'comer', 'e', 'beber'], expect: 'Eu quero comer e beber.' },
+  ],
+  'futuro do subjuntivo — o tempo que "quando" e "se" exigem': [
+    // Regulares: a forma e identica ao infinitivo, e so por isso ja saia certo
+    // por acidente. Os irregulares e que denunciavam a falta.
+    { cards: ['quando', 'papai', 'chegar', 'eu', 'brincar'],
+      expect: 'Quando o papai chegar eu brinco.' },
+    { cards: ['se', 'você', 'querer', 'eu', 'ir'], expect: 'Se você quiser eu vou.' },
+    { cards: ['quando', 'eu', 'ser', 'grande', 'eu', 'querer', 'dirigir'],
+      expect: 'Quando eu for grande eu quero dirigir.' },
+    { cards: ['se', 'eu', 'poder', 'eu', 'comer', 'bolo'],
+      expect: 'Se eu puder eu como o bolo.' },
+    { cards: ['quando', 'mamãe', 'vir', 'eu', 'falar'],
+      expect: 'Quando a mamãe vier eu falo.' },
   ],
   'palavra fora do léxico': [
     // Nao conjuga nem artigula o que so foi adivinhado: telegrafico e menos

@@ -105,6 +105,13 @@ export interface Settings {
 
   /* ------------------------------------------------------------ tipografia */
 
+  /**
+   * Faixa de palavras-nucleo acima da grade, igual em todas as pranchas.
+   * Poupa a troca de prancha a cada palavra funcional — que e o custo que o
+   * planejamento motor mais penaliza. Ver `lib/coreStrip.ts`.
+   */
+  coreStrip: boolean
+
   /** `auto` segue o modo dislexia; o resto sao pilhas de fonte do sistema. */
   font: 'auto' | 'verdana' | 'tahoma' | 'century' | 'comic'
   /** Multiplicador do corpo do texto. */
@@ -135,6 +142,7 @@ export const DEFAULT_SETTINGS: Settings = {
   wordColors: 'off',
   region: 'padrao',
   register: 'coloquial',
+  coreStrip: true,
   font: 'auto',
   textScale: 1,
   letterSpacing: 0,

@@ -253,6 +253,23 @@ export function SettingsPanel({
             Menos colunas deixam os alvos maiores. Para quem tem dificuldade motora fina,
             2 ou 3 colunas costumam funcionar melhor que uma grade cheia.
           </p>
+
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={settings.coreStrip}
+              onChange={(e) => onChange({ coreStrip: e.target.checked })}
+            />
+            <span>Palavras-núcleo em todas as pranchas</span>
+          </label>
+          <p className="settings__note">
+            Uma faixa fixa com <strong>eu, querer, mais, não, acabou, ajudar</strong> acima da
+            grade, igual em toda prancha. Sem ela, dizer "quero mais bolo" custa três trocas de
+            prancha — e o atraso entre o movimento e a fala é o que mais atrapalha a fluência,
+            segundo a literatura de planejamento motor. É como Proloquo2Go, LAMP Words for Life
+            e Grid 3 fazem. A faixa fica <em>fora</em> da grade justamente para não deslocar
+            nenhuma célula já aprendida.
+          </p>
         </section>
         )}
 

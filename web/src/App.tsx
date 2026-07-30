@@ -22,6 +22,7 @@ import type { Script } from './lib/scripts'
 import { speak, speakCue, speechSupported } from './lib/speech'
 import { compose, NO_MARKS, type ArticleMode, type GrammarMarks } from './lib/grammar'
 import { regionalLabel } from './lib/regional'
+import { CORE_STRIP } from './lib/coreStrip'
 import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
@@ -29,6 +30,7 @@ import { usePanelHistory } from './lib/usePanelHistory'
 import { SentenceBar } from './components/SentenceBar'
 import { BoardTabs, panelId, tabId } from './components/BoardTabs'
 import { CardGrid } from './components/CardGrid'
+import { Pictogram } from './components/Pictogram'
 import { SearchOverlay } from './components/SearchOverlay'
 import { SettingsPanel } from './components/SettingsPanel'
 import { PhrasesPanel } from './components/PhrasesPanel'
@@ -615,6 +617,27 @@ export default function App() {
         tabIndex={0}
         {...(board ? { id: panelId(board.id), 'aria-labelledby': tabId(board.id) } : {})}
       >
+        {/* A faixa fica FORA da grade e antes dela: posicao identica em toda
+            prancha, sem deslocar nenhuma celula existente. */}
+        {settings.coreStrip && (
+          <div className="shell">
+            <div className="core" role="group" aria-label="Palavras que servem em qualquer prancha">
+              {CORE_STRIP.map((card) => (
+                <button
+                  key={card.label}
+                  type="button"
+                  className="core__cell"
+                  onClick={() => pick(card)}
+                  aria-label={regionalLabel(card.label, settings.region)}
+                >
+                  <Pictogram card={card} eager />
+                  <span>{regionalLabel(card.label, settings.region)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="shell">
           <CardGrid
             cards={cards}

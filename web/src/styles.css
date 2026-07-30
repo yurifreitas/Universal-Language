@@ -2232,3 +2232,59 @@ textarea {
     grid-row: 1 / -1;
   }
 }
+
+/* ------------------------------------------------- faixa de palavras-núcleo
+
+   Mesma posição em todas as pranchas. Existe porque dizer "quero mais bolo"
+   custava três trocas de prancha — e o atraso entre o movimento e a fala é
+   justamente o que a literatura de planejamento motor aponta como prejudicial
+   à fluência.
+
+   Fica FORA da grade de propósito: acrescentar células no início de cada
+   prancha deslocaria todas as outras, que é o que o LAMP proíbe. */
+.core {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(6px, 1vw, 12px);
+  padding-block: 8px 4px;
+}
+
+.core__cell {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 2px;
+  justify-items: center;
+  min-height: 64px;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--card-ink);
+  background: var(--card-bg);
+  border: 2px solid transparent;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  user-select: none;
+}
+.core__cell:hover {
+  border-color: var(--accent);
+}
+.core__cell:active {
+  transform: scale(0.96);
+}
+.core__cell .picto,
+.core__cell .picto--fallback {
+  max-height: 46px;
+}
+
+@media (max-width: 560px) {
+  .core__cell {
+    min-height: 56px;
+    font-size: 0.62rem;
+  }
+  .core__cell .picto,
+  .core__cell .picto--fallback {
+    max-height: 36px;
+  }
+}
