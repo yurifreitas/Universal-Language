@@ -113,6 +113,39 @@ passada não pode fazer sem quebrar invariante; é exatamente o que a árvore
 
 ---
 
+## 3b. Navegação — revisão de 30/07
+
+Três defeitos achados abrindo o app, não lendo o código.
+
+**A barra voltara a quebrar em duas linhas.** O comentário no `App.tsx` dizia ter
+resolvido isso movendo seis controles para o menu ⋯; mas cada módulo opcional
+ligado acrescentava um botão solto no fim da fila, e com os três ligados a barra
+quebrava de novo — num monitor de 1568px, não só no celular. A segunda linha
+custa uma fileira de cards.
+
+Os três módulos de criar (Padrões, Poesia, Estúdio) passaram a entrar como **um
+botão só**, "Criar". As cinco posições de fala não se movem ao ligar ou desligar
+módulo — é a mesma regra das células —, e o agrupamento não é de conveniência:
+os três são criação livre, e nenhum é fala. Com um só ligado, o botão vira aquele
+módulo, sem nível a mais. A barra voltou a uma linha e a prancha ganhou ~95px.
+
+**Todo painel era um beco sem saída.** A única porta era ✕, e ✕ devolve à
+prancha: ir de Frases a Roteiros custava três ações. Agora `Dialog` — a casca dos
+doze painéis — desenha uma trilha **"Ir para"** com os irmãos do mesmo grupo
+(`lib/navegacao.tsx`). Um toque. Vive num contexto e não numa prop justamente
+para valer nos doze sem doze assinaturas iguais.
+
+Dois detalhes que a implementação exigiu:
+- A trilha fica **depois** do cabeçalho, para não roubar o foco inicial do
+  diálogo — em Buscar, o foco tem de cair no campo, e cai.
+- `.overlay` era `grid-template-rows: auto auto 1fr`; o quarto filho tomou a
+  faixa `1fr` e abriu 190px de vão. Faixa declarada e `grid-row: 4` no corpo.
+
+**🎯 servia a "Achar" e a "Objetivos".** Dois destinos com o mesmo desenho anulam
+a única pista que se lê sem ler. Objetivos passou a 🧭.
+
+---
+
 ## 4. As ferramentas
 
 ### `ferramentas/gramatica/` — auditoria do motor

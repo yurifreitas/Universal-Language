@@ -61,6 +61,7 @@ import { earcon } from './lib/audio'
 import { useScanning } from './lib/useScanning'
 import { useRovingFocus } from './lib/useRovingFocus'
 import { usePanelHistory } from './lib/usePanelHistory'
+import { ProvedorDeNavegacao, GRUPOS, grupoDe } from './lib/navegacao'
 import { SentenceBar } from './components/SentenceBar'
 import { BoardTabs, panelId, tabId } from './components/BoardTabs'
 import { CardGrid } from './components/CardGrid'
@@ -132,7 +133,10 @@ const TOOLS = [
   { key: 'search', icon: '🔍', label: 'Buscar', aria: 'Buscar pictograma', group: 'ajustar' },
   { key: 'editor', icon: '✎', label: 'Editar', aria: 'Editar pranchas e cards', group: 'ajustar' },
   { key: 'help', icon: '?', label: 'Ajuda', aria: 'Atalhos e acesso', group: 'ajustar' },
-  { key: 'objetivos', icon: '🎯', label: 'Objetivos', aria: 'Objetivos individuais', group: 'ajustar' },
+  // 🧭 e não 🎯: o alvo já é o ícone de "Achar", e dois destinos diferentes com
+  // o mesmo desenho anulam a única pista que se lê sem ler — que é o ponto de
+  // ter ícone. Bússola cabe melhor no que Objetivos faz: apontar direção.
+  { key: 'objetivos', icon: '🧭', label: 'Objetivos', aria: 'Objetivos individuais', group: 'ajustar' },
   { key: 'settings', icon: '⚙', label: 'Ajustes', aria: 'Configurações', group: 'ajustar' },
   { key: 'lock', icon: '🔓', label: 'Travar', aria: 'Travar na prancha', group: 'ajustar' },
 ] as const
@@ -280,6 +284,40 @@ export default function App() {
   const closePanel = useCallback(() => setPanel('none'), [])
   usePanelHistory(panel !== 'none', closePanel)
   const tools = useRovingFocus(FALAR.length + 1)
+
+  /**
+   * Para onde dá para ir de dentro do painel aberto — os irmãos do mesmo grupo.
+   * Ver `lib/navegacao.tsx` para por que isto existe.
+   *
+   * O filtro por módulo ligado importa: oferecer "Poesia" a quem desligou
+   * Poesia seria religar pela porta dos fundos um módulo que a pessoa escolheu
+   * não ter. A escolha em Ajustes vale em todo lugar, inclusive aqui.
+   */
+  const ligado = useCallback(
+    (chave: string) =>
+      chave === 'padroes' ? settings.padroes
+      : chave === 'poesia' ? settings.poesia
+      : chave === 'estudio' ? settings.estudio
+      : true,
+    [settings.padroes, settings.poesia, settings.estudio],
+  )
+
+  /** Os módulos de criar que a pessoa deixou ligados, na ordem fixa de `GRUPOS`. */
+  const criarLigados = useMemo(
+    () => GRUPOS.criar!.filter((d) => ligado(d.chave)),
+    [ligado],
+  )
+
+  const navegacao = useMemo(() => {
+    const grupo = grupoDe(panel)
+    return {
+      atual: panel,
+      irmaos: grupo
+        ? GRUPOS[grupo]!.filter((d) => d.chave !== panel && ligado(d.chave))
+        : [],
+      ir: (chave: string) => setPanel(chave as Panel),
+    }
+  }, [panel, ligado])
 
   /**
    * Ordem das pranchas: fabrica (com as edicoes do usuario aplicadas), depois
@@ -818,40 +856,39 @@ export default function App() {
                   </button>
                 ))}
 
-                {settings.padroes && (
+                {/* OS MÓDULOS DE CRIAR ENTRAM COMO UM BOTÃO SÓ.
+                 *
+                 * Eram três botões soltos no fim da fila. Com os três ligados a
+                 * barra voltava a quebrar em duas linhas — o defeito que este
+                 * arquivo diz ter consertado, reaberto por quem ligasse tudo. E
+                 * a segunda linha custa um card inteiro de altura no celular,
+                 * que é justamente a tela onde ela quebra primeiro.
+                 *
+                 * Um botão só resolve sem violar nada: as cinco posições de
+                 * FALAR não se movem quando um módulo é ligado ou desligado —
+                 * é a mesma regra das células da prancha —, e "Padrões, Poesia,
+                 * Estúdio" não é um agrupamento de conveniência: os três são
+                 * criação livre, e nenhum deles é fala. Chegar neles custa um
+                 * toque a mais, e dentro deles a trilha "Ir para" liga os três
+                 * entre si (ver `lib/navegacao.tsx`). */}
+                {criarLigados.length > 0 && (
                   <button
                     type="button"
                     className="btn btn--ghost btn--barra"
                     tabIndex={-1}
-                    onClick={() => setPanel('padroes')}
-                    aria-label="Padrões visuais"
+                    onClick={() => setPanel(criarLigados[0]!.chave as Panel)}
+                    aria-label={
+                      criarLigados.length === 1
+                        ? criarLigados[0]!.aria
+                        : `Criar — ${criarLigados.map((d) => d.rotulo).join(', ')}`
+                    }
                   >
-                    <span aria-hidden="true">◇</span>
-                    <span className="btn__text">Padrões</span>
-                  </button>
-                )}
-                {settings.poesia && (
-                  <button
-                    type="button"
-                    className="btn btn--ghost btn--barra"
-                    tabIndex={-1}
-                    onClick={() => setPanel('poesia')}
-                    aria-label="Oficina de poesia"
-                  >
-                    <span aria-hidden="true">✒</span>
-                    <span className="btn__text">Poesia</span>
-                  </button>
-                )}
-                {settings.estudio && (
-                  <button
-                    type="button"
-                    className="btn btn--ghost btn--barra"
-                    tabIndex={-1}
-                    onClick={() => setPanel('estudio')}
-                    aria-label="Estúdio de formas"
-                  >
-                    <span aria-hidden="true">🧩</span>
-                    <span className="btn__text">Estúdio</span>
+                    <span aria-hidden="true">
+                      {criarLigados.length === 1 ? criarLigados[0]!.icone : '✦'}
+                    </span>
+                    <span className="btn__text">
+                      {criarLigados.length === 1 ? criarLigados[0]!.rotulo : 'Criar'}
+                    </span>
                   </button>
                 )}
 
@@ -1223,6 +1260,7 @@ export default function App() {
         </div>
       </main>
 
+      <ProvedorDeNavegacao valor={navegacao}>
       {panel === 'search' && (
         <SearchOverlay
           settings={settings}
@@ -1358,6 +1396,7 @@ export default function App() {
         />
       )}
       {panel === 'help' && <HelpOverlay onClose={() => setPanel('none')} />}
+      </ProvedorDeNavegacao>
     </div>
   )
 }

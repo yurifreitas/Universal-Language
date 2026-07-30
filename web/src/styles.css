@@ -1408,7 +1408,11 @@ img,
   inset: 0;
   z-index: 20;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  /* Quatro faixas: cabecalho, status, trilha, corpo. A trilha e opcional — ver
+     lib/navegacao.tsx —, e por isso o corpo declara `grid-row: 4` explicito la
+     embaixo: sem isso, quando a trilha nao existe, o corpo escorrega para a
+     faixa 3 (`auto`) e perde o `1fr` que faz a rolagem dele funcionar. */
+  grid-template-rows: auto auto auto 1fr;
   padding-top: var(--safe-top);
   /* Mesma armadilha da grade principal: faixa `auto` cresce ate o max-content
      e estica o dialogo para fora da tela. */
@@ -1500,7 +1504,82 @@ img,
   display: block;
 }
 
+/* A TRILHA — os painéis irmãos, dentro do painel aberto. Ver lib/navegacao.tsx.
+
+   Ela é deliberadamente mais discreta que o conteúdo: ir para outro painel é a
+   ação secundária, e a primária é usar o painel em que a pessoa já está. Por
+   isso item pequeno, sem preenchimento forte e sem cor de destaque — presente
+   quando se procura, calado quando não. */
+.trilha {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.trilha__shell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Em tela estreita a trilha rola em vez de quebrar: quebrar custaria uma
+     segunda linha de altura dentro de um painel que já é a parte apertada. */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding-block: 8px;
+}
+.trilha__shell::-webkit-scrollbar {
+  display: none;
+}
+.trilha__rotulo {
+  flex: none;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.trilha__item {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* 40px de alvo. Menor que os 52px da barra principal porque é ação
+     secundária, e ainda acima do mínimo de 24px do WCAG 2.2 (2.5.8) com folga. */
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.trilha__item:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.trilha__item:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Em tela muito estreita fica só o ícone: quatro rótulos não cabem, e um item
+   cortado pela metade é pior do que um ícone inteiro com nome no leitor. */
+@media (max-width: 30rem) {
+  .trilha__texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .trilha__item {
+    padding: 0 14px;
+    font-size: 1.05rem;
+  }
+}
+
 .overlay__body {
+  /* Faixa 4 sempre, exista trilha ou nao. Ver `grid-template-rows` em .overlay. */
+  grid-row: 4;
   min-height: 0;
   overflow-y: auto;
   /* Chegar ao fim da rolagem do dialogo nao pode passar o gesto para a pagina

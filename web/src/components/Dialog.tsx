@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useNavegacao } from '../lib/navegacao'
 
 interface Props {
   title: string
@@ -27,6 +28,7 @@ const FOCUSABLE =
  * https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/
  */
 export function Dialog({ title, headerContent, status, onClose, children }: Props) {
+  const navegacao = useNavegacao()
   const ref = useRef<HTMLDivElement>(null)
   const restoreTo = useRef<HTMLElement | null>(null)
   const titleId = useId()
@@ -110,6 +112,33 @@ export function Dialog({ title, headerContent, status, onClose, children }: Prop
       <p className="overlay__status" id={statusId} role="status">
         <span className="shell">{status}</span>
       </p>
+
+      {/* A TRILHA DOS IRMÃOS.
+          Fica depois do cabeçalho de propósito: o foco inicial do diálogo é o
+          primeiro focável, e ele tem que continuar sendo o conteúdo do painel
+          (o campo de busca, por exemplo) — não um atalho para sair dele.
+          Ver `lib/navegacao.tsx`. */}
+      {navegacao && (
+        <nav className="trilha" aria-label="Ir para">
+          <div className="shell trilha__shell">
+            <span className="trilha__rotulo" aria-hidden="true">
+              Ir para
+            </span>
+            {navegacao.irmaos.map((d) => (
+              <button
+                key={d.chave}
+                type="button"
+                className="trilha__item"
+                onClick={() => navegacao.ir(d.chave)}
+                aria-label={d.aria}
+              >
+                <span aria-hidden="true">{d.icone}</span>
+                <span className="trilha__texto">{d.rotulo}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
 
       <div className="overlay__body">{children}</div>
     </div>

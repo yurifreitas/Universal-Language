@@ -973,6 +973,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   /** Índice do verbo que fica no infinitivo por ser de oração reduzida
    *  aberta por preposição — "para eu **comer**". Ver `PREP_ANTES_DE_INFINITIVO`. */
   let infinitivoDaPreposicao: number | null = null
+  /** O "tem" existencial acabou de sair e o substantivo dele não leva artigo. */
+  let existencialAberto = false
   let pendingIntensidade: { texto: string; cardIndex: number } | null = null
   let pendingPrep: string | null = null
   /** Regencia do verbo principal, que se repete em cada item de uma lista. */
@@ -1458,6 +1460,44 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           })
         }
 
+        /**
+         * O "TEM" EXISTENCIAL — "tem bolo?", "tem mais?".
+         *
+         * É das perguntas mais frequentes numa prancha, e saía "Tenho o bolo?".
+         * Em português brasileiro "ter" sem sujeito é o verbo de existência
+         * ("tem pão na mesa"), onde o resto do mundo lusófono usa "haver"; e ele
+         * não leva artigo, porque não fala de um bolo específico e sim de haver
+         * bolo.
+         *
+         * A trava é a PERGUNTA, e ela não é acidental. Sem sujeito explícito o
+         * motor assume 1ª pessoa, e essa suposição está certa quase sempre:
+         * `TER · FOME` é "tenho fome", `TER · DOR` é "tenho dor" — estados do
+         * próprio corpo, que são metade do uso de "ter" numa prancha. Ninguém
+         * pergunta a si mesmo se tem fome; mas "tem bolo?" se pergunta o dia
+         * inteiro. Só a pergunta separa os dois casos sem chutar.
+         *
+         * Com sujeito escolhido nada disso vale: "você tem bolo?" é posse, e
+         * `subjectGroup` não vazio já exclui esse caminho.
+         */
+        const existencial =
+          label === 'ter' &&
+          marks.question &&
+          subjectGroup.length === 0 &&
+          !pronoun &&
+          next?.lex.class === 'noun'
+
+        if (existencial) {
+          const text = conjugate('ter', '3s', tense)
+          push(text, 'inflected', { cardIndex: it.index, original: it.card.label })
+          // O substantivo que vem a seguir não leva artigo: "tem bolo?", e não
+          // "tem o bolo?".
+          existencialAberto = true
+          verbDone = true
+          lastVerbLabel = label
+          previousWasNoun = false
+          break
+        }
+
         if (infinitivoDaPreposicao === it.index) {
           // "isso para eu COMER" — a preposição abriu uma oração reduzida, e o
           // verbo dela é infinitivo. Foi o que segurou o pronome na forma reta
@@ -1716,6 +1756,14 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
          * explícito é ignorado — e o "nenhum" continua valendo, porque tirar é
          * sempre um pedido possível.
          */
+        // Substantivo logo depois do "tem" existencial: sem artigo. "Tem bolo?"
+        // pergunta se HÁ bolo; "tem o bolo?" perguntaria por um bolo específico,
+        // que é outra coisa.
+        if (existencialAberto) {
+          suppressArticle = true
+          existencialAberto = false
+        }
+
         const cabeArtigo = !suppressArticle
         const art =
           modo === 'none' || !cabeArtigo
