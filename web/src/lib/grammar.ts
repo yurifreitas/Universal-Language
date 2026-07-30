@@ -350,6 +350,26 @@ function agree(word: string, gender: 'm' | 'f', plural: boolean, lex?: Lexeme): 
  */
 const ASPECTO_ANTES_DA_NEGACAO = new Set(['ainda', 'já', 'quase', 'hoje', 'agora'])
 
+/** Verbos de ligação — os que admitem sujeito posposto na interrogativa. */
+const LIGACAO = new Set(['ser', 'estar', 'ficar'])
+
+/**
+ * Verbos que pedem DOIS complementos: alguma coisa, e a pessoa que recebe.
+ * Depois deles a pessoa é destinatário ("dá água pra mãe"), não dono.
+ */
+const DITRANSITIVOS = new Set([
+  'dar',
+  'mostrar',
+  'levar',
+  'trazer',
+  'entregar',
+  'contar',
+  'emprestar',
+  'mandar',
+  'pedir',
+  'ensinar',
+])
+
 const OBLIQUO: Record<string, string> = {
   eu: 'mim',
   tu: 'ti',
@@ -381,6 +401,16 @@ const DETERMINERS: Record<string, Record<'m' | 'f', [string, string]>> = {
   sua: { m: ['seu', 'seus'], f: ['sua', 'suas'] },
   nosso: { m: ['nosso', 'nossos'], f: ['nossa', 'nossas'] },
   nossa: { m: ['nosso', 'nossos'], f: ['nossa', 'nossas'] },
+  // Estes concordam com o substantivo como os possessivos: "toda hora", "outra
+  // vez", "as mesmas coisas". Sem a tabela sairia "todo hora".
+  todo: { m: ['todo', 'todos'], f: ['toda', 'todas'] },
+  toda: { m: ['todo', 'todos'], f: ['toda', 'todas'] },
+  outro: { m: ['outro', 'outros'], f: ['outra', 'outras'] },
+  outra: { m: ['outro', 'outros'], f: ['outra', 'outras'] },
+  mesmo: { m: ['mesmo', 'mesmos'], f: ['mesma', 'mesmas'] },
+  mesma: { m: ['mesmo', 'mesmos'], f: ['mesma', 'mesmas'] },
+  // "cada" é invariável — a tabela existe para dizer isso, não por engano.
+  cada: { m: ['cada', 'cada'], f: ['cada', 'cada'] },
 }
 
 /**
@@ -842,11 +872,34 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       }
     }
 
+    /**
+     * SUJEITO DEPOIS DO VERBO, NA PERGUNTA COM "ONDE"/"COMO"/"QUEM".
+     *
+     * `ONDE · ESTAR · MÃE` saía **"Onde estou a mãe?"**: o sujeito só era
+     * procurado ANTES do verbo, não achava nada, e caía na suposição de 1ª
+     * pessoa. Mas "cadê a mãe?" é das perguntas mais feitas numa prancha, e em
+     * português a interrogativa inverte — o sujeito vai para depois do verbo.
+     *
+     * A regra é estreita de propósito: só com verbo de ligação e só quando a
+     * oração abre com palavra interrogativa. Fora daí, inverter seria chutar —
+     * `QUERER · ÁGUA` continua sendo "quero água", porque numa prancha o
+     * enunciado sem sujeito é sobre quem fala, e essa suposição acerta quase
+     * sempre. Aqui ela erra, e erra sempre, por isso a exceção.
+     */
+    const verboDaOracao = fv >= 0 ? dentro.find((it) => it.index === fv) : undefined
+    const invertePergunta =
+      Boolean(verboDaOracao && LIGACAO.has(verboDaOracao.label)) &&
+      dentro.some((it) => it.lex.class === 'question' && it.index < fv)
+    const subjPosposto = invertePergunta
+      ? dentro.find((it) => it.lex.class === 'noun' && it.index > fv)
+      : undefined
+
     let p: Person = pron?.lex.person ?? '1s'
     // Sem pronome, assume-se 1a pessoa: numa prancha de CAA o enunciado padrao
     // e sobre o proprio falante ("quero agua"). O pronome implicito NAO e
     // escrito — so a flexao do verbo o indica.
-    if (!pron && subjNoun) p = subjNoun.lex.plural ? '3p' : '3s'
+    const nucleoSujeito = subjNoun ?? subjPosposto
+    if (!pron && nucleoSujeito) p = nucleoSujeito.lex.plural ? '3p' : '3s'
 
     // SUJEITO COMPOSTO: "MAMÃE · EU · VOCÊ" e um sujeito so, e o portugues manda
     // o verbo para a 1a do plural. Qualquer elemento de 1a na lista -> 1p;
@@ -1072,10 +1125,25 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const nounLink = (
     prev: { label: string; lex: Lexeme },
     cur: { label: string; lex: Lexeme },
-  ): 'em' | 'de' | 'list' => {
+    // "pra"/"para" entram aqui por causa do destinatário dos ditransitivos —
+    // ver o ramo do animado abaixo. O tipo diz quais ligações existem.
+  ): 'em' | 'de' | 'para' | 'pra' | 'list' => {
     if (prev.label === 'dor' && cur.lex.bodyPart) return 'em'
     if (COMPOUND.has(`${prev.label}|${cur.label}`)) return 'de'
-    if (!prev.lex.animate && cur.lex.animate) return 'de'
+    if (!prev.lex.animate && cur.lex.animate) {
+      /**
+       * Coisa seguida de pessoa é posse — "o carro DO pai" —, e essa é a regra
+       * certa quase sempre. Depois de um verbo de dar, não: ali a pessoa é quem
+       * RECEBE, e recebe com "para".
+       *
+       * `DAR · ÁGUA · MÃE` saía "Dá água **da** mãe", que troca quem dá por quem
+       * é dono. É pedido de todo dia numa prancha — dar, mostrar, levar algo a
+       * alguém — e a preposição errada aí não deixa a frase esquisita: deixa
+       * outra frase.
+       */
+      if (lastVerbLabel && DITRANSITIVOS.has(lastVerbLabel)) return to
+      return 'de'
+    }
     return 'list'
   }
 
@@ -1484,7 +1552,18 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           marks.question &&
           subjectGroup.length === 0 &&
           !pronoun &&
-          next?.lex.class === 'noun'
+          // O substantivo pode não ser o item seguinte: "tem MAIS bolo?", "tem
+          // OUTRO copo?". Olhar só uma casa à frente deixava passar justamente
+          // as perguntas mais úteis — as que pedem repetição.
+          items
+            .slice(i + 1)
+            .find(
+              (x) =>
+                x.lex.class !== 'quantifier' &&
+                x.lex.class !== 'determiner' &&
+                x.lex.class !== 'article' &&
+                x.lex.class !== 'negation',
+            )?.lex.class === 'noun'
 
         if (existencial) {
           const text = conjugate('ter', '3s', tense)
@@ -1562,8 +1641,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         // Movimento + lugar pede "para": "vou pra escola". Movimento + pessoa
         // pede "a": "vou ao médico" — nunca "vou o médico".
         if ((label === 'ir' || label === 'vir') && !explicitPrep) {
-          if (next?.lex.place) pendingPrep = to
-          else if (next?.lex.animate) pendingPrep = 'a'
+          // "ir" e "vir" estavam no mesmo ramo, e são direções OPOSTAS: quem vai,
+          // vai PARA um lugar; quem vem, vem DE um lugar. Saía "eu venho pra
+          // escola" para quem queria dizer que estava voltando dela.
+          const origem = label === 'vir'
+          if (next?.lex.place) pendingPrep = origem ? 'de' : to
+          else if (next?.lex.animate) pendingPrep = origem ? 'de' : 'a'
         }
         previousWasNoun = false
         break

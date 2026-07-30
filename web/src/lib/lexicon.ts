@@ -440,6 +440,37 @@ export const LEXICON: Record<string, Lexeme> = {
   meu: { class: 'determiner', gender: 'm' },
   minha: { class: 'determiner', gender: 'f' },
 
+  /**
+   * DETERMINANTES QUE ESTAVAM SENDO ADIVINHADOS COMO SUBSTANTIVO.
+   *
+   * `todo`, `outro`, `mesmo` e `cada` terminam como substantivo masculino
+   * comum, e a adivinhação os classificava assim. Dois substantivos seguidos
+   * viram lista — a regra certa para `PÃO · LEITE` —, e por isso saía **"Todo e
+   * dia"**, "Outro e copo", "Todo e hora".
+   *
+   * São palavras do dia a dia numa prancha: "todo dia", "outro copo", "toda
+   * hora" são pedidos e rotinas, não vocabulário raro. O conserto é lexical
+   * porque o defeito é lexical — a estrutura estava certa a respeito de dois
+   * substantivos; o que estava errado era chamá-los de substantivo.
+   */
+  todo: { class: 'determiner', gender: 'm' },
+  toda: { class: 'determiner', gender: 'f' },
+  outro: { class: 'determiner', gender: 'm' },
+  outra: { class: 'determiner', gender: 'f' },
+  mesmo: { class: 'determiner', gender: 'm' },
+  mesma: { class: 'determiner', gender: 'f' },
+  cada: { class: 'determiner' },
+
+  /**
+   * Pronomes indefinidos, pela mesma razão: `ninguém` e `alguém` terminam em
+   * consoante e caíam em substantivo masculino. Como sujeito eles levam o verbo
+   * à 3ª do singular, que é o que a classe `pronoun` com `person` garante.
+   */
+  // `tudo` e `nada` já existem abaixo como quantificadores, de propósito: eles
+  // também quantificam ("nada de bolo"), e a entrada de lá é anterior a esta.
+  ninguém: { class: 'pronoun', person: '3s' },
+  alguém: { class: 'pronoun', person: '3s' },
+
   querer: V({ modal: true }),
   não: { class: 'negation' },
   sim: { class: 'affirmation' },

@@ -622,6 +622,51 @@ const CASES: Record<string, Case[]> = {
     // Sem advérbio de aspecto a negação continua abrindo a frase.
     { cards: ['não', 'bolo'], expect: 'Não o bolo.' },
   ],
+
+  // Segunda varredura de construções — outro terreno, mesma lição: o defeito
+  // aparece onde nenhuma dimensão enumerada olhava.
+  'o "tem" existencial': [
+    // "Tenho o bolo?" era a saída. É das perguntas mais feitas numa prancha.
+    { cards: ['ter', 'bolo'], marks: { question: true }, expect: 'Tem bolo?' },
+    // O substantivo pode não ser o item seguinte — e "tem mais?" é o pedido de
+    // repetição, dos mais usados que existem.
+    { cards: ['ter', 'mais', 'bolo'], marks: { question: true }, expect: 'Tem mais bolo?' },
+    { cards: ['não', 'ter', 'bolo'], marks: { question: true }, expect: 'Não tem bolo?' },
+    // Com sujeito escolhido é posse, não existência.
+    { cards: ['você', 'ter', 'bolo'], marks: { question: true }, expect: 'Você tem o bolo?' },
+    // Sem pergunta, a suposição de 1ª pessoa continua valendo — e ela é o uso
+    // mais comum de "ter" numa prancha: estados do próprio corpo.
+    { cards: ['ter', 'fome'], expect: 'Tenho fome.' },
+    { cards: ['eu', 'ter', 'bolo'], expect: 'Eu tenho o bolo.' },
+  ],
+
+  'determinantes que eram adivinhados como substantivo': [
+    // "Todo e dia", "Outro e copo": dois substantivos seguidos viram lista, e a
+    // regra estava certa — errado era chamá-los de substantivo.
+    { cards: ['todo', 'dia'], expect: 'Todo dia.' },
+    { cards: ['todo', 'hora'], expect: 'Toda hora.' },
+    { cards: ['outro', 'copo'], expect: 'Outro copo.' },
+    // A lista de verdade continua sendo lista.
+    { cards: ['pão', 'leite', 'bolo'], expect: 'Pão, leite e bolo.' },
+  ],
+
+  'regência e papéis — quem vem de onde, quem recebe o quê': [
+    // "ir" e "vir" estavam no mesmo ramo, sendo direções opostas.
+    { cards: ['eu', 'ir', 'escola'], expect: 'Eu vou pra escola.' },
+    { cards: ['eu', 'vir', 'escola'], expect: 'Eu venho da escola.' },
+    // Depois de verbo de dar, a pessoa recebe — não é dona.
+    { cards: ['dar', 'água', 'mãe'], marks: { request: true }, expect: 'Dá água pra mãe.' },
+    // ...mas a posse comum continua com "de".
+    { cards: ['carro', 'pai'], expect: 'O carro do pai.' },
+  ],
+
+  'sujeito depois do verbo, na pergunta': [
+    // "Onde estou a mãe?" — o sujeito só era procurado antes do verbo, e a
+    // suposição de 1ª pessoa entrava no lugar. "Cadê a mãe?" é pergunta diária.
+    { cards: ['onde', 'estar', 'mãe'], marks: { question: true }, expect: 'Onde está a mãe?' },
+    // A inversão é só com verbo de ligação: fora daí, inverter seria chutar.
+    { cards: ['querer', 'água'], marks: { question: true }, expect: 'Quero água?' },
+  ],
 }
 
 let pass = 0
