@@ -618,6 +618,17 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
    * depois. Quem le so `items[i + 1]` para decidir regencia precisa pular por
    * cima dele.
    */
+  /**
+   * O TEMPO DA FRASE, decidido antes do fatiamento em oracoes.
+   *
+   * Estava declarado bem mais abaixo, e a segmentacao — que precisa dele para
+   * saber se a subordinada olha para a frente ou para tras — nao o alcancava.
+   * Escolha explicita vence o adverbio: quem tocou "Antes" quis "Antes".
+   */
+  const timeAdverb = items.find((it) => TIME_ADVERBS[it.label])
+  const tense: Tense =
+    marks.tense !== 'auto' ? marks.tense : (timeAdverb && TIME_ADVERBS[timeAdverb.label]) || 'present'
+
   const proximoIgnorandoNegacao = (i: number) => {
     for (let j = i + 1; j < items.length; j++) {
       const x = items[j]
@@ -662,6 +673,19 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   const clauseOf: number[] = []
   /** Oracoes que o conectivo pos no futuro do subjuntivo. */
   const clauseSubjunctive: boolean[] = [false]
+  /**
+   * A oracao foi aberta por conectivo SUBORDINATIVO — pergunta de ESTRUTURA.
+   *
+   * Nasceu separada de `clauseSubjunctive` porque as duas sao coisas
+   * diferentes, e conflundi-las quebrou "se voce quis": aquela diz se o VERBO
+   * vai no futuro do subjuntivo, e isso depende do tempo da frase; esta diz se
+   * a ORACAO e subordinada, e isso nao depende de tempo nenhum.
+   *
+   * Quem precisa desta e a regra do volitivo: um "querer" dentro de uma oracao
+   * ja subordinada nao encaixa o que vem depois dela — "se voce quiser, eu vou"
+   * e condicional, nao "voce quer que eu va".
+   */
+  const clauseSubordinada: boolean[] = [false]
   /** Itens que abriram uma oracao subordinada. */
   const abriuOracao = new Set<number>()
   {
@@ -715,11 +739,26 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         if (porConectivo) {
           c++
           abriuOracao.add(it.index)
-          clauseSubjunctive[c] = SUBJUNTIVO_FUTURO.has(it.label)
+          /**
+           * O futuro do subjuntivo só existe se a frase olhar PARA A FRENTE.
+           *
+           * `QUANDO · PAI · CHEGAR · EU · BRINCAR` no passado saía
+           * "Quando o pai **chegar**, eu brinquei" — que mistura duas épocas
+           * numa frase só e não é português. "Chegar" ali projeta um futuro, e o
+           * "brinquei" diz que já acabou.
+           *
+           * Contar o que já aconteceu é metade do que se diz numa prancha
+           * ("quando o pai chegou, eu brinquei"), e nesse caso a subordinada vai
+           * no indicativo, como qualquer outra oração.
+           */
+          clauseSubordinada[c] = SUBJUNTIVO_FUTURO.has(it.label)
+          clauseSubjunctive[c] =
+            clauseSubordinada[c] === true && tense !== 'past' && tense !== 'imperfect'
         } else {
           // O proprio item ja pertence a oracao nova.
           c++
           clauseSubjunctive[c] = false
+          clauseSubordinada[c] = false
           clauseOf[it.index] = c
           /**
            * Verbo volitivo antes de sujeito novo pede **que** + subjuntivo:
@@ -736,9 +775,9 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // PRINCIPAL ("se voce quiser, eu vou"), nao uma encaixada de
           // "querer". Um verbo volitivo dentro de uma oracao ja subordinada nao
           // encaixa o que vem depois dela.
-          if (verboAntes && verboAntes.lex.volitivo === true && !clauseSubjunctive[c - 1]) {
+          if (verboAntes && verboAntes.lex.volitivo === true && !clauseSubordinada[c - 1]) {
             clauseQue.add(c)
-          } else if (verboAntes && verboAntes.lex.opiniao === true && !clauseSubjunctive[c - 1]) {
+          } else if (verboAntes && verboAntes.lex.opiniao === true && !clauseSubordinada[c - 1]) {
             // Mesmo "que", tempo diferente: "acho que ela vem".
             clauseQue.add(c)
             clauseIndicativo.add(c)
@@ -973,10 +1012,6 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   let firstVerbIndex = oracao.firstVerbIndex
   void firstVerbIndex
   let useImperative = oracao.useImperative
-
-  const timeAdverb = items.find((it) => TIME_ADVERBS[it.label])
-  const tense: Tense =
-    marks.tense !== 'auto' ? marks.tense : (timeAdverb && TIME_ADVERBS[timeAdverb.label]) || 'present'
 
   /**
    * TODOS os cards de negacao, e nao so o primeiro.

@@ -708,6 +708,50 @@ const CASES: Record<string, Case[]> = {
     // telegráfica, que é a troca de sempre.
     { cards: ['primeiro', 'banho'], expect: 'Primeiro banho.' },
     { cards: ['último', 'dia'], expect: 'Último dia.' },
+  ],
+
+  // Revisão completa dos tempos: 4 tempos × pessoas × irregulares × marcadores.
+  // O motor passou em tudo, menos nestes dois — e num deles o defeito era a
+  // ausência de um botão, não uma regra errada.
+  'tempos — a subordinada acompanha a frase': [
+    // "Quando o pai VIER, eu brinquei" mistura duas épocas numa frase só. O
+    // futuro do subjuntivo só existe se a frase olhar para a frente; contar o
+    // que já aconteceu é metade do que se diz numa prancha.
+    { cards: ['quando', 'pai', 'vir', 'eu', 'brincar'], expect: 'Quando o pai vier, eu brinco.' },
+    {
+      cards: ['quando', 'pai', 'vir', 'eu', 'brincar'],
+      marks: { tense: 'past' },
+      expect: 'Quando o pai veio, eu brinquei.',
+    },
+    {
+      cards: ['quando', 'pai', 'vir', 'eu', 'brincar'],
+      marks: { tense: 'imperfect' },
+      expect: 'Quando o pai vinha, eu brincava.',
+    },
+    // ESTRUTURA e FORMA são coisas diferentes: "a oração é subordinada" não
+    // depende de tempo, "o verbo vai no futuro do subjuntivo" depende. Confundir
+    // as duas fez "Se você quis QUE EU VÁ" — o volitivo encaixando dentro de uma
+    // condicional, onde ele não encaixa.
+    { cards: ['se', 'você', 'querer', 'eu', 'ir'], expect: 'Se você quiser, eu vou.' },
+    {
+      cards: ['se', 'você', 'querer', 'eu', 'ir'],
+      marks: { tense: 'past' },
+      expect: 'Se você quis, eu fui.',
+    },
+  ],
+
+  'tempos — o imperfeito, que a tela não deixava pedir': [
+    // Estava inteiro no motor e inalcançável: nenhum botão o pedia, e o modo
+    // "Sozinho" nunca o escolhe porque nenhum advérbio aponta para ele.
+    { cards: ['eu', 'comer'], marks: { tense: 'imperfect' }, expect: 'Eu comia.' },
+    // É como se pede com jeito em português — a diferença entre soar ríspido e
+    // não soar, num app cujo usuário pede o dia inteiro.
+    { cards: ['eu', 'querer', 'água'], marks: { tense: 'imperfect' }, expect: 'Eu queria água.' },
+    { cards: ['eu', 'ter', 'fome'], marks: { tense: 'imperfect' }, expect: 'Eu tinha fome.' },
+    { cards: ['eu', 'triste'], marks: { tense: 'imperfect' }, expect: 'Eu estava triste.' },
+    // `chegar` faltava no léxico — e é o exemplo do próprio comentário do
+    // código sobre futuro do subjuntivo.
+    { cards: ['pai', 'chegar'], marks: { tense: 'past' }, expect: 'O pai chegou.' },
     { cards: ['primeiro', 'banho', 'depois', 'jantar'], expect: 'Primeiro banho depois jantar.' },
   ],
 }

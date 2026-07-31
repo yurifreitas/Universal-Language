@@ -62,6 +62,27 @@ const TENSES = [
   { value: 'past', icon: '⏪', label: 'Antes', ajuda: 'Já aconteceu — "eu comi".' },
   { value: 'present', icon: '⏺', label: 'Agora', ajuda: 'Está acontecendo — "eu como".' },
   { value: 'future', icon: '⏩', label: 'Depois', ajuda: 'Vai acontecer — "eu vou comer".' },
+  /**
+   * O IMPERFEITO, que o motor sabia fazer e a tela não deixava pedir.
+   *
+   * "Eu comia", "eu tinha fome", "a gente ia na escola" — o tempo de contar
+   * rotina, que é metade do que se conta. E, em português, é também como se
+   * pede com jeito: "eu QUERIA água" em vez de "eu QUERO água". Quem usa
+   * prancha depende de pedir o dia inteiro, e a diferença entre as duas formas
+   * é a diferença entre soar ríspido e não soar.
+   *
+   * Estava inteiro em `grammar.ts` — quatro paradigmas, os irregulares, a
+   * cópula — e inalcançável: nenhum botão o pedia, e o modo "Sozinho" nunca o
+   * escolhe, porque nenhum advérbio de tempo aponta para ele.
+   *
+   * Entra no FIM da fila. Nenhum botão que a mão já aprendeu se move.
+   */
+  {
+    value: 'imperfect',
+    icon: '⟲',
+    label: 'Antes sempre',
+    ajuda: 'Acontecia toda vez — "eu comia". E serve para pedir com jeito: "eu queria água".',
+  },
 ] as const
 
 /**

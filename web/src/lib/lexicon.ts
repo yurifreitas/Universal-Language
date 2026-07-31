@@ -552,6 +552,20 @@ export const LEXICON: Record<string, Lexeme> = {
    */
   contar: V({ ditransitivo: true, opiniao: true }),
   ensinar: V({ ditransitivo: true }),
+
+  /**
+   * Verbos de movimento e de rotina que faltavam.
+   *
+   * `chegar` e o caso que expoe melhor o problema: e o exemplo que o proprio
+   * comentario do futuro do subjuntivo em `grammar.ts` usa — "quando o papai
+   * chegar" — e ele nao estava no lexico. A documentacao do codigo demonstrava
+   * uma regra com uma palavra que o motor nao conhecia, entao a frase saia
+   * "quando o papai chegar, eu chegar": infinitivo em toda pessoa e todo tempo,
+   * pela politica conservadora de nao conjugar chute.
+   */
+  chegar: V(),
+  voltar: V(),
+  // `sair` e `entrar` ja existem mais abaixo, com a regencia certa.
   entregar: V({ ditransitivo: true }),
   mandar: V({ volitivo: true, ditransitivo: true }),
   mexer: V({ prep: 'em', atividade: true }),

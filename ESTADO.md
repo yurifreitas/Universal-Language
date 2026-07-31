@@ -18,7 +18,7 @@ build e auditoria que **não** vão para o navegador.
 
 | | |
 |---|---|
-| Testes | **315** em 6 suítes (`npm test`) |
+| Testes | **325** em 6 suítes (`npm test`) |
 | Auditoria do motor | **40 sementes · 800.160 casos · 0 suspeitas** |
 | Léxico revisado à mão | 250 palavras |
 | Léxico gerado do acervo | **4.905** publicadas · 1.249 em revisão |
@@ -276,6 +276,45 @@ entradas" (são 250 + 4.905), "52 casos de teste" (são 227) e "o imperfeito só
 existe no progressivo" — verificado, `EU · COMER` no imperfeito dá "Eu comia".
 Documento desatualizado é pior que documento nenhum: os dois primeiros números
 subestimavam o app, o terceiro mandaria alguém reimplementar o que já existe.
+
+### Revisão completa dos tempos — 31/07
+
+Varredura de tudo: 4 tempos × todas as pessoas × irregulares × marcadores ×
+cópula × vários verbos × subordinada. **O motor passou em quase tudo** —
+conjugação, concordância, perífrase, imperfeito da cópula, tempo por advérbio.
+
+Dois defeitos, e o primeiro não era uma regra errada:
+
+**O imperfeito existia no motor e a tela não deixava pedir.** Quatro paradigmas,
+os irregulares, a cópula — tudo pronto, e **inalcançável**: `TENSES` tinha
+`auto`/`past`/`present`/`future`, e o modo "Sozinho" nunca o escolhe porque
+nenhum advérbio de tempo aponta para ele.
+
+Pesa porque em português o imperfeito é como se **pede com jeito**: "eu *queria*
+água" em vez de "eu *quero* água". Quem usa prancha pede o dia inteiro, e essa é
+a diferença entre soar ríspido e não soar. Entrou como 5º botão, **no fim da
+fila** — nenhum botão já aprendido se moveu.
+
+**A subordinada não acompanhava o tempo da frase.** `QUANDO · PAI · VIR · EU ·
+BRINCAR` no passado saía "Quando o pai **vier**, eu brinquei" — duas épocas numa
+frase só. O futuro do subjuntivo só existe se a frase olhar para a frente.
+
+O conserto exigiu separar duas coisas que eu tinha confundido num campo só:
+**estrutura** (a oração é subordinada — não depende de tempo) e **forma** (o
+verbo vai no futuro do subjuntivo — depende). Confundi-las quebrou
+"Se você quis **que eu vá**", com o volitivo encaixando dentro de uma
+condicional, onde ele não encaixa. Agora são `clauseSubordinada` e
+`clauseSubjunctive`.
+
+**Um susto que virou achado.** `Quando o pai chegar, eu chegar` parecia o mesmo
+defeito e não era: **`chegar` não estava no léxico**, então ficava no infinitivo
+pela política conservadora de não conjugar chute. E `chegar` é o exemplo que o
+**próprio comentário do `grammar.ts`** usa para explicar o futuro do subjuntivo —
+a documentação do código demonstrava uma regra com uma palavra que o motor não
+conhecia. Adicionados `chegar` e `voltar`.
+
+Depois: **237 casos** no motor (325 no total) · **800.160 frases · 0 violações ·
+0 suspeitas** · e "Eu quero" → "Eu queria" verificado clicando no app.
 
 ### O que ainda erra — achado, não consertado
 
