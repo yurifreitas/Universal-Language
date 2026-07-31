@@ -564,7 +564,19 @@ img,
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  justify-content: flex-end;
+  /**
+   * CENTRO, e nao `flex-end`.
+   *
+   * Com `flex-end`, a linha que quebra vai INTEIRA para a direita: no celular
+   * sobravam dois botoes encostados na borda e um vao do tamanho da tela ao
+   * lado deles. A barra parecia quebrada — e o olho le esse vao como "acabou",
+   * entao os dois botoes empurrados para la deixam de ser procurados.
+   *
+   * Centralizado, uma linha incompleta fica no meio e continua parecendo parte
+   * da mesma barra. Nao ha como condicionar alinhamento a ter havido quebra em
+   * CSS; entao vale o que funciona nos dois casos.
+   */
+  justify-content: center;
   min-width: 0;
 }
 .topbar__inner {
@@ -1832,6 +1844,49 @@ kbd {
      Metade da tela gasta antes do primeiro card, e a prancha, que e o app,
      espremida no resto. Cada regra abaixo devolve altura.
      --------------------------------------------------------------------- */
+
+  /**
+   * O SEPARADOR SAI.
+   *
+   * Ele existe para partir a fila em dois grupos com donos diferentes — fala e
+   * cuidador. Numa fila que ja quebrou em duas linhas ele nao separa nada: cai
+   * no meio de uma linha ou no fim de outra, e vira um risco solto. Some, e
+   * devolve os 9px dele.
+   *
+   * O que NAO se faz aqui e encolher botao para caber mais por linha. Medido em
+   * 333px: com 61px cabem 4 por linha, e com 52px cabem os mesmos 4 — a conta
+   * nao muda de linha, so o alvo fica menor. Duas linhas e o minimo fisico para
+   * sete controles nesta largura, e alvo grande vale mais que barra curta num
+   * app cujo usuario pode ter comprometimento motor.
+   */
+  .topbar__split {
+    display: none;
+  }
+
+  /**
+   * O SELO DA VARREDURA VIRA SO O SIMBOLO.
+   *
+   * "⟳ Varredura" ocupava a largura de quatro botoes numa fila que ja nao
+   * cabia, e era ele que empurrava os dois ultimos para uma segunda linha. Mas
+   * ele nao e botao — nao se toca nele, ele so avisa que a varredura esta
+   * ligada. Um aviso nao pode custar mais espaco que os controles que ele
+   * acompanha.
+   *
+   * O texto continua no leitor de tela, entao quem depende dele — que e
+   * justamente quem usa varredura — nao perde nada.
+   */
+  .pill__texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .pill {
+    padding: 0 10px;
+    gap: 0;
+  }
 
   /* A marca vira so leitor de tela: o `h1` continua existindo para navegacao
      por cabecalho, mas nao gasta linha. E o que forcava a barra a quebrar. */

@@ -80,6 +80,56 @@ const CLASSES = new Set([
  * não recusar o arquivo inteiro. Mas classe fora do conjunto conhecido é outra
  * coisa: significa que o significado do dado mudou, e aí a entrada sai.
  */
+/**
+ * O CONTRATO DO LÉXICO GERADO — quais marcas atravessam do arquivo para o motor.
+ *
+ * Esta lista é a padronização: um campo que não estiver aqui não chega ao motor,
+ * por mais que o gerador o escreva. Ela é declarada uma vez e consumida pelo
+ * validador abaixo, em vez de repetida numa linha por campo.
+ *
+ * O que está de fora, e por quê:
+ *
+ *   `class` e `gender` — validados à parte, porque têm domínio fechado e não são
+ *   booleanos nem texto livre.
+ *
+ *   `person`, `postposed`, `fixed` — descrevem palavras de classe FECHADA
+ *   (pronomes, possessivos, locuções travadas). Nenhuma delas vem do acervo:
+ *   são as 250 revisadas à mão, e essas já estão no `LEXICON`. Deixar o gerador
+ *   declará-las abriria caminho para uma inferência automática marcar
+ *   `person: '1s'` num substantivo qualquer.
+ */
+const CAMPOS_BOOLEANOS = [
+  // Numeral cardinal já é plural por natureza — "trinta bolos". Sem este campo,
+  // os 31 numerais entravam mudos e o substantivo não pluralizava.
+  'plural',
+  'femininoBase',
+  'mass',
+  'animate',
+  'place',
+  'bodyPart',
+  'bareAfterPrep',
+  'device',
+  'modal',
+  'copulaSer',
+  'prenominal',
+  'predicativo',
+  // Comportamento de classe aberta — a razão de existir desta lista. Ver o bloco
+  // correspondente em `lexicon.ts`.
+  'volitivo',
+  'opiniao',
+  'ligacao',
+  'ditransitivo',
+  'atividade',
+  'soTerceira',
+] as const satisfies readonly (keyof Lexeme)[]
+
+const CAMPOS_TEXTO = [
+  'pluralForm',
+  'prep',
+  'prepInf',
+  'nounPrepInf',
+] as const satisfies readonly (keyof Lexeme)[]
+
 function limpar(bruto: Record<string, unknown>): Record<string, Lexeme> {
   const saida: Record<string, Lexeme> = {}
   for (const [palavra, valor] of Object.entries(bruto)) {
@@ -89,17 +139,20 @@ function limpar(bruto: Record<string, unknown>): Record<string, Lexeme> {
 
     const entrada: Lexeme = { class: v['class'] as Lexeme['class'] }
     if (v['gender'] === 'm' || v['gender'] === 'f') entrada.gender = v['gender']
-    if (typeof v['pluralForm'] === 'string' && v['pluralForm'].trim()) {
-      entrada.pluralForm = v['pluralForm'].trim()
+
+    // Transporte guiado pelas listas declaradas acima, e não por uma linha por
+    // campo. Era assim antes, e o efeito era silencioso: um campo novo no
+    // `Lexeme` simplesmente não atravessava, e a regra que dependia dele ficava
+    // muda para as 4.905 palavras geradas — sem erro, sem aviso, sem teste
+    // falhando. Declarar o conjunto num lugar só faz o transporte acompanhar o
+    // tipo em vez de ficar para trás dele.
+    for (const campo of CAMPOS_BOOLEANOS) {
+      if (v[campo] === true) entrada[campo] = true
     }
-    // Numeral cardinal já é plural por natureza — "trinta bolos". Sem copiar
-    // este campo, os 31 numerais entrariam mudos e o substantivo não
-    // pluralizaria.
-    if (v['plural'] === true) entrada.plural = true
-    if (v['femininoBase'] === true) entrada.femininoBase = true
-    if (v['mass'] === true) entrada.mass = true
-    if (v['animate'] === true) entrada.animate = true
-    if (v['place'] === true) entrada.place = true
+    for (const campo of CAMPOS_TEXTO) {
+      const valorTexto = v[campo]
+      if (typeof valorTexto === 'string' && valorTexto.trim()) entrada[campo] = valorTexto.trim()
+    }
     saida[palavra.trim().toLowerCase()] = entrada
   }
   return saida

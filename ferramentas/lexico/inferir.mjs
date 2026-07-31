@@ -401,6 +401,136 @@ const ADJETIVOS_INVARIAVEIS_EM_A = new Set([
  * contexto precisa saber a classe de TODO o acervo antes de qualquer inferência
  * rodar — e chamar `inferir()` para descobrir isso seria circular.
  */
+/* ==========================================================================
+   COMPORTAMENTO DO VERBO — as seis marcas de classe aberta
+
+   Ver LEXICO-PADRAO.md. Estes campos existem para que a regra de gramatica
+   alcance as 4.905 palavras do acervo, e nao so as 250 revisadas a mao.
+
+   POR QUE LISTA, E NAO REGRA.
+
+   Todo o resto deste arquivo infere por FORMA — terminacao, artigo na
+   definicao, presenca do par masculino no acervo. Gênero e plural sao
+   propriedades morfologicas: a palavra carrega o sinal.
+
+   Estas seis nao. "Dar" rege dois complementos e "danar" nao, e as duas
+   terminam igual. Nenhuma terminacao, nenhum prefixo e nenhuma contagem de
+   letras separa um verbo de opiniao de um verbo de acao — a diferenca e de
+   SIGNIFICADO, e significado nao esta na forma.
+
+   Entao aqui se declara o que se sabe, e o que nao esta declarado nao recebe
+   marca. E a mesma regra do empate de genero neste arquivo: omitir e melhor que
+   chutar, porque o motor tem caminho telegrafico para a omissao e nao tem
+   conserto para a marca errada. Um verbo marcado como ditransitivo por engano
+   troca "o carro do pai" por "o carro pro pai" em toda frase que o use.
+
+   As listas cobrem o vocabulario de uma prancha de CAA, nao o portugues
+   inteiro. Verbo do acervo que ficar de fora sai sem marca — que e exatamente o
+   estado de antes desta mudanca, e nunca pior que ele.
+   ========================================================================== */
+
+/**
+ * Verbos de LIGACAO. Classe praticamente fechada, e a mais segura das seis:
+ * dez verbos, e a lista de qualquer gramatica do portugues.
+ */
+const V_LIGACAO = new Set([
+  'ser', 'estar', 'ficar', 'parecer', 'permanecer',
+  'continuar', 'virar', 'tornar', 'seguir',
+  // `andar` como copula existe ("ando cansado"), mas numa prancha ele e
+  // movimento quase sempre. Marca de baixo ganho e risco real: fica fora.
+])
+
+/**
+ * Verbos VOLITIVOS: regem oracao encaixada com "que" + SUBJUNTIVO, porque
+ * falam do que ainda nao e fato — o que se quer, se pede, se teme.
+ */
+const V_VOLITIVO = new Set([
+  'querer', 'desejar', 'precisar', 'pedir', 'deixar', 'mandar', 'esperar',
+  'preferir', 'exigir', 'sugerir', 'permitir', 'proibir', 'implorar',
+  'recomendar', 'aconselhar', 'ordenar', 'insistir', 'torcer', 'evitar',
+  'impedir', 'temer', 'duvidar', 'merecer',
+  // FORA, e a trava de conflito em `medir.mjs` foi quem mostrou: `tentar` e
+  // `conseguir` regem INFINITIVO, nao oracao com "que" — "tento ir", nunca
+  // "tento que ele va". Estavam aqui por parentesco semantico com "querer", e
+  // parentesco semantico nao e regencia.
+])
+
+/**
+ * Verbos de OPINIAO e de saber: regem "que" + INDICATIVO, porque tomam o
+ * conteudo por real. E a fala que permite supor, discordar e explicar.
+ */
+const V_OPINIAO = new Set([
+  'achar', 'saber', 'lembrar', 'esquecer', 'ver', 'perceber', 'dizer',
+  'pensar', 'crer', 'acreditar', 'imaginar', 'supor', 'notar', 'afirmar',
+  'garantir', 'jurar', 'prometer', 'avisar', 'entender', 'descobrir',
+  'sentir', 'ouvir', 'escutar', 'reparar', 'concluir', 'suspeitar',
+  'desconfiar', 'admitir', 'confessar', 'responder', 'contar', 'observar',
+  'adivinhar', 'decidir', 'combinar', 'reclamar', 'avaliar',
+])
+
+/**
+ * DITRANSITIVOS: pedem coisa + pessoa, e a pessoa RECEBE. Sem isto,
+ * `DAR · AGUA · MAE` sai "da agua DA mae" — troca quem recebe por quem e dono.
+ */
+const V_DITRANSITIVO = new Set([
+  'dar', 'mostrar', 'levar', 'trazer', 'entregar', 'contar', 'emprestar',
+  'mandar', 'pedir', 'ensinar', 'oferecer', 'devolver', 'vender', 'enviar',
+  'passar', 'servir', 'explicar', 'apresentar', 'escrever', 'prometer',
+  'doar', 'presentear', 'pagar', 'contar', 'dedicar', 'avisar', 'responder',
+])
+
+/** Verbos de ATIVIDADE: aparelho depois deles pede locativo — "jogar NO celular". */
+const V_ATIVIDADE = new Set([
+  'jogar', 'brincar', 'falar', 'mexer', 'estudar', 'trabalhar', 'conversar',
+  'digitar', 'navegar', 'pesquisar', 'desenhar', 'assistir', 'teclar',
+])
+
+/**
+ * SO TERCEIRA: o sujeito e a coisa, nunca quem fala. "Doi a barriga", "chove".
+ * Marcar errado aqui e grave — apagaria a 1a pessoa de um verbo comum —, entao
+ * a lista fica nos fenomenos naturais e nas sensacoes do corpo, que sao os
+ * casos em que a restricao e real.
+ */
+const V_SO_TERCEIRA = new Set([
+  'doer', 'chover', 'nevar', 'ventar', 'trovejar', 'relampejar',
+  'amanhecer', 'anoitecer', 'escurecer', 'garoar', 'chuviscar',
+])
+
+/** Os seis campos de comportamento, para quem precisa da lista sem os conjuntos. */
+export const CAMPOS_COMPORTAMENTO_GABARITO = [
+  'ligacao', 'volitivo', 'opiniao', 'ditransitivo', 'atividade', 'soTerceira',
+]
+
+const MARCAS_DO_VERBO = [
+  ['ligacao', V_LIGACAO],
+  ['volitivo', V_VOLITIVO],
+  ['opiniao', V_OPINIAO],
+  ['ditransitivo', V_DITRANSITIVO],
+  ['atividade', V_ATIVIDADE],
+  ['soTerceira', V_SO_TERCEIRA],
+]
+
+/**
+ * As marcas de comportamento de um verbo, ou `{}` se nenhuma se aplica.
+ *
+ * O rotulo do acervo costuma vir como locucao — "dar de comer", "brincar com
+ * bonecas". O comportamento e do NUCLEO, entao a busca e pela primeira palavra;
+ * mas so quando ela e mesmo o verbo, e nao quando a locucao inteira e outra
+ * coisa. Por isso o corte em duas palavras: "dar banho" herda de "dar", e uma
+ * locucao longa nao herda de nada.
+ */
+export function comportamentoDoVerbo(termo) {
+  const limpo = String(termo).trim().toLowerCase()
+  const partes = limpo.split(/\s+/)
+  const nucleo = partes.length <= 2 ? partes[0] : limpo
+
+  const marcas = {}
+  for (const [campo, conjunto] of MARCAS_DO_VERBO) {
+    if (conjunto.has(nucleo)) marcas[campo] = true
+  }
+  return marcas
+}
+
 export function classeDoTermo(linhas) {
   const porClasse = new Map()
   for (const l of linhas) {
@@ -561,6 +691,12 @@ export function inferir(termo, linhas, contexto) {
     return { entrada, confianca: 'alta', sinais: {}, pontos: 0 }
   }
 
+  if (classe === 'verb') {
+    // Comportamento por declaracao, nunca por forma. Ver `comportamentoDoVerbo`.
+    Object.assign(entrada, comportamentoDoVerbo(termo))
+    return { entrada, confianca: 'alta', sinais: {}, pontos: 0 }
+  }
+
   if (classe !== 'noun') {
     return { entrada, confianca: 'alta', sinais: {}, pontos: 0 }
   }
@@ -695,11 +831,19 @@ export function gabarito(fonteTs) {
     if (!classe) continue
     const g = valor.match(/^(?:N|ADJ)\('([mf])'/) || valor.match(/gender:\s*'([mf])'/)
     const pf = valor.match(/pluralForm:\s*'([^']+)'/)
-    saida.set(chave, {
+    const entrada = {
       class: classe,
       gender: g ? g[1] : undefined,
       pluralForm: pf ? pf[1] : undefined,
-    })
+    }
+    // As seis marcas de comportamento de classe aberta. Sem extrai-las aqui, a
+    // trava de conflito em `medir.mjs` compararia sempre contra `undefined` e
+    // acusaria conflito em toda marca correta — um teste que so sabe reprovar
+    // nao mede nada.
+    for (const campo of CAMPOS_COMPORTAMENTO_GABARITO) {
+      if (new RegExp(`\\b${campo}:\\s*true\\b`).test(valor)) entrada[campo] = true
+    }
+    saida.set(chave, entrada)
   }
   return saida
 }

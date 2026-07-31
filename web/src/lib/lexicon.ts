@@ -137,6 +137,60 @@ export interface Lexeme {
    * "hipócrita"), e converter esses daria "otimisto".
    */
   femininoBase?: boolean
+  /**
+   * Adjetivo que pede "ser", e nao "estar".
+   *
+   * A copula padrao e `estar`, e ela acerta para sentimento e estado ("estou
+   * triste", "a agua esta quente"). Erra para juizo e classificacao: "isso E
+   * dificil" fala do que a coisa e; "isso ESTA dificil" fala so de agora.
+   */
+  copulaSer?: boolean
+  /**
+   * Adjetivo que vem ANTES do substantivo e nao predica — os ordinais.
+   * "Primeiro o banho", nunca "o banho esta primeiro".
+   */
+  prenominal?: boolean
+  /**
+   * Substantivo abstrato que, como PREDICATIVO de "ser", dispensa artigo:
+   * "isso e verdade", "isso e mentira". Com artigo — "isso e A verdade" — a
+   * frase passa a apontar uma verdade especifica, que e outra coisa.
+   *
+   * So vale depois de "ser". Como sujeito ou objeto o artigo volta a valer
+   * normalmente ("a verdade apareceu"), e por isso a marca nao e `mass`.
+   */
+  predicativo?: boolean
+
+  /* ------------------------------------------- comportamento de classe aberta
+
+     Estes campos existem para que o COMPORTAMENTO deixe de morar em conjuntos
+     fixos dentro de `grammar.ts`.
+
+     O motivo e de escala, e ele e concreto: uma lista escrita no codigo so
+     alcanca as palavras que alguem digitou la. As 4.905 entradas geradas do
+     acervo nunca poderiam entrar num `Set` do grammar.ts — nao ha por onde. O
+     resultado era que sete regras de gramatica so valiam para as 250 palavras
+     revisadas a mao, e ficavam mudas para os outros 95% do vocabulario.
+
+     Declarado aqui, o gerador pode preencher, o revisor pode revisar, o
+     validador pode transportar e a auditoria pode enumerar. E o que permite a
+     regra crescer junto com o lexico em vez de crescer contra ele.
+
+     O que NAO virou campo, de proposito: artigo, contracao, pronome obliquo,
+     conjuncao subordinativa. Sao classes FECHADAS — a lingua nao ganha
+     preposicao nova —, entao tabela no codigo e o lugar certo delas. */
+
+  /** Rege oracao encaixada com "que" + SUBJUNTIVO: "quero que voce venha". */
+  volitivo?: boolean
+  /** Rege oracao encaixada com "que" + INDICATIVO: "acho que ela vem". */
+  opiniao?: boolean
+  /** Verbo de ligacao: admite sujeito posposto na interrogativa ("onde esta a mae?"). */
+  ligacao?: boolean
+  /** Pede dois complementos; a pessoa depois do objeto RECEBE ("da agua pra mae"). */
+  ditransitivo?: boolean
+  /** Verbo de atividade: aparelho depois dele pede locativo ("jogar NO celular"). */
+  atividade?: boolean
+  /** So existe na 3a pessoa — "doer". Sujeito e a coisa que doi, nunca quem fala. */
+  soTerceira?: boolean
 }
 
 /* ------------------------------------------------------------------ verbos */
@@ -471,7 +525,68 @@ export const LEXICON: Record<string, Lexeme> = {
   ninguém: { class: 'pronoun', person: '3s' },
   alguém: { class: 'pronoun', person: '3s' },
 
-  querer: V({ modal: true }),
+  /* ------------------------------------------------- as palavras de pensar
+
+     Sustentam a prancha "Pensar". Sem elas a prancha teria os cards e o motor
+     os trataria a chute — e o chute erra justamente aqui, porque quase todas
+     são irregulares, abstratas ou de classe que a terminação não denuncia.
+
+     São as palavras que fazem a diferença entre pedir e argumentar. Uma prancha
+     que só sabe pedir deixa quem a usa sem como discordar. */
+
+  // Verbos de opinião: encaixam oração com "que" no INDICATIVO — "acho que a
+  // mãe vem". Ver `OPINIAO` em grammar.ts.
+  // `saber`, `explicar`, `então`, `talvez` e `igual` já estão no léxico mais
+  // abaixo — e as entradas de lá valem, inclusive `saber` como modal ("sei
+  // nadar"). `OPINIAO` em grammar.ts é indexado pelo rótulo, então o encaixe
+  // com "que" funciona sem precisar duplicar a entrada aqui.
+  /**
+   * Verbos que existiam SO dentro dos conjuntos fixos do `grammar.ts`.
+   *
+   * A migracao para campos declarados expos isto: sete verbos governavam regra
+   * de gramatica sem ter entrada no lexico. Funcionavam pela lista e por mais
+   * nada — sem classe, sem regencia, conjugados pelo palpite da terminacao.
+   *
+   * E o sintoma exato do problema que a migracao resolve: conhecimento
+   * linguistico em dois lugares que nao se conversam.
+   */
+  contar: V({ ditransitivo: true, opiniao: true }),
+  ensinar: V({ ditransitivo: true }),
+  entregar: V({ ditransitivo: true }),
+  mandar: V({ volitivo: true, ditransitivo: true }),
+  mexer: V({ prep: 'em', atividade: true }),
+  perceber: V({ opiniao: true }),
+  preferir: V({ volitivo: true, modal: true }),
+
+  achar: V({ opiniao: true }),
+  lembrar: V({ prep: 'de', opiniao: true }),
+  esquecer: V({ prep: 'de', opiniao: true }),
+  entender: V({ opiniao: true }),
+  duvidar: V({ prep: 'de', volitivo: true }),
+  escolher: V(),
+
+  // "diferente" compara e concorda em número ("as duas são diferentes"). É de
+  // dois gêneros, por isso sem `femininoBase`.
+  diferente: { class: 'adjective', copulaSer: true },
+  // `gender: 'm'` e o que autoriza a flexao para o feminino ("a mesa e errada").
+  // Sem ele saia "a mesa e errado" — 1.179 casos na auditoria.
+  certo: { class: 'adjective', gender: 'm', copulaSer: true },
+  errado: { class: 'adjective', gender: 'm', copulaSer: true },
+  // Substantivos do juízo. "verdade" e "mentira" são contáveis — "é uma
+  // mentira" —, ao contrário de "dor".
+  verdade: N('f', { predicativo: true }),
+  mentira: N('f', { predicativo: true }),
+  problema: N('m'),
+  // Ordinais: vêm antes do substantivo e organizam ordem — "primeiro o banho".
+  primeiro: { class: 'adjective', gender: 'm', prenominal: true },
+  último: { class: 'adjective', gender: 'm', prenominal: true },
+  // Comparação e juízo pedem "ser": dizem o que a coisa é, não como ela está.
+  melhor: { class: 'adjective', copulaSer: true },
+  pior: { class: 'adjective', copulaSer: true },
+  difícil: { class: 'adjective', copulaSer: true },
+  fácil: { class: 'adjective', copulaSer: true },
+
+  querer: V({ modal: true, volitivo: true }),
   não: { class: 'negation' },
   sim: { class: 'affirmation' },
   mais: { class: 'quantifier' },
@@ -481,13 +596,13 @@ export const LEXICON: Record<string, Lexeme> = {
   ir: V({ modal: true }),
   vir: V({ modal: true }),
   parar: V(),
-  dar: V(),
+  dar: V({ ditransitivo: true }),
   pegar: V(),
   olhar: V({ prep: 'para' }),
   fazer: V(),
   comer: V(),
   beber: V(),
-  brincar: V({ prep: 'com' }),
+  brincar: V({ prep: 'com', atividade: true }),
   dormir: V(),
   banheiro: N('m', { place: true }),
   // Incontavel: diz-se "estou com dor", nao "estou com a dor".
@@ -502,7 +617,7 @@ export const LEXICON: Record<string, Lexeme> = {
   quando: { class: 'question' },
   abrir: V(),
   fechar: V(),
-  esperar: V(),
+  esperar: V({ volitivo: true }),
   terminar: V({ prepInf: 'de', modal: true }),
 
   /* -------------------------------------------------------- sentimentos */
@@ -598,9 +713,9 @@ export const LEXICON: Record<string, Lexeme> = {
   sentar: V({ prep: 'em' }),
   levantar: V(),
   andar: V(),
-  escrever: V(),
+  escrever: V({ ditransitivo: true }),
   ler: V(),
-  desenhar: V(),
+  desenhar: V({ atividade: true }),
   pintar: V(),
   colorir: V(),
   recortar: V(),
@@ -611,15 +726,15 @@ export const LEXICON: Record<string, Lexeme> = {
   passear: V({ prep: 'em' }),
   nadar: V(),
   descansar: V(),
-  conversar: V({ prep: 'com' }),
+  conversar: V({ prep: 'com', atividade: true }),
   cantar: V(),
   dançar: V(),
   lavar: V(),
   vestir: V(),
   'escovar os dentes': V(),
   'tomar banho': V(),
-  ouvir: V(),
-  falar: V({ prep: 'com' }),
+  ouvir: V({ opiniao: true }),
+  falar: V({ prep: 'com', atividade: true }),
 
   /* --------------------------------------------------------- qualidades */
   grande: ADJ(),
@@ -654,26 +769,26 @@ export const LEXICON: Record<string, Lexeme> = {
      Palavras que nao estao em nenhuma prancha mas chegam com frequencia pela
      busca na ARASAAC. Sem registro aqui elas caem no `guess()`, que por
      seguranca nao conjuga nem artigula — anotar as mais comuns e barato. */
-  ver: V(),
-  saber: V({ modal: true }),
+  ver: V({ opiniao: true }),
+  saber: V({ modal: true, opiniao: true }),
   poder: V({ modal: true }),
   ter: V(),
-  ser: V(),
-  estar: V(),
-  ficar: V(),
+  ser: V({ ligacao: true }),
+  estar: V({ ligacao: true }),
+  ficar: V({ ligacao: true }),
   chorar: V(),
-  jogar: V(),
-  assistir: V(),
-  estudar: V(),
-  trabalhar: V(),
+  jogar: V({ atividade: true }),
+  assistir: V({ atividade: true }),
+  estudar: V({ atividade: true }),
+  trabalhar: V({ atividade: true }),
   viajar: V(),
   comprar: V(),
   procurar: V(),
-  precisar: V({ prep: 'de', modal: true }),
+  precisar: V({ prep: 'de', modal: true, volitivo: true }),
   chamar: V(),
-  mostrar: V(),
+  mostrar: V({ ditransitivo: true }),
   guardar: V(),
-  doer: V(),
+  doer: V({ soTerceira: true }),
   bola: N('f'),
   livro: N('m'),
   brinquedo: N('m'),
@@ -762,29 +877,29 @@ export const LEXICON: Record<string, Lexeme> = {
   // `lookup` cai no `guess()`, que marca "adivinhado" — e o motor,
   // corretamente, nao conjuga o que so foi adivinhado. A tabela de irregulares
   // ficava inalcancavel.
-  pedir: V(),
+  pedir: V({ volitivo: true, ditransitivo: true }),
   sair: V(),
   cair: V(),
   subir: V(),
-  dizer: V(),
-  trazer: V(),
+  dizer: V({ opiniao: true }),
+  trazer: V({ ditransitivo: true }),
   perder: V(),
   tocar: V(),
   abraçar: V(),
   almoçar: V(),
-  explicar: V(),
+  explicar: V({ ditransitivo: true }),
 
   acordar: V(),
   entrar: V({ prep: 'em' }),
-  sentir: V(),
+  sentir: V({ opiniao: true }),
   tirar: V(),
   colocar: V({ prep: 'em' }),
   trocar: V(),
-  levar: V(),
+  levar: V({ ditransitivo: true }),
   machucar: V(),
   ganhar: V(),
-  emprestar: V(),
-  deixar: V({ modal: true }),
+  emprestar: V({ ditransitivo: true }),
+  deixar: V({ modal: true, volitivo: true }),
   tentar: V({ modal: true }),
   começar: V({ prepInf: 'a', modal: true }),
   acabar: V({ prepInf: 'de', modal: true }),
@@ -883,7 +998,8 @@ export const LEXICON: Record<string, Lexeme> = {
   legal: ADJ(),
   feio: ADJ('m'),
   chato: ADJ('m'),
-  igual: ADJ(),
+  // "isso É igual" — compara, não descreve estado. Ver `copulaSer`.
+  igual: { class: 'adjective', copulaSer: true },
 
   só: { class: 'adverb' },
   já: { class: 'adverb' },

@@ -241,15 +241,13 @@ export function imperative(infinitive: string, register: Register): string {
  * dispensa toda a irregularidade do futuro — basta `ir` no presente.
  */
 /** Defectivos: so existem na 3a pessoa. "Eu doo a barriga" nao existe. */
-const SO_TERCEIRA = new Set(['doer'])
-
 export function conjugate(infinitive: string, person: Person, tense: Tense): string {
   const parts = infinitive.split(' ')
   const head = parts[0] ?? infinitive
   const tail = parts.slice(1).join(' ')
   const join = (v: string) => (tail ? `${v} ${tail}` : v)
 
-  if (SO_TERCEIRA.has(head) && person !== '3s' && person !== '3p') person = '3s'
+  if (lookup(head).soTerceira === true && person !== '3s' && person !== '3p') person = '3s'
 
   if (tense === 'future') {
     // "vou ir" nao existe na fala: o futuro de IR e o proprio presente de IR.
@@ -350,25 +348,11 @@ function agree(word: string, gender: 'm' | 'f', plural: boolean, lex?: Lexeme): 
  */
 const ASPECTO_ANTES_DA_NEGACAO = new Set(['ainda', 'já', 'quase', 'hoje', 'agora'])
 
-/** Verbos de ligação — os que admitem sujeito posposto na interrogativa. */
-const LIGACAO = new Set(['ser', 'estar', 'ficar'])
 
 /**
  * Verbos que pedem DOIS complementos: alguma coisa, e a pessoa que recebe.
  * Depois deles a pessoa é destinatário ("dá água pra mãe"), não dono.
  */
-const DITRANSITIVOS = new Set([
-  'dar',
-  'mostrar',
-  'levar',
-  'trazer',
-  'entregar',
-  'contar',
-  'emprestar',
-  'mandar',
-  'pedir',
-  'ensinar',
-])
 
 const OBLIQUO: Record<string, string> = {
   eu: 'mim',
@@ -610,9 +594,20 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
    * Com sujeito igual, o mesmo verbo rege infinitivo direto — "quero ir" — e e
    * por isso que a marca so nasce em `ehSujeitoNovo`.
    */
-  const VOLITIVOS = new Set(['querer', 'precisar', 'pedir', 'deixar', 'mandar', 'esperar', 'preferir'])
-  /** Oracoes que precisam do "que" e do presente do subjuntivo. */
+  /**
+   * Verbos de OPINIÃO e de saber. Também encaixam com "que" — mas no
+   * INDICATIVO, não no subjuntivo: "acho que a mãe **vem**", e não "venha".
+   *
+   * A diferença não é de estilo. O subjuntivo marca o que ainda não é fato — o
+   * que se quer, o que se pede; o indicativo marca o que se toma por real. Quem
+   * diz "acho que vem" está afirmando algo sobre o mundo, e é justamente essa a
+   * fala que a prancha não permitia: sem ela não há como supor, discordar ou
+   * explicar — só pedir. Ver a prancha "Pensar" em `boards.json`.
+   */
+  /** Oracoes que precisam do "que" — de subjuntivo ou de indicativo. */
   const clauseQue = new Set<number>()
+  /** Das acima, as que ficam no indicativo porque quem encaixa é verbo de opinião. */
+  const clauseIndicativo = new Set<number>()
   /** O "que" sai uma vez por oracao, antes do sujeito dela. */
   const queEmitido = new Set<number>()
   /**
@@ -741,8 +736,12 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           // PRINCIPAL ("se voce quiser, eu vou"), nao uma encaixada de
           // "querer". Um verbo volitivo dentro de uma oracao ja subordinada nao
           // encaixa o que vem depois dela.
-          if (verboAntes && VOLITIVOS.has(verboAntes.label) && !clauseSubjunctive[c - 1]) {
+          if (verboAntes && verboAntes.lex.volitivo === true && !clauseSubjunctive[c - 1]) {
             clauseQue.add(c)
+          } else if (verboAntes && verboAntes.lex.opiniao === true && !clauseSubjunctive[c - 1]) {
+            // Mesmo "que", tempo diferente: "acho que ela vem".
+            clauseQue.add(c)
+            clauseIndicativo.add(c)
           } else {
             /**
              * Oração nova SEM conectivo e sem verbo que a encaixe: separa por
@@ -888,7 +887,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
      */
     const verboDaOracao = fv >= 0 ? dentro.find((it) => it.index === fv) : undefined
     const invertePergunta =
-      Boolean(verboDaOracao && LIGACAO.has(verboDaOracao.label)) &&
+      Boolean(verboDaOracao && verboDaOracao.lex.ligacao === true) &&
       dentro.some((it) => it.lex.class === 'question' && it.index < fv)
     const subjPosposto = invertePergunta
       ? dentro.find((it) => it.lex.class === 'noun' && it.index > fv)
@@ -1028,6 +1027,8 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   let infinitivoDaPreposicao: number | null = null
   /** O "tem" existencial acabou de sair e o substantivo dele não leva artigo. */
   let existencialAberto = false
+  /** Um ordinal prenominal saiu; o substantivo dele vai sem artigo. */
+  let ordinalAberto = false
   let pendingIntensidade: { texto: string; cardIndex: number } | null = null
   let pendingPrep: string | null = null
   /** Regencia do verbo principal, que se repete em cada item de uma lista. */
@@ -1141,7 +1142,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
        * alguém — e a preposição errada aí não deixa a frase esquisita: deixa
        * outra frase.
        */
-      if (lastVerbLabel && DITRANSITIVOS.has(lastVerbLabel)) return to
+      if (lastVerbLabel && lookup(lastVerbLabel).ditransitivo === true) return to
       return 'de'
     }
     return 'list'
@@ -1223,7 +1224,6 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   // `ver` e `assistir` sairam da lista: pedem objeto direto ("eu vejo
   // televisão"), e o locativo produzia "eu assisto NA televisão". Ficaram os
   // que de fato locativizam: joga-se NO celular, fala-se NO telefone.
-  const ACTIVITY_VERBS = new Set(['jogar', 'brincar', 'falar', 'mexer', 'estudar'])
 
   /**
    * A negação sai no predicado ONDE O CARD ESTÁ — não no primeiro da frase.
@@ -1596,7 +1596,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
           const tempoDoVerbo = tense === 'future' && lex.modal ? 'present' : tense
           const subjFuturo = clauseSubjunctive[oracaoAtual] === true
           // Oracao encaixada por verbo volitivo: presente do subjuntivo.
-          const subjPresente = clauseQue.has(oracaoAtual)
+          const subjPresente = clauseQue.has(oracaoAtual) && !clauseIndicativo.has(oracaoAtual)
           const text = subjPresente
             ? subjunctivePresent(label, person)
             : subjFuturo
@@ -1800,7 +1800,7 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         }
 
         // Aparelho depois de verbo de atividade: "jogar no celular".
-        if (!pendingPrep && lex.device && lastVerbLabel && ACTIVITY_VERBS.has(lastVerbLabel)) {
+        if (!pendingPrep && lex.device && lastVerbLabel && lookup(lastVerbLabel).atividade === true) {
           pendingPrep = 'em'
         }
 
@@ -1845,6 +1845,16 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
         if (existencialAberto) {
           suppressArticle = true
           existencialAberto = false
+        }
+
+        // Predicativo de "ser": "isso é verdade", e não "isso é A verdade" —
+        // que apontaria uma verdade específica. Ver `predicativo` no léxico.
+        if (lex.predicativo && copulaEmitida === 'ser') suppressArticle = true
+
+        // Substantivo logo depois de ordinal prenominal: sem artigo.
+        if (ordinalAberto) {
+          suppressArticle = true
+          ordinalAberto = false
         }
 
         const cabeArtigo = !suppressArticle
@@ -1920,9 +1930,46 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
       }
 
       case 'adjective': {
+        /**
+         * ORDINAL VEM ANTES DO SUBSTANTIVO, E NÃO PREDICA.
+         *
+         * `PRIMEIRO · BANHO` saía "Estou primeiro o banho": o motor via
+         * adjetivo, não achava verbo e inventava cópula. Mas "primeiro" aí não
+         * diz nada sobre alguém — organiza a ordem das coisas, e é assim que se
+         * usa numa rotina: "primeiro o banho, depois o jantar".
+         */
+        if (lex.prenominal && next?.lex.class === 'noun') {
+          push(it.card.label, 'card', { cardIndex: it.index })
+          // O substantivo vem sem artigo: "Primeiro banho, depois jantar".
+          //
+          // Com artigo saía "Último **o** dia", que não é português — em
+          // português o artigo do ordinal vem ANTES dele ("o último dia"), e
+          // movê-lo para trás do card que a pessoa escolheu mudaria a ordem
+          // dela. Sem artigo, os dois ficam certos, e a frase fica telegráfica
+          // — que é a troca que este arquivo já faz em todo lugar onde a
+          // alternativa seria uma forma inexistente.
+          ordinalAberto = true
+          previousWasNoun = false
+          break
+        }
+
         // "eu triste" nao e frase em portugues; "eu estou triste" e. A copula
         // so entra se ainda nao houver verbo.
-        if (!verbDone) emitCopula()
+        //
+        /**
+         * QUAL CÓPULA — "ser" ou "estar" — MUDA O SENTIDO, não o estilo.
+         *
+         * "Isso ESTÁ difícil" fala de agora, e passa; "isso É difícil" fala do
+         * que a coisa é. `IGUAL`, `DIFERENTE`, `MELHOR`, `DIFÍCIL` classificam,
+         * e saíam todos com "estar" porque `estar` é o padrão — que está certo
+         * para sentimento ("estou triste") e errado para juízo.
+         *
+         * Numa prancha isso pesa mais do que parece: comparar e julgar é
+         * exatamente o que a prancha "Pensar" existe para permitir, e dizer
+         * "isso está errado" quando se quis dizer "isso é errado" enfraquece a
+         * afirmação na hora em que ela mais precisa valer.
+         */
+        if (!verbDone) emitCopula(lex.copulaSer ? 'ser' : 'estar')
 
         // Concorda com o ultimo substantivo ("a agua quente") ou, se nao houver,
         // com o falante ("estou cansada") — cujo genero e ajuste explicito.
@@ -2100,6 +2147,34 @@ export function compose(sentence: Card[], options: ComposeOptions = {}): Compose
   if (pendingIntensidade) {
     push(pendingIntensidade.texto, 'card', { cardIndex: pendingIntensidade.cardIndex })
     pendingIntensidade = null
+  }
+
+  /**
+   * "ACHO QUE NÃO."
+   *
+   * `EU · ACHAR · NÃO` saía "Não eu acho" — a negação não achou verbo para
+   * negar e foi para a frente da frase, que é a saída certa para `NÃO · BOLO` e
+   * errada aqui.
+   *
+   * Depois de verbo de opinião a negação não nega o verbo: nega o que se pensa.
+   * "Não acho" e "acho que não" dizem coisas diferentes — o primeiro recusa
+   * opinar, o segundo opina. E é o segundo que a pessoa quis, porque é o modo
+   * mais comum de discordar em português sem confrontar. Numa prancha isso
+   * importa: discordar é justamente o que ela não permitia fazer.
+   */
+  const negacaoDeOpiniao =
+    negated &&
+    !negationDone &&
+    Boolean(lastVerbLabel && lookup(lastVerbLabel).opiniao === true) &&
+    items[items.length - 1]?.lex.class === 'negation'
+  if (negacaoDeOpiniao) {
+    push('que', 'inserted')
+    push(
+      'não',
+      negationCard ? 'card' : 'inserted',
+      negationCard ? { cardIndex: negationCard.index } : {},
+    )
+    negationDone = true
   }
 
   // Negacao escolhida sem nenhum verbo na frase ("não" + "bolo"): a particula

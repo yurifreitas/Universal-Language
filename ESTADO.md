@@ -18,7 +18,7 @@ build e auditoria que **não** vão para o navegador.
 
 | | |
 |---|---|
-| Testes | **280** em 6 suítes (`npm test`) |
+| Testes | **315** em 6 suítes (`npm test`) |
 | Auditoria do motor | **40 sementes · 800.160 casos · 0 suspeitas** |
 | Léxico revisado à mão | 250 palavras |
 | Léxico gerado do acervo | **4.905** publicadas · 1.249 em revisão |
@@ -92,6 +92,191 @@ por fora de todas elas.
 
 Depois: **196 casos** no motor, **800.160 frases · 0 violações · 0 suspeitas**.
 
+### Segunda varredura — 30/07
+
+Terreno novo: quantidade, lugar e direção, cortesia, dois complementos, séries,
+pergunta com sujeito. Mesma lição — o defeito aparece onde nenhuma dimensão
+enumerada olhava.
+
+| conserto | o que saía antes |
+|---|---|
+| `tem` existencial | `TER · BOLO ?` → "Tenho o bolo?" |
+| `todo`/`outro`/`mesmo`/`cada` são determinantes | "Todo **e** dia", "Outro **e** copo" |
+| `ninguém`/`alguém` são pronomes | eram substantivo masculino adivinhado |
+| `ir` e `vir` são direções opostas | "eu venho **pra** escola" |
+| Destinatário de verbo de dar | `DAR · ÁGUA · MÃE` → "Dá água **da** mãe" |
+| Sujeito posposto na interrogativa | `ONDE · ESTAR · MÃE` → "Onde **estou** a mãe?" |
+
+Duas dessas eram **lexicais, não estruturais**: `todo` e `outro` terminam como
+substantivo masculino comum, a adivinhação os classificava assim, e a regra de
+"dois substantivos seguidos são lista" — que está certa — fazia o resto. Vale
+registrar: nem todo defeito de gramática é da gramática.
+
+Duas travas que a implementação exigiu, ambas para não trocar um erro por outro:
+- O existencial é preso à **pergunta**. Sem sujeito o motor supõe 1ª pessoa, e
+  supõe bem: `TER · FOME` é "tenho fome", metade do uso de "ter" numa prancha.
+  Ninguém pergunta a si mesmo se tem fome; "tem bolo?" se pergunta o dia inteiro.
+- A inversão do sujeito vale **só com verbo de ligação**. `QUERER · ÁGUA ?`
+  continua "Quero água?", porque ali a suposição de 1ª pessoa acerta.
+
+Depois: **212 casos** no motor, **800.160 frases · 0 violações · 0 suspeitas**.
+
+### A prancha "Pensar" e a gramática que ela exigiu — 30/07
+
+A 12ª prancha de fábrica, **24 cards**, no fim da fila — nenhuma posição já
+aprendida se moveu. O levantamento (`FUNCIONALIDADES.md`) mostrou que havia 13
+grupos de frases e **nenhum sobre pensar**: sem `acho que`, `porque`, `se`,
+`igual`, `verdade`, não há como supor, discordar ou explicar. Uma prancha que só
+sabe pedir deixa quem a usa sem como argumentar.
+
+Pôr os cards não bastava — o motor tratava essas palavras a chute, e o chute erra
+justamente aí. Cinco consertos:
+
+| conserto | o que saía antes |
+|---|---|
+| Encaixe de opinião no **indicativo** (`OPINIAO`) | não existia — só havia o subjuntivo dos volitivos |
+| "acho que não" | `EU · ACHAR · NÃO` → "**Não eu acho**" |
+| `copulaSer` — julgar pede "ser" | "Isso **está** difícil", "Isso **está** errado" |
+| `predicativo` — abstrato sem artigo | "Isso é **a** verdade" |
+| `prenominal` — ordinal não predica | `PRIMEIRO · BANHO` → "**Estou** primeiro o banho" |
+
+Duas distinções que valem mais que a implementação:
+
+- **Subjuntivo x indicativo não é estilo.** O subjuntivo marca o que ainda não é
+  fato; o indicativo, o que se toma por real. "Acho que a mãe **vem**" afirma
+  algo sobre o mundo — e era exatamente essa fala que faltava.
+- **"Não acho" e "acho que não" dizem coisas diferentes**: o primeiro recusa
+  opinar, o segundo opina. É o segundo que a pessoa quis, e é o modo mais comum
+  de discordar em português sem confrontar.
+
+**A auditoria pegou um defeito meu.** As entradas novas declaravam
+`femininoBase: false` mas não `gender: 'm'`, e é `gender` que autoriza a flexão:
+"A mesa não é **errado**", 1.179 casos. Achado pelas 800 mil frases, não pelos
+testes — que é para isso que ela existe.
+
+Depois: **227 casos** no motor, **800.160 frases · 0 violações · 0 suspeitas**,
+e "Eu acho que não." verificada clicando cards no app.
+
+### A padronização do léxico — 31/07
+
+O motor é o diferencial do app. Um diferencial que só funciona para 5% do
+vocabulário não é um diferencial — e era esse o caso.
+
+O conhecimento morava em dois lugares que não se conversavam: campos declarados
+no `Lexeme`, que qualquer palavra pode ter, e **seis conjuntos fixos dentro do
+`grammar.ts`** (`VOLITIVOS`, `OPINIAO`, `DITRANSITIVOS`, `ACTIVITY_VERBS`,
+`LIGACAO`, `SO_TERCEIRA`), que só alcançam o que alguém digitou lá. Uma palavra
+gerada **não tem como entrar num `Set` escrito no código** — não é difícil, é
+impossível por construção.
+
+E o transporte era pior: `limpar()` copiava campo a campo, e copiava 7 dos 20.
+Os outros 13 caíam em silêncio — sem erro, sem aviso, sem teste falhando.
+
+**A regra de decisão**, agora escrita em `LEXICO-PADRAO.md`: *a língua pode
+ganhar mais uma palavra dessas?* Pode → classe aberta → campo no `Lexeme`. Não
+pode → classe fechada (artigo, preposição, contração, paradigma) → tabela no
+código, e ela fica lá por decisão, não por dívida.
+
+| | antes | agora |
+|---|---|---|
+| Marcas que uma palavra gerada carrega | 7 | **22** |
+| Conjuntos abertos no `grammar.ts` | 6 | **0** |
+
+O transporte passou a ser guiado por duas listas declaradas com
+`satisfies keyof Lexeme` — errar o nome de um campo virou erro de compilação.
+
+**O que a migração expôs:** sete verbos (`contar`, `ensinar`, `entregar`,
+`mandar`, `mexer`, `perceber`, `preferir`) governavam regra de gramática **sem
+ter entrada no léxico**. Funcionavam pela lista e por mais nada — sem classe,
+sem regência, conjugados pelo palpite da terminação.
+
+Depois: **227 casos** do motor e **800.160 frases · 0 violações · 0 suspeitas**,
+idênticos ao de antes — que é o resultado certo de um refactor. A prova de que o
+teto subiu está em `lexico.test.ts`: `suspeitar`, que o `LEXICON` não conhece,
+entregue só pelo léxico gerado, produz **"Eu suspeito que a mãe vem."**
+
+### O gerador preenchendo o comportamento — 31/07
+
+O padrão da seção anterior construiu o cano; esta rodada o encheu.
+`ferramentas/lexico/inferir.mjs` agora declara as seis marcas para os verbos do
+acervo. **44 dos 978 verbos** ganharam comportamento — de zero.
+
+**Por lista, não por regra, e o motivo é linguístico:** "dar" rege dois
+complementos e "danar" não, e as duas terminam igual. Nenhuma terminação separa
+verbo de opinião de verbo de ação — a diferença é de significado, e significado
+não está na forma. O que não está declarado não recebe marca, pela mesma política
+do empate de gênero: omitir deixa a regra muda, e mudo nunca é pior que antes.
+
+**A trava nova em `medir.mjs`** confere que o gerado não CONTRADIZ o revisado à
+mão, e falha o build se contradisser. O risco aqui não é a lacuna: é o conflito.
+O `LEXICON` vence no `lookup`, então uma marca gerada errada não apareceria neste
+app — apareceria em qualquer consumidor do `lexico.json` sem o `LEXICON`. E
+silencioso e divergente é a pior combinação possível.
+
+**Ela pagou o próprio custo na primeira execução, com 13 conflitos:**
+- **erro meu** — `tentar` e `conseguir` estavam entre os volitivos por parentesco
+  com "querer", mas regem *infinitivo*: "tento ir", nunca "tento que ele vá".
+  Parentesco semântico não é regência.
+- **risco meu** — `andar` como cópula existe, mas numa prancha ele é movimento
+  quase sempre. Saiu.
+- **onze lacunas do lado oposto** — o gerador estava certo e o `LEXICON` é que
+  estava incompleto (`contar`, `entender`, `ouvir`, `sentir` também são de
+  opinião; `escrever` e `explicar` também são ditransitivos). Completados à mão.
+
+**Cobertura, medida e não afirmada.** 44 de 978 parece pouco e não é: numa
+amostra determinística de 45 verbos sem marca — `afundar`, `engolir`, `fritar`,
+`rasgar` — todos são de ação concreta e corretamente não levam marca. Dois ou
+três seriam discutíveis, nenhum é erro claro. Está escrito como estimativa por
+amostra de propósito.
+
+**Achado colateral:** o acervo traz português **europeu** em vários termos
+(`actuar`, `facturar`, `mandriar`, `barbear-se`). Num app pt-BR é problema de
+qualidade do léxico gerado, e ainda não está tratado.
+
+Depois: 97 verbos conferidos · **0 conflitos** · gênero em confiança alta 100% ·
+227 casos do motor · **800.160 frases · 0 violações · 0 suspeitas**.
+
+### A documentação dos níveis — 31/07
+
+`NIVEIS.md`. Existe porque "melhorar a gramática" não é uma direção — são oito
+direções com custos diferentes, e sem escala não dá para saber se uma mudança é
+um degrau ou um enfeite.
+
+**A escala N0–N7**, de telegráfico a pragmática. O motor está em **N4** (várias
+orações, com subjuntivo x indicativo) e com folga. O N5 — rever uma decisão já
+tomada — está a zero.
+
+**Os três tetos**, que não são bugs e não saem com regra nova:
+1. **A passada única.** Quase todo defeito difícil desta sessão foi um caso
+   disso, e a cura foi sempre a mesma gambiarra: espiar à frente antes de
+   decidir. `next` ignorando negação, `modalAindaAberto`, `pendingIntensidade`,
+   `infinitivoDaPreposicao`. Cada uma funciona; somadas, são a admissão de que o
+   motor **está simulando uma segunda passada** — e simulação de árvore não vira
+   árvore.
+2. **A forma não carrega o significado.** Gênero se infere da terminação;
+   "é ditransitivo" não. Sem saída automática.
+3. **Nenhum contexto além da frase.** Decisão de privacidade, não acidente — mas
+   vale saber que ela é mais forte do que a regra exige.
+
+**As cinco abordagens**, com veredito. A que interessa registrar: **modelo
+generativo está descartado para a composição**, e não por gosto — ele não pode
+garantir as três regras duras. Pode acrescentar palavra que a pessoa não
+escolheu, trocar por sinônimo, reordenar. Num app de fala isso é alguém ser
+ouvido dizendo o que não disse, **sem como perceber, porque a saída é fluente**.
+Fora da composição — sugerir card, ordenar busca — continua plausível.
+
+**O limite que nenhuma camada cobre**, escrito sem rodeio: as três camadas de
+revisão medem se o motor faz o que eu disse que ele deve fazer. Nenhuma mede se
+o que ele deve fazer está certo. O motor pode estar num N4 sólido e ainda assim
+resolver o problema errado, e as ferramentas construídas aqui são
+estruturalmente incapazes de perceber isso.
+
+**Correções no `GRAMMAR.md`.** A seção 12 afirmava coisas falsas: "~180
+entradas" (são 250 + 4.905), "52 casos de teste" (são 227) e "o imperfeito só
+existe no progressivo" — verificado, `EU · COMER` no imperfeito dá "Eu comia".
+Documento desatualizado é pior que documento nenhum: os dois primeiros números
+subestimavam o app, o terceiro mandaria alguém reimplementar o que já existe.
+
 ### O que ainda erra — achado, não consertado
 
 Sabido e escrito aqui de propósito: cada um destes precisa de decisão que a
@@ -99,17 +284,17 @@ varredura sozinha não toma.
 
 | entrada | sai | devia sair |
 |---|---|---|
-| `TER · BOLO` + pergunta | "Tenho o bolo?" | "Tem bolo?" — o `tem` existencial |
 | `JÁ · EU · COMER` | "Já eu comi" | "Eu já comi" — mover advérbio é mexer na ordem escolhida |
 | `DEIXAR · EU · VER` | "Deixo que eu veja" | "Deixa eu ver" |
 | `ISSO · GRANDE · QUE · AQUILO` | "está grande que" | "é maior que" — comparativo |
+| `ESTAR · CIMA` | "Estou cima" | "Está em cima" — falta a preposição |
+| `EU · QUERER · ÁGUA · FAVOR` | "água **e** favor" | "por favor" precisa ser unidade |
 | `PORQUE` + pergunta | "Porque?" | "Por quê?" |
-| `BONECA · IRMÃ` | "Boneca da irmã" | artigo inconsistente com "O carro do pai" |
+| `PÔR · AQUI` + pedido | "Pôr aqui" | "Põe aqui" — irregular fora do léxico |
 
-O existencial é o de maior peso — "tem bolo?" é das perguntas mais frequentes
-numa prancha. Os dois seguintes exigem reordenar cards, o que o motor de uma
-passada não pode fazer sem quebrar invariante; é exatamente o que a árvore
-(seção 5) existe para destravar.
+Os dois primeiros exigem **reordenar cards**, o que um motor de uma passada não
+faz sem quebrar invariante — é exatamente o que a árvore (seção 5) existe para
+destravar. Os quatro últimos são lexicais, e cabem na fila de revisão do léxico.
 
 ---
 
@@ -143,6 +328,21 @@ Dois detalhes que a implementação exigiu:
 
 **🎯 servia a "Achar" e a "Objetivos".** Dois destinos com o mesmo desenho anulam
 a única pista que se lê sem ler. Objetivos passou a 🧭.
+
+**A linha quebrada ia inteira para a direita.** `justify-content: flex-end` na
+fila: no celular sobravam dois botões encostados na borda e um vão do tamanho da
+tela ao lado deles. O olho lê esse vão como "acabou", e o que foi empurrado para
+lá deixa de ser procurado. Passou a `center` — linha incompleta fica no meio e
+continua parecendo parte da mesma barra. Junto: o selo "⟳ Varredura" virou só o
+símbolo abaixo de 560px (ocupava a largura de quatro botões e não é botão — o
+texto continua no leitor, e quem usa varredura depende dele), e o separador
+decorativo some, porque numa fila já quebrada ele não separa nada.
+
+**O que se decidiu NÃO fazer:** encolher botão para caber mais por linha. Medido
+em 333px — com 61px cabem 4 por linha, com 52px cabem os mesmos 4. A conta não
+muda de linha, só o alvo fica menor. Duas linhas é o mínimo físico para sete
+controles nessa largura, e alvo grande vale mais que barra curta num app cujo
+usuário pode ter comprometimento motor.
 
 ---
 
@@ -215,5 +415,8 @@ telegráfico de verdade, explicar a frase palavra a palavra.
 | `ROADMAP.md` | o que o app ainda não é, por impacto |
 | `PLANO.md` | escala: padronização, imagens, fundamentação em lote |
 | `ARVORE.md` | a arquitetura do motor |
+| `LEXICO-PADRAO.md` | **onde o conhecimento linguístico mora, e por quê** — a regra aberta/fechada |
+| `NIVEIS.md` | **até onde o motor chega, onde para, e por quais caminhos** — a escala N0–N7, os três tetos, as cinco abordagens |
+| `FUNCIONALIDADES.md` | **tudo que o app faz hoje**, contado do código — e a proposta da seção de Lógica |
 | `ferramentas/*/REVISAO.md`, `LEXICO.md` | método e números das ferramentas |
 | **este** | onde o trabalho está agora |

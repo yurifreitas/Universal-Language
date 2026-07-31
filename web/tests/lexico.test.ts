@@ -111,6 +111,41 @@ eq('comum de dois: sem artigo, e não masculino', frase(['eu', 'querer', 'dentis
 definirLexicoGerado({ pão: { class: 'noun', gender: 'm', pluralForm: 'pães' } })
 eq('plural irregular do acervo', lookup('pão').pluralForm, 'pães')
 
+/* ------------------- comportamento de classe aberta vindo do acervo
+
+   Estes casos existem para provar que o TETO subiu.
+
+   Antes, o comportamento morava em conjuntos fixos dentro de `grammar.ts`, e
+   uma palavra vinda do acervo não tinha como entrar num `Set` escrito no
+   código. Sete regras de gramática valiam só para as 250 palavras revisadas à
+   mão e ficavam mudas para as outras 4.905 — sem erro e sem teste falhando.
+
+   Agora o comportamento é campo declarado, o validador o transporta, e a regra
+   dispara para qualquer palavra que o traga. Se alguém voltar a escrever
+   comportamento em `Set` no código, estes casos quebram. */
+
+// Verbo de opinião que o LEXICON não conhece: encaixa oração com "que" no
+// indicativo, exatamente como "achar".
+definirLexicoGerado({ suspeitar: { class: 'verb', opiniao: true } })
+eq(
+  'opinião do acervo encaixa com "que"',
+  frase(['eu', 'suspeitar', 'mãe', 'vir']),
+  'Eu suspeito que a mãe vem.',
+)
+
+// Verbo de dar que o LEXICON não conhece: a pessoa depois do objeto RECEBE.
+definirLexicoGerado({ doar: { class: 'verb', ditransitivo: true } })
+eq('ditransitivo do acervo dá "para"', frase(['doar', 'água', 'mãe']), 'Doo água pra mãe.')
+
+// Verbo de ligação que o LEXICON não conhece: admite sujeito posposto.
+definirLexicoGerado({ permanecer: { class: 'verb', ligacao: true } })
+eq('ligação do acervo aceita sujeito posposto', lookup('permanecer').ligacao, true)
+
+// E o contrato tem limite: campo fora das listas declaradas não atravessa.
+// `person` descreve classe fechada e não pode vir de inferência automática.
+definirLexicoGerado({ xis: { class: 'noun', person: '1s' } as never })
+eq('campo fora do contrato não atravessa', lookup('xis').person, undefined)
+
 esquecerLexicoGerado()
 
 if (falhas) {

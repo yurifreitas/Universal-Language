@@ -471,20 +471,27 @@ entram **depois** das de fábrica.
 
 1. **Nada disso foi validado com o público-alvo.** É aplicação de gramática
    descritiva e de convenção de CAA, não resultado de teste com usuários.
-2. **O léxico é pequeno.** ~180 entradas. Fora delas, o comportamento degrada
-   para telegráfico — por escolha, mas degrada.
+2. **O léxico tem duas velocidades.** 250 entradas revisadas à mão, com
+   comportamento completo, e 4.905 geradas do acervo, que carregam 22 das 26
+   marcas que o motor consome. Fora das duas, o comportamento degrada para
+   telegráfico — por escolha, mas degrada. Ver [LEXICO-PADRAO.md](LEXICO-PADRAO.md).
 3. **A 1ª pessoa implícita é uma aposta.** "querer água" vira "Quero água". Se o
-   usuário falava de terceiro, sai errado. O pronome explícito resolve.
-4. **O imperfeito só existe no progressivo.** "eu estava comendo" sai; "eu
-   comia" não. Para o vocabulário de uma prancha isso raramente aparece, mas é
-   uma lacuna real.
+   usuário falava de terceiro, sai errado. O pronome explícito resolve. A aposta
+   acerta quase sempre — e onde ela erra sempre, como em `TER · BOLO ?`, há
+   exceção declarada.
+4. **O comportamento semântico não é inferível da forma.** Gênero e plural o
+   gerador acerta porque a terminação carrega o sinal; "é ditransitivo" não —
+   *"dar" e "danar" terminam igual*. As seis marcas de comportamento vêm de lista
+   declarada, e hoje cobrem 44 dos 978 verbos do acervo.
 5. **A regra de dois substantivos é uma generalização.** "suco fruta" → "suco de
    fruta" e "mãe pai" → "a mãe e o pai" funcionam porque o léxico marca quem é
    animado. Um par em que essa marcação falta cai no "de" e pode soar estranho.
-6. **A cobertura de teste é uma tabela, não uma prova.** `npm run test:grammar`
-   fixa 52 casos de entrada e saída (`web/tests/grammar.test.ts`); combinações
-   fora dela continuam sem rede. A tabela existe para que uma mudança de regra
-   não altere calado o que já funcionava.
+6. **A cobertura de teste é uma tabela mais uma varredura.** `npm run
+   test:grammar` fixa **227** casos (`web/tests/grammar.test.ts`), e
+   `node ferramentas/gramatica/rodada.mjs` roda 40 sementes e **800.160** frases
+   contra 14 detectores. A tabela impede regressão no que já foi consertado; a
+   varredura acha o que ninguém escreveu — mas **só o que os detectores sabem
+   procurar**. Ver [NIVEIS.md](NIVEIS.md) § 4.
 7. **As frases prontas são um chute informado.** Foram escritas a partir dos
    contextos que a literatura de CAA descreve como recorrentes, não de registro
    de uso real. Quais faltam só se descobre observando alguém usar.
@@ -503,8 +510,22 @@ entram **depois** das de fábrica.
 
 ---
 
+11. **O motor não revê uma decisão já tomada.** Ele percorre os cards uma vez e
+   escreve conforme decide. É o teto estrutural do desenho atual, e é o que
+   impede tirar o artigo por escolha, o modo telegráfico de verdade e explicar a
+   frase palavra por palavra. Ver [NIVEIS.md](NIVEIS.md) § 2 e
+   [ARVORE.md](ARVORE.md).
+12. **Não há contexto além da frase.** O motor não sabe o que foi dito antes,
+   com quem se fala, nem onde. Isso é decisão de privacidade, não acidente — mas
+   é o que impede referência entre frases ("ele" = o pai da frase anterior) e
+   adequação automática de registro.
+
+---
+
 ## Ver também
 
+- [NIVEIS.md](NIVEIS.md) — até onde o motor chega, onde para, e quais abordagens
+  existem para ir além.
 - [LANGUAGE-SYSTEMS.md](LANGUAGE-SYSTEMS.md) — Bliss, Minspeak, LAMP e por que
   cada decisão acima tem a forma que tem.
 - [REFERENCES.md](REFERENCES.md) — metodologias de CAA e vocabulário-núcleo.

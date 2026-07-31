@@ -819,7 +819,10 @@ export default function App() {
               <>
                 {settings.scanning && (
                   <span className="pill" title="Varredura ativa — acione com Espaço ou Enter">
-                    ⟳ Varredura
+                    <span aria-hidden="true">⟳</span>
+                    {/* O rótulo some em tela estreita, mas continua no leitor —
+                        quem usa varredura depende dele. Ver `.pill__texto`. */}
+                    <span className="pill__texto">Varredura</span>
                   </span>
                 )}
                 {/* Módulos avançados entram no FIM da fila, nunca no meio:

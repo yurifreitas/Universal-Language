@@ -667,6 +667,49 @@ const CASES: Record<string, Case[]> = {
     // A inversão é só com verbo de ligação: fora daí, inverter seria chutar.
     { cards: ['querer', 'água'], marks: { question: true }, expect: 'Quero água?' },
   ],
+
+  // A fala que a prancha não permitia: supor, comparar, discordar, explicar.
+  // Sustenta a prancha "Pensar". Ver FUNCIONALIDADES.md seção 6.
+  'pensar — opinião encaixada no indicativo': [
+    // O subjuntivo marca o que ainda não é fato; o indicativo, o que se toma
+    // por real. "Acho que a mãe venha" não é o que a pessoa quis dizer.
+    { cards: ['eu', 'achar', 'mãe', 'vir'], expect: 'Eu acho que a mãe vem.' },
+    { cards: ['eu', 'saber', 'você', 'querer'], expect: 'Eu sei que você quer.' },
+    // "Não acho" recusa opinar; "acho que não" opina. É o segundo que a pessoa
+    // quis, e é o jeito mais comum de discordar sem confrontar.
+    { cards: ['eu', 'achar', 'não'], expect: 'Eu acho que não.' },
+    // O volitivo continua no subjuntivo — as duas regras convivem.
+    { cards: ['eu', 'querer', 'você', 'vir'], expect: 'Eu quero que você venha.' },
+  ],
+
+  'pensar — julgar pede "ser", não "estar"': [
+    // "Isso ESTÁ difícil" fala de agora e passa; "isso É difícil" fala do que a
+    // coisa é. Comparar e julgar é o que a prancha "Pensar" existe para
+    // permitir, e a cópula errada enfraquece a afirmação.
+    { cards: ['isso', 'difícil'], expect: 'Isso é difícil.' },
+    { cards: ['isso', 'igual'], expect: 'Isso é igual.' },
+    { cards: ['isso', 'melhor'], expect: 'Isso é melhor.' },
+    { cards: ['isso', 'errado'], expect: 'Isso é errado.' },
+    // Sentimento e estado continuam com "estar" — o padrão não mudou.
+    { cards: ['eu', 'triste'], expect: 'Eu estou triste.' },
+    { cards: ['água', 'quente'], expect: 'Água está quente.' },
+    // Predicativo abstrato dispensa artigo: "é A verdade" apontaria uma
+    // verdade específica.
+    { cards: ['isso', 'verdade'], expect: 'Isso é verdade.' },
+    { cards: ['isso', 'mentira'], expect: 'Isso é mentira.' },
+  ],
+
+  'pensar — ordinal organiza ordem, não predica': [
+    // "Estou primeiro o banho" era a saída: adjetivo sem verbo inventava
+    // cópula. Mas numa rotina "primeiro" ordena as coisas.
+    // Sem artigo nos dois: em português o artigo do ordinal vem ANTES dele ("o
+    // último dia"), e pô-lo depois — "Último o dia" — não é português. Movê-lo
+    // para trás do card escolhido mudaria a ordem da pessoa, então a saída fica
+    // telegráfica, que é a troca de sempre.
+    { cards: ['primeiro', 'banho'], expect: 'Primeiro banho.' },
+    { cards: ['último', 'dia'], expect: 'Último dia.' },
+    { cards: ['primeiro', 'banho', 'depois', 'jantar'], expect: 'Primeiro banho depois jantar.' },
+  ],
 }
 
 let pass = 0

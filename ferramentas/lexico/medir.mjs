@@ -12,7 +12,10 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { inferir, lerAcervo, gabarito, pluralDoMotor, construirContexto } from './inferir.mjs'
+import {
+  inferir, lerAcervo, gabarito, pluralDoMotor, construirContexto,
+  CAMPOS_COMPORTAMENTO_GABARITO,
+} from './inferir.mjs'
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const acervo = lerAcervo(join(raiz, 'data', 'arasaac.sqlite'))
@@ -257,6 +260,50 @@ console.log(
     : `    OK — ${CLASSE_ESPERADA.length} conferidos, todos na classe certa`,
 )
 
+/* ==========================================================================
+   TRAVA — o comportamento gerado nao pode CONTRADIZER o revisado a mao
+
+   As seis marcas de classe aberta (ver LEXICO-PADRAO.md) sao semanticas, e
+   inferidas por lista declarada. O risco delas nao e a lacuna: e o conflito.
+
+   Uma lacuna deixa a regra muda, e mudo e o estado de antes — nunca pior. Um
+   CONFLITO e outra coisa: o `LEXICON` revisado a mao vence no `lookup`, entao
+   uma marca gerada errada nao apareceria neste app, mas apareceria em qualquer
+   consumidor do `lexico.json` que nao tenha o LEXICON — a ferramenta de
+   auditoria, um export, uma prancha de terceiro.
+
+   Silencioso e divergente e a pior combinacao possivel. Entao a divergencia
+   falha aqui, no build, e nao la.
+   ========================================================================== */
+const conflitos = []
+let verbosConferidos = 0
+let verbosComMarca = 0
+for (const [palavra, esperado] of revisado) {
+  if (esperado?.class !== 'verb') continue
+  const linhas = acervo.get(palavra)
+  if (!linhas) continue
+  const r = inferir(palavra, linhas, contexto)
+  if (!r || r.entrada.class !== 'verb') continue
+  verbosConferidos++
+  let temMarca = false
+  for (const campo of CAMPOS_COMPORTAMENTO_GABARITO) {
+    const gerado = r.entrada[campo] === true
+    const mao = esperado[campo] === true
+    if (gerado) temMarca = true
+    // Só conflito conta. O gerado ter MENOS que o revisado é lacuna conhecida —
+    // a lista cobre vocabulário de prancha, não o português inteiro.
+    if (gerado && !mao) conflitos.push(`${palavra}.${campo}: gerado marca, revisado não`)
+  }
+  if (temMarca) verbosComMarca++
+}
+
+console.log('\n  COMPORTAMENTO DO VERBO — gerado não contradiz o revisado à mão')
+console.log(
+  conflitos.length
+    ? `    FALHOU: ${conflitos.join('; ')}`
+    : `    OK — ${verbosConferidos} verbos conferidos, ${verbosComMarca} com marca, 0 conflitos`,
+)
+
 const meta = conta.generoAltoTotal ? conta.generoAltoOk / conta.generoAltoTotal : 1
 console.log(
   `\n  META: gênero em confiança alta ≥ 96% → ${pc(conta.generoAltoOk, conta.generoAltoTotal)}` +
@@ -269,5 +316,6 @@ if (
   contraditorias.length ||
   converteram.length ||
   classeErrada.length ||
+  conflitos.length ||
   meta < 0.96
 ) process.exit(1)

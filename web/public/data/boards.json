@@ -1161,5 +1161,108 @@
     "label": "igual"
    }
   ]
+ },
+ {
+  "id": "pensar",
+  "name": "Pensar",
+  "icon": "💡",
+  "cards": [
+   {
+    "id": 8661,
+    "label": "pensar"
+   },
+   {
+    "id": 24741,
+    "label": "achar"
+   },
+   {
+    "id": 9034,
+    "label": "saber"
+   },
+   {
+    "id": 7180,
+    "label": "não sei"
+   },
+   {
+    "id": 11696,
+    "label": "talvez"
+   },
+   {
+    "id": 11357,
+    "label": "lembrar"
+   },
+   {
+    "id": 26258,
+    "label": "esquecer"
+   },
+   {
+    "id": 11348,
+    "label": "porque"
+   },
+   {
+    "id": 6481,
+    "label": "se"
+   },
+   {
+    "id": 13080,
+    "label": "então"
+   },
+   {
+    "id": 3423,
+    "label": "igual"
+   },
+   {
+    "id": 4628,
+    "label": "diferente"
+   },
+   {
+    "id": 13028,
+    "label": "antes"
+   },
+   {
+    "id": 32749,
+    "label": "depois"
+   },
+   {
+    "id": 4726,
+    "label": "primeiro"
+   },
+   {
+    "id": 4765,
+    "label": "último"
+   },
+   {
+    "id": 8715,
+    "label": "verdade"
+   },
+   {
+    "id": 8629,
+    "label": "mentira"
+   },
+   {
+    "id": 31226,
+    "label": "errado"
+   },
+   {
+    "id": 11470,
+    "label": "melhor"
+   },
+   {
+    "id": 39512,
+    "label": "pior"
+   },
+   {
+    "id": 4629,
+    "label": "difícil"
+   },
+   {
+    "id": 4645,
+    "label": "fácil"
+   },
+   {
+    "id": 6483,
+    "label": "escolher"
+   }
+  ]
  }
 ]
