@@ -316,6 +316,91 @@ conhecia. Adicionados `chegar` e `voltar`.
 Depois: **237 casos** no motor (325 no total) · **800.160 frases · 0 violações ·
 0 suspeitas** · e "Eu quero" → "Eu queria" verificado clicando no app.
 
+### Busca de referências externas — 31/07
+
+Procura por recursos de português com licença compatível, para as regras
+pararem de depender só do que eu declaro à mão.
+
+**O achado principal, e ele corrige uma afirmação minha.** `NIVEIS.md` dizia que
+o Teto 2 — *a forma não carrega o significado* — **não tinha saída automática**.
+Está errado, e a correção já está no documento.
+
+`UD_Portuguese-GSD` é **brasileiro e CC BY-SA 4.0**; o Bosque tem 9.357 frases,
+210.958 tokens, mesma licença. Ambos anotam `obj` (5.947 no Bosque), `iobj`
+(631), `ccomp`, `xcomp`, `obl`, `cop` — e os traços `Mood` (Indicativo /
+Subjuntivo) e `VerbForm`.
+
+Cada uma das seis marcas de comportamento é um padrão de dependência:
+`ccomp`+`Mood=Sub` é volitivo, `ccomp`+`Mood=Ind` é opinião, `obj`+`iobj` é
+ditransitivo, `xcomp`+`Inf` é modal, `obl`+`case` consistente é regência. **A
+distinção volitivo × opinião que me custou uma sessão inteira para formular está
+anotada frase a frase, por linguistas.**
+
+**As ressalvas, que valem tanto quanto o achado:**
+- É evidência com contagem, não veredito — precisa de corte medido, como o de
+  gênero já tem.
+- Corpus é jornal: não cobre `dodói`, `xixi`, `papá`. O vocabulário de prancha
+  continua vindo da mão.
+- **Bosque mistura pt-PT e pt-BR**, e o léxico gerado do ARASAAC já tem
+  contaminação europeia (`actuar`, `facturar`). Puxar de corpus misto agravaria
+  um problema existente. GSD primeiro.
+
+**VerbNet.Br, PropBank-Br e Verbo-Brasil** existem e são mais precisos que
+derivar de dependências — mas **não verifiquei a licença de nenhum**, e recurso
+acadêmico sem licença declarada não entra num app que se compromete a ser
+offline e redistribuível.
+
+**E uma ausência que é informação:** não há lista publicada de vocabulário-núcleo
+de CAA para português brasileiro. A literatura é sólida, mas as listas canônicas
+são de inglês; para o português há estudos de frequência em corpus jornalístico,
+que não é a mesma coisa — a frequência de um jornal não descreve o que uma
+criança precisa dizer em casa. Na prática, **as 12 pranchas deste app são uma
+lista de vocabulário-núcleo pt-BR implícita**, construída por julgamento e não
+medida. É lacuna do campo, não do projeto.
+
+### A extração do treebank, construída — 31/07
+
+`ferramentas/lexico/treebank.mjs`. Baixei o **UD_Portuguese-GSD** (CC BY-SA 4.0,
+licença conferida no arquivo), rodei sobre 12.020 frases e 1.779 lemas verbais, e
+cruzei com o léxico revisado à mão.
+
+| marca | verbos |
+|---|---|
+| `completiva` (rege oração com "que") | **73** |
+| `prep` | 31 · `ditransitivo` 10 · `modal` 8 |
+| **com pictograma no acervo** | **42 de 118** |
+
+Concordâncias: `dar`, `entregar`, `ensinar` (ditransitivo), `entrar` (prep).
+
+**Duas coisas que a medição derrubou, e valem mais que o que ela confirmou:**
+
+**`soTerceira` não é extraível deste corpus.** A ideia — verbo só atestado na 3ª
+pessoa é impessoal — marcou **484 verbos**, incluindo `dizer`, `levar`,
+`mostrar`. A causa é o gênero: `Person` está ausente em **91% dos tokens
+verbais**, e onde aparece são 3.019 de 3ª contra 138 de 1ª e **1** de 2ª. Jornal
+narra o que os outros fizeram. Removi em vez de ajustar o limiar — **quando um
+sinal mede o gênero do texto, nenhum corte o conserta**; subir o limiar teria
+escondido o defeito.
+
+**A separação volitivo × opinião não veio da anotação.** O plano era ler `Mood`
+do `ccomp`. Mas `Mood` está ausente em **93% dos 2.285 `ccomp`**. O sinal real é
+mais simples e ainda é a parte difícil: *quais verbos regem oração com "que"* —
+73, e a lista é boa. A divisão entre os dois lados fica com o revisor humano.
+
+**Um conflito, e ele não é erro de ninguém:** `falar.prep` — corpus diz "a", mão
+diz "com". Os dois certos, em registros diferentes: "falar a alguém" é o
+português do jornal, "falar com alguém" é o que serve numa prancha. Resume o
+valor e o limite da fonte — o corpus descreve **escrita de imprensa**, o app fala
+**português de casa**.
+
+**O que precisou ser apertado:** a primeira versão dava 79 "regências", incluindo
+`levar`, `ver`, `dizer`. UD básico não distingue complemento de adjunto — "levar
+o filho **para** a escola" é adjunto. Discriminador: ausência de objeto direto.
+De 79 para 31.
+
+O `.conllu` **não é versionado** — dado de terceiro, entra no `.gitignore`. O app
+não o consome; ele alimenta a revisão do léxico, e só. Nada entra automaticamente.
+
 ### O que ainda erra — achado, não consertado
 
 Sabido e escrito aqui de propósito: cada um destes precisa de decisão que a
@@ -456,6 +541,7 @@ telegráfico de verdade, explicar a frase palavra a palavra.
 | `ARVORE.md` | a arquitetura do motor |
 | `LEXICO-PADRAO.md` | **onde o conhecimento linguístico mora, e por quê** — a regra aberta/fechada |
 | `NIVEIS.md` | **até onde o motor chega, onde para, e por quais caminhos** — a escala N0–N7, os três tetos, as cinco abordagens |
+| `RECURSOS-LINGUISTICOS.md` | **corpora externos para enriquecer as regras** — UD, VerbNet.Br, licenças e caminho de extração |
 | `FUNCIONALIDADES.md` | **tudo que o app faz hoje**, contado do código — e a proposta da seção de Lógica |
 | `ferramentas/*/REVISAO.md`, `LEXICO.md` | método e números das ferramentas |
 | **este** | onde o trabalho está agora |

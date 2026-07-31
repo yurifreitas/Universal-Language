@@ -17,3 +17,8 @@ web/dev-dist/
 
 .DS_Store
 Thumbs.db
+
+# Treebank do Universal Dependencies — dado de terceiro, CC BY-SA 4.0, baixado
+# sob demanda para `ferramentas/lexico/treebank.mjs`. Não vai para o repositório
+# nem para o app: alimenta a revisão do léxico, e só.
+*.conllu

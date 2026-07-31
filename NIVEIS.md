@@ -118,8 +118,19 @@ lista declarada tem o tamanho que alguém escreveu. Hoje: **44 dos 978 verbos** 
 acervo. Amostrado, quase todos os 934 restantes são verbos de ação concreta que
 corretamente não levam marca — mas isso é estimativa por amostra, não medida.
 
-**Saída:** nenhuma automática. Ou alguém revisa, ou fica assim. É o argumento
-mais forte a favor de uma fila de revisão humana com prioridade por frequência.
+**Saída — e aqui esta página estava errada.** A primeira versão dizia "nenhuma
+automática. Ou alguém revisa, ou fica assim". Isso valia para o método que eu
+estava usando — inferir da *forma* da palavra —, não para o problema.
+
+Existe corpus de português com **estrutura argumental anotada**, e estrutura
+argumental é exatamente o que estas seis marcas descrevem. `UD_Portuguese-GSD` é
+brasileiro e CC BY-SA 4.0; `ccomp` com `Mood=Sub` é volitivo, `ccomp` com
+`Mood=Ind` é opinião, `obj`+`iobj` é ditransitivo. A distinção que me custou uma
+sessão inteira para formular está anotada frase a frase por linguistas.
+
+Não é veredito: é evidência com contagem, precisa de corte medido, e não cobre
+vocabulário de prancha (`dodói`, `xixi`). Mas é caminho, e eu havia declarado que
+não havia. Ver [RECURSOS-LINGUISTICOS.md](RECURSOS-LINGUISTICOS.md).
 
 ### Teto 3 — nenhum contexto além da frase
 
@@ -276,6 +287,8 @@ estruturalmente incapazes de perceber isso.
 - [GRAMMAR.md](GRAMMAR.md) — o que o motor faz, regra a regra.
 - [ARVORE.md](ARVORE.md) — a abordagem B, em detalhe, com plano de migração.
 - [LEXICO-PADRAO.md](LEXICO-PADRAO.md) — onde o conhecimento mora, e por quê.
+- [RECURSOS-LINGUISTICOS.md](RECURSOS-LINGUISTICOS.md) — corpora externos com
+  licença compatível, e o caminho que corrige o Teto 2.
 - [ferramentas/gramatica/REVISAO.md](ferramentas/gramatica/REVISAO.md) — a
   auditoria em massa, detector a detector.
 - [ESTADO.md](ESTADO.md) — o que foi feito, em ordem cronológica.
