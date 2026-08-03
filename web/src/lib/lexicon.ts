@@ -573,6 +573,13 @@ export const LEXICON: Record<string, Lexeme> = {
   preferir: V({ volitivo: true, modal: true }),
 
   achar: V({ opiniao: true }),
+  /**
+   * "Penso que a mae vem" e "penso em voce" — os dois usos, e o segundo e o
+   * mais frequente numa prancha. Veio da extracao de treebank
+   * (`ferramentas/lexico/treebank.mjs`), como `completiva`; a regencia `em` e
+   * revisao a mao, porque o corpus da preposicao do portugues escrito.
+   */
+  pensar: V({ prep: 'em', opiniao: true }),
   lembrar: V({ prep: 'de', opiniao: true }),
   esquecer: V({ prep: 'de', opiniao: true }),
   entender: V({ opiniao: true }),
@@ -609,7 +616,8 @@ export const LEXICON: Record<string, Lexeme> = {
   gostar: V({ prep: 'de', modal: true }),
   ir: V({ modal: true }),
   vir: V({ modal: true }),
-  parar: V(),
+  /** "Parar DE comer" — mesma regencia de `terminar`, e o corpus confirma. */
+  parar: V({ prepInf: 'de', modal: true }),
   dar: V({ ditransitivo: true }),
   pegar: V(),
   olhar: V({ prep: 'para' }),

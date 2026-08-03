@@ -244,11 +244,32 @@ detector(
 )
 
 detector('preposicao-dupla', 'alta', 'Preposição seguida de preposição.', (c) => {
-  const palavras = c.saida.text.toLowerCase().replace(/[.?!,]/g, '').split(/\s+/).filter(Boolean)
+  /*
+   * A checagem é por TOKEN, não por texto, e o motivo custou 1.561 falsos
+   * positivos numa rodada só: **"para" é preposição e é verbo**.
+   *
+   *   "Eles não para de levar."   ← imperativo de `parar` + a regência `de`
+   *
+   * Lendo a frase como string, isso é indistinguível de "para de" preposição
+   * seguida de preposição. Lendo o token, não é: a forma verbal veio de um
+   * card e está flexionada (`inflected`); a preposição que o motor pôs é
+   * `inserted`, e a que a pessoa escolheu é um card de classe `preposition`.
+   *
+   * Nenhum limiar consertaria isso — o detector estava medindo a grafia, não a
+   * função. É a mesma lição do `soTerceira` em RECURSOS-LINGUISTICOS.md § 2b.
+   */
+  const tokens = c.saida.tokens
+  const ehPreposicao = (t) => {
+    const palavra = t.text.toLowerCase().replace(/[.?!,]/g, '')
+    if (!PREPOSICOES.has(palavra)) return false
+    if (t.kind === 'inserted') return true
+    if (t.cardIndex == null) return false
+    return lookup(regionalLabel(t.original ?? c.entrada[t.cardIndex], c.opcoes.region)).class === 'preposition'
+  }
   const achados = []
-  for (let i = 1; i < palavras.length; i++) {
-    if (PREPOSICOES.has(palavras[i]) && PREPOSICOES.has(palavras[i - 1])) {
-      achados.push(`"${palavras[i - 1]} ${palavras[i]}"`)
+  for (let i = 1; i < tokens.length; i++) {
+    if (ehPreposicao(tokens[i]) && ehPreposicao(tokens[i - 1])) {
+      achados.push(`"${tokens[i - 1].text} ${tokens[i].text}"`)
     }
   }
   return achados

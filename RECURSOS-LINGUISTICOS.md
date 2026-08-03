@@ -177,6 +177,82 @@ do projeto. De 79 caiu para 31.
 
 ---
 
+## 2c. O rendimento real, medido contra a prancha — **e ele é pequeno**
+
+Medido em **02/08/2026**, e o resultado corrige tanto esta página quanto o
+ranking de abordagens do `NIVEIS.md` § 3b.
+
+A § 2b comemorava **42 verbos com pictograma**. Mas "tem pictograma" quer dizer
+"existe no acervo de 13.801", não "está numa prancha". Cruzando a extração com
+os **211 cards das 12 pranchas de fábrica**:
+
+| medida | verbos |
+|---|---|
+| extraídos do GSD | 118 |
+| com pictograma no acervo | 42 |
+| **em card de prancha de fábrica** | **9** |
+| desses, **já anotados à mão** | **8** |
+| **ganho líquido** | **1** (`pensar`) + 1 correção (`parar`) |
+
+Os 8 já anotados são `dar`, `saber`, `falar`, `achar`, `lembrar`, `esperar`,
+`brincar` e `parar` — e a concordância entre corpus e mão é boa notícia sobre a
+qualidade das duas fontes. Não é rendimento.
+
+### O que isso diz sobre o Teto 2
+
+**A métrica "44 de 978 verbos" tem o denominador errado.** 978 é o acervo; o que
+a pessoa toca são os 39 verbos que estão em card. Desses, **18 têm marca de
+comportamento e 21 não** — e os 21 são `comer`, `beber`, `dormir`, `abrir`,
+`fechar`, `correr`, `pular`, `andar`, `cantar`, `dançar`, `lavar`, `vestir`…
+verbos de ação concreta, que **corretamente não levam marca**.
+
+A cobertura do vocabulário que se usa está praticamente completa. O que a
+extração de corpus alcança é a cauda do acervo — `ressaltar`, `frisar`,
+`reiterar`, `conquistar`, `promover` —, palavra de reportagem que ninguém vai
+tocar numa prancha.
+
+O `NIVEIS.md` § 2 estimava isso por amostra ("quase todos os 934 restantes são
+verbos de ação concreta que corretamente não levam marca"). A estimativa estava
+certa. O que estava errado era tratar a diferença como um **teto**: ela é a
+distância entre o acervo e o uso, e fechá-la não melhora nenhuma frase.
+
+### O que foi aplicado
+
+Só o que a medição sustenta, com caso fixado em `npm run test:grammar`:
+
+| verbo | marca | frase |
+|---|---|---|
+| `pensar` | `prep: 'em'`, `opiniao` | "Eu penso na mãe." |
+| `parar` | `prepInf: 'de'`, `modal` | "Eu paro de comer." |
+
+A regência `em` de `pensar` **não** veio do corpus — veio da revisão à mão, pelo
+mesmo motivo do conflito `falar a/com`: o corpus dá a preposição do português
+escrito.
+
+### O falso positivo que a mudança expôs — e valeu mais que ela
+
+Marcar `parar` fez a auditoria saltar de 0 para **1.561 suspeitas** numa rodada,
+todas do mesmo detector e todas falsas:
+
+    "Eles não para de levar."   →  preposicao-dupla: "para de"
+
+**"Para" é preposição e é verbo.** O detector lia a frase como string, e string
+não distingue as duas. Consertado em `detectar.mjs`: a checagem passou a ser por
+**token** — só conta como preposição o que o motor inseriu (`kind: 'inserted'`)
+ou o que veio de card de classe `preposition`. Uma forma verbal flexionada de
+card não entra.
+
+Depois do conserto: **40 sementes · 800.160 casos · 0 invariantes · 0
+suspeitas**, com sonda de defeito injetado confirmando que o detector continua
+pegando preposição dupla de verdade ("Eu gosto **de de** bolo").
+
+Vale registrar por que isso importa mais que os dois verbos: um detector que
+grita 1.561 vezes à toa é um detector que ninguém lê, e ele estava a **uma marca
+de léxico** de virar isso. É a mesma lição do `soTerceira` acima — sinal que mede
+a grafia em vez da função não se conserta com limiar.
+
+---
+
 ## 3. Os recursos de valência específicos
 
 Existem, e são mais precisos que UD — mas menos acessíveis.

@@ -501,6 +501,9 @@ const CASES: Record<string, Case[]> = {
     { cards: ['eu', 'cair'], marks: { tense: 'past' }, expect: 'Eu caí.' },
     // Regencia antes de infinitivo, diferente da de substantivo.
     { cards: ['eu', 'terminar', 'comer'], expect: 'Eu termino de comer.' },
+    // Vieram da extracao de treebank; ver RECURSOS-LINGUISTICOS.md secao 2c.
+    { cards: ['eu', 'parar', 'comer'], expect: 'Eu paro de comer.' },
+    { cards: ['eu', 'pensar', 'mãe'], expect: 'Eu penso na mãe.' },
     { cards: ['eu', 'falar', 'mãe'], expect: 'Eu falo com a mãe.' },
     { cards: ['eu', 'sentar', 'cadeira'], expect: 'Eu sento na cadeira.' },
     { cards: ['eu', 'querer', 'colo'], expect: 'Eu quero colo.' },

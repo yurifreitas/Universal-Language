@@ -482,12 +482,14 @@ entram **depois** das de fábrica.
 4. **O comportamento semântico não é inferível da forma.** Gênero e plural o
    gerador acerta porque a terminação carrega o sinal; "é ditransitivo" não —
    *"dar" e "danar" terminam igual*. As seis marcas de comportamento vêm de lista
-   declarada, e hoje cobrem 44 dos 978 verbos do acervo.
+   declarada. Cobrem 52 dos 978 verbos do acervo — mas o número que importa e
+   outro: **18 dos 39 verbos que estao em card**, e os 21 restantes sao acao
+   concreta que corretamente nao leva marca. Ver RECURSOS-LINGUISTICOS.md 2c.
 5. **A regra de dois substantivos é uma generalização.** "suco fruta" → "suco de
    fruta" e "mãe pai" → "a mãe e o pai" funcionam porque o léxico marca quem é
    animado. Um par em que essa marcação falta cai no "de" e pode soar estranho.
 6. **A cobertura de teste é uma tabela mais uma varredura.** `npm run
-   test:grammar` fixa **227** casos (`web/tests/grammar.test.ts`), e
+   test:grammar` fixa **239** casos (`web/tests/grammar.test.ts`), e
    `node ferramentas/gramatica/rodada.mjs` roda 40 sementes e **800.160** frases
    contra 14 detectores. A tabela impede regressão no que já foi consertado; a
    varredura acha o que ninguém escreveu — mas **só o que os detectores sabem

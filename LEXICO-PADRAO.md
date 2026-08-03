@@ -188,6 +188,17 @@ O acervo é dominado por verbos de ação. **44 é o tamanho certo da lista, nã
 tamanho do que faltou** — mas isto é uma estimativa por amostra, e está escrito
 como estimativa de propósito.
 
+**Confirmado em 02/08/2026, e por outro caminho.** Cruzando o léxico com os 211
+cards das 12 pranchas de fábrica: **39 rótulos são verbo declarado, 18 têm marca
+e 21 não** — e os 21 são `comer`, `beber`, `dormir`, `abrir`, `fechar`, `correr`,
+`pular`, `andar`, `cantar`, `dançar`, `lavar`, `vestir`. Ação concreta, sem marca
+por estarem certos.
+
+A extração de treebank, rodada contra a prancha, achou **9** verbos e **8 já
+estavam anotados à mão**. Duas fontes independentes, mesma conclusão: a cobertura
+do vocabulário que se toca está fechada. A denominação "44 de 978" mede o acervo,
+e o acervo não é o que a pessoa usa — ver `RECURSOS-LINGUISTICOS.md` § 2c.
+
 ### Achado colateral
 
 A amostra expôs que o acervo traz português **europeu** em vários termos:
